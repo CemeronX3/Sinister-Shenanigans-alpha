@@ -3536,7 +3536,24 @@ function updWorld(dt){
 function updFx(dt){for(const p of parts){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=Math.pow(.05,dt);p.vy*=Math.pow(.05,dt);p.life-=dt}parts=parts.filter(p=>p.life>0);
   for(const t of texts){t.time+=dt;t.y-=34*dt}texts=texts.filter(t=>t.time<t.max)}
 
+function debugJumpErrorPhase3(){
+  if(state!=='run'||paused||!room||room.endT!=null)return;
+  const b=enemies.find(e=>e.alive&&e.type==='errorBoss');
+  if(!b||b.phase===3)return;
+  // Убираем оставшихся врагов второй фазы, чтобы они не мешали тесту.
+  for(let i=enemies.length-1;i>=0;i--)if(enemies[i]!==b)enemies.splice(i,1);
+  b.phase=3;b.hidden=false;b.x=W/2;b.y=A.y+160;
+  b.hp=run.hard?2400:1800;b.maxHp=b.hp;
+  b.atk=null;b.at=0;b.cd=1.4;b.cmRevived=true;b.cmLast=null;b.cmFinal=null;
+  b.cmDarts=[];b.cmLines=[];b.cmOrbs=[];b.cmLasers=[];b.cmEye=null;
+  b.stunT=0;b.slowT=0;b.dotT=0;b.dotAcc=0;
+  if(ui.cmLine)ui.cmLine=null;
+  shake=12;flashScreen=.25;
+  banner('ЛОЖНЫЙ СОЗДАТЕЛЬ · ФАЗА 3','Тестовый переход [L]');
+  sfx('boss');
+}
 function updRun(dt){
+  if(pressed.has('KeyL'))debugJumpErrorPhase3();
   if(room.kind==='training'&&pressed.has('KeyR')){trainDmg=[];trainTotal=0;trainStart=time;text(P.x,P.y-60,'Счётчик сброшен',C.acid,14);sfx('pick')}
   if(ui.banner){ui.banner.time-=dt;if(ui.banner.time<=0)ui.banner=null}
   if(ui.cmLine)ui.cmLine.t=(ui.cmLine.t||0)+dt;
