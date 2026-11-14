@@ -6087,12 +6087,18 @@ function drawHUD(){ctx.fillStyle='#141316';ctx.fillRect(0,0,W,room.cam?50:A.y-24
     ctx.restore();ctx.restore()}
   if(ui.cmLine){const L=ui.cmLine,t=L.t||0,dur=L.dur||3.4,a=clamp(Math.min(t*4,(dur-t)*2),0,1);
     ctx.save();ctx.setTransform(DPR,0,0,DPR,0,0);ctx.globalAlpha=a;
-    const bw=Math.min(W-48,650),bh=52,bx=(W-bw)/2,by=H-110;
-    ctx.fillStyle='rgba(12,11,13,.9)';ctx.fillRect(bx,by,bw,bh);
-    ctx.strokeStyle='rgba(255,42,34,.65)';ctx.lineWidth=1;ctx.strokeRect(bx,by,bw,bh);
-    ctx.beginPath();ctx.rect(bx+12,by+4,bw-24,bh-8);ctx.clip();
-    ctx.font=`16px ${FM}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=C.red;
-    ctx.fillText(String(L.txt||''),W/2,by+bh/2,bw-28);
+    const bw=Math.min(W-48,760),bx=(W-bw)/2,pad=22,maxTextW=bw-pad*2;
+    ctx.font=`16px ${FM}`;
+    const lines=[],words=String(L.txt||'').split(/\s+/);let line='';
+    for(const word of words){const candidate=line?line+' '+word:word;
+      if(line&&ctx.measureText(candidate).width>maxTextW){lines.push(line);line=word}else line=candidate}
+    if(line)lines.push(line);
+    const bh=Math.max(58,lines.length*23+24),by=Math.max(A.y+28,H-165-bh);
+    ctx.fillStyle='rgba(12,11,13,.96)';ctx.fillRect(bx,by,bw,bh);
+    ctx.strokeStyle='rgba(255,42,34,.9)';ctx.lineWidth=2;ctx.strokeRect(bx,by,bw,bh);
+    ctx.beginPath();ctx.rect(bx+pad/2,by+6,bw-pad,bh-12);ctx.clip();
+    ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=C.red;
+    lines.forEach((txt,i)=>ctx.fillText(txt,W/2,by+bh/2+(i-(lines.length-1)/2)*23,maxTextW));
     ctx.restore()}
   if(room&&room.crystalGet!=null){const k=room.crystalGet,a=Math.min(1,(2.8-k)*2,k*2);
     ctx.save();ctx.globalAlpha=a;ctx.fillStyle='rgba(12,11,13,.55)';ctx.fillRect(0,0,W,H);
