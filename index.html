@@ -2013,6 +2013,16 @@ function cmUpdBarsIn(arr,dt,zone){
       b.col=CM_GB_COLS[Math.floor(Math.random()*CM_GB_COLS.length)];
       b.x=rand(zone.x0,zone.x1);b.y=rand(zone.y0,zone.y1)}}
 }
+function cmAnimateEtudeGlitches(dt){
+  cmUpdBarsIn(CM_TORSO_BARS,dt,CM_TORSO_BAR_ZONE);
+  cmUpdBarsIn(CM_UARM_BARS_A,dt,CM_UARM_BAR_ZONE);
+  cmUpdBarsIn(CM_UARM_BARS_B,dt,CM_UARM_BAR_ZONE);
+  cmUpdBarsIn(CM_FARM_BARS_A,dt,CM_FARM_BAR_ZONE);
+  cmUpdBarsIn(CM_FARM_BARS_B,dt,CM_FARM_BAR_ZONE);
+  cmUpdBarsIn(CM_GLOVE_BARS_A,dt,CM_GLOVE_BAR_ZONE);
+  cmUpdBarsIn(CM_GLOVE_BARS_B,dt,CM_GLOVE_BAR_ZONE);
+  cmUpdBarsIn(CM_HEAD_BARS,dt,CM_HEAD_BAR_ZONE);
+}
 function drawCMBars(g,arr){for(const b of arr){if(!b.on)continue;g.fillStyle=b.col;g.fillRect(b.x-b.len/2,b.y-b.h/2,b.len,b.h)}}
 const CM_TORSO_BAR_ZONE={x0:-26,x1:26,y0:-60,y1:36};
 const CM_TORSO_BARS=cmMakeBars(14,9,20,CM_TORSO_BAR_ZONE);
@@ -2041,7 +2051,7 @@ function drawCreatorMan(b,x,y){const g=ctx,t=b.t||time,fl=b.flash>0,hot=b.phase=
   const GREY1=fl?'#efeae2':'#5c586a';
   const S=.82;
   const breathe=1+Math.sin(t*1.6)*.015, bob=Math.sin(t*1.6)*2;
-  shadow(x,y+120*S,30);
+  shadow(x,y+120*S,23);
   g.save();g.translate(x,y+bob);
   g.save();g.scale(S,S*breathe);
 
@@ -2139,15 +2149,13 @@ function drawCreatorMan(b,x,y){const g=ctx,t=b.t||time,fl=b.flash>0,hot=b.phase=
   g.strokeStyle='#efeae2';g.lineWidth=1;hexPath(g,-1,0,4.2,3.6);g.stroke();
   // зрачок следит за игроком — сдвигается внутри гекса в его сторону
   {
-    const eyeGlow=b.eyeGlow==null?1:b.eyeGlow;
-    const mtx=g.getTransform();
-    const eyeScreen=mtx.transformPoint({x:-1,y:0});
-    const eyeSX=eyeScreen.x/DPR, eyeSY=eyeScreen.y/DPR;
-    const angWorld=Math.atan2(P.y-eyeSY,P.x-eyeSX);
-    const angLocal=angWorld+Math.PI/2;
+    const eyeGlow=1;
+    const target=g.getTransform().inverse().transformPoint({x:P.x*DPR,y:P.y*DPR});
+    const angLocal=Math.atan2(target.y,target.x+1);
     const range=1.8;
     g.save();g.globalAlpha=eyeGlow;
-    g.translate(-1+Math.cos(angLocal)*range,0+Math.sin(angLocal)*range);g.scale(5.5/22,5.5/22);
+    g.shadowColor='#f2efe9';g.shadowBlur=9;
+    g.translate(-1+Math.cos(angLocal)*range,Math.sin(angLocal)*range);g.scale(5.5/22,5.5/22);
     g.fillStyle=hot?'#ff2a22':'#f2efe9';
     const spike=(len,w)=>{g.beginPath();g.moveTo(-w,0);g.lineTo(0,-len);g.lineTo(w,0);g.lineTo(0,len);g.closePath();g.fill()};
     spike(13,2.2);g.save();g.rotate(Math.PI/2);spike(13,2.2);g.restore();
@@ -2832,7 +2840,7 @@ function drawRevivedEtudeMan(b,x,y){const g=ctx,t=b.t||time,fl=b.flash>0,hot=b.p
   const SHIRT='#efeae2', ERR_BLUE=fl?'#0c0b0d':(hot?'#ff2a22':'#2a52ff'), ERR_BLUE_DARK=fl?'#0c0b0d':(hot?'#8a0f0a':'#15306b');
   const SKIN_GLOVE='#efeae2', GLOVE_LINE=fl?'#0c0b0d':'#8d8890';
   const GREY1=fl?'#efeae2':'#5c586a';
-  const S=1.7;
+  const S=.72;
   const breathe=1+Math.sin(t*1.6)*.015, bob=Math.sin(t*1.6)*2;
   shadow(x,y+120*S,30);
   g.save();g.translate(x,y+bob);
@@ -6643,7 +6651,7 @@ function drawOfficeCutsceneUI(){
 }
 
 /* ---------- loop ---------- */
-function update(dt){time+=dt;touchFrame();shake=Math.max(0,shake-dt*40);flashScreen=Math.max(0,flashScreen-dt);
+function update(dt){time+=dt;cmAnimateEtudeGlitches(dt);touchFrame();shake=Math.max(0,shake-dt*40);flashScreen=Math.max(0,flashScreen-dt);
   if(pressed.has('KeyM')){muted=!muted;if(bossMusic)bossMusic.muted=muted;musVolume()}
   syncPause();
   if(state==='lobby')updLobby(dt);
