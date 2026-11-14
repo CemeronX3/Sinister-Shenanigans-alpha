@@ -6694,9 +6694,10 @@ function render(){ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle='#141316';ctx.
   try{drawHUD()}catch(err){renderFailure=renderFailure||err;console.error('HUD render:',err)}
   if(renderFailure){
     ctx.save();ctx.setTransform(DPR,0,0,DPR,0,0);
-    ctx.fillStyle='rgba(16,0,0,.93)';ctx.fillRect(12,96,Math.min(W-24,820),86);
-    ctx.font='bold 16px monospace';ctx.fillStyle='#ff7a75';ctx.fillText('ОШИБКА ОТРИСОВКИ — пришли скриншот этого сообщения',22,121);
-    ctx.font='13px monospace';ctx.fillStyle='#fff';ctx.fillText(String(renderFailure.name+': '+renderFailure.message).slice(0,108),22,150);
+    ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.globalAlpha=1;
+    ctx.fillStyle='rgba(16,0,0,.88)';ctx.fillRect(12,96,Math.min(W-24,740),64);
+    ctx.font='bold 13px monospace';ctx.fillStyle='#ff7a75';ctx.fillText('ОШИБКА ОТРИСОВКИ',22,116);
+    ctx.font='12px monospace';ctx.fillStyle='#fff';ctx.fillText(String(renderFailure.name+': '+renderFailure.message),22,141,Math.min(W-48,710));
     ctx.restore();
   }
   if(room&&room.officeCutscene)drawOfficeCutsceneUI();
