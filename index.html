@@ -2962,7 +2962,7 @@ function drawRevivedEtudeMan(b,x,y){const g=ctx,t=b.t||time,fl=b.flash>0,hot=b.p
     g.globalAlpha=1;
     g.shadowColor='#ffffff';g.shadowBlur=18;
     g.fillStyle='#ffffff';
-    g.beginPath();g.arc(0,0,2.15,0,Math.PI*2);g.fill();
+    // No translucent or circular halo: only the four-point eye from the etude.
     g.beginPath();g.moveTo(0,-4.1);g.lineTo(1.1,-1.1);g.lineTo(4.1,0);
     g.lineTo(1.1,1.1);g.lineTo(0,4.1);g.lineTo(-1.1,1.1);
     g.lineTo(-4.1,0);g.lineTo(-1.1,-1.1);g.closePath();g.fill();
