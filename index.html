@@ -441,9 +441,31 @@ function endUlt(silent){if(!P||!P.ult)return;const base=P.kind==='cain'?cainStat
   if(!silent)text(P.x,P.y-70,'Ульт. форма спадает',C.ember,14)}
 
 /* ---------- rooms ---------- */
+/* 0.4.27 — разнообразные, но проходимые схемы обычных комнат.
+   Вход и выход остаются свободными; арены боссов не затрагиваются. */
+function addCombatLayout(r){
+  const choice=randi(0,3);r.layout=choice;
+  if(choice===0)return; // классическая случайная комната
+  const cx=A.x+A.w/2,cy=A.y+A.h/2;
+  const plans={
+    1:[{x:cx-43,y:cy-115,w:86,h:45},{x:cx-43,y:cy+70,w:86,h:45}], // две баррикады и широкий проход
+    2:[{x:cx-132,y:cy-92,w:62,h:48},{x:cx+70,y:cy+44,w:62,h:48}], // диагональное укрытие
+    3:[{x:cx-125,y:cy-113,w:65,h:43},{x:cx+60,y:cy-113,w:65,h:43},
+       {x:cx-125,y:cy+70,w:65,h:43},{x:cx+60,y:cy+70,w:65,h:43}] // четыре островка
+  };
+  for(const k of plans[choice]){
+    if(k.x>A.x+100&&k.x+k.w<A.x+A.w-100&&k.y>A.y+24&&k.y+k.h<A.y+A.h-24)r.rocks.push(k);
+  }
+}
+function combatPropAllowed(r,x,y){
+  // Не запираем стартовый коридор, двери и центральный проход.
+  if(Math.abs(y-MIDY)<48&&(x<A.x+225||x>A.x+A.w-225))return false;
+  if(Math.hypot(x-W/2,y-(MIDY+40))<76)return false;
+  return true;
+}
 function newRoom(kind){A=roomBounds(kind);const r={kind,rocks:[],props:[],solids:[],cleared:kind!=='combat',exitOpen:kind==='lobby',wavesLeft:0,endT:null};
   if(kind==='boss'&&run&&run.zone===2)r.solids.push({x:A.x,y:A.y,w:A.w,h:TITAN_ROOF_Y-A.y});
-  if(kind==='combat'){const n=randi(0,3);let tries=0;
+  if(kind==='combat'){addCombatLayout(r);const n=r.layout===0?randi(0,3):r.rocks.length;let tries=0;
     while(r.rocks.length<n&&tries++<60){const w=rand(44,90),h=rand(34,62),x=rand(A.x+150,A.x+A.w-150-w),y=rand(A.y+40,A.y+A.h-40-h);
       const ok=r.rocks.every(k=>x+w+40<k.x||k.x+k.w+40<x||y+h+40<k.y||k.y+k.h+40<y)&&!(Math.abs(y+h/2-MIDY)<70&&(x<A.x+220||x+w>A.x+A.w-220));
       if(ok)r.rocks.push({x,y,w,h})}}
@@ -458,10 +480,23 @@ function newRoom(kind){A=roomBounds(kind);const r={kind,rocks:[],props:[],solids
     const n=denser?(kind==='boss'?8:randi(9,13)):(kind==='boss'?5:randi(5,8));let tries=0;
     while(r.props.length<n&&tries++<160){const x=rand(A.x+60,A.x+A.w-60),y=rand(A.y+36,A.y+A.h-30);
       if(Math.abs(y-MIDY)<70&&(x<A.x+150||x>A.x+A.w-150))continue;
+      if(kind==='combat'&&!combatPropAllowed(r,x,y))continue;
       if(kind==='boss'){if(run&&run.zone===2){if(y<TITAN_ROOF_Y+24)continue}else if(Math.hypot(x-W/2,y-(A.y+190))<200)continue}
       if(r.rocks.some(k=>x>k.x-34&&x<k.x+k.w+34&&y>k.y-34&&y<k.y+k.h+34))continue;
       if(r.props.some(q=>Math.hypot(q.x-x,q.y-y)<56))continue;
-      r.props.push(makeProp(pick(set),x,y))}}
+      r.props.push(makeProp(pick(set),x,y))}
+    // Небольшие группы разрушаемых объектов рядом с укрытиями — не в проходах.
+    if(kind==='combat'&&r.layout>0&&r.rocks.length){
+      const target=r.rocks[randi(0,r.rocks.length-1)];
+      for(let i=0;i<2;i++){
+        const x=target.x+target.w/2+(i===0?-1:1)*(target.w/2+32),y=target.y+target.h/2+rand(-12,12);
+        if(x<A.x+55||x>A.x+A.w-55||y<A.y+38||y>A.y+A.h-38)continue;
+        if(!combatPropAllowed(r,x,y))continue;
+        if(r.rocks.some(k=>x>k.x-31&&x<k.x+k.w+31&&y>k.y-31&&y<k.y+k.h+31))continue;
+        if(r.props.some(q=>Math.hypot(q.x-x,q.y-y)<42))continue;
+        r.props.push(makeProp(pick(set),x,y));
+      }
+    }}
   r.mimicSpots=[];if(kind!=='lobby'&&run&&run.level>=4){const m=kind==='boss'?1:randi(1,2);let t2=0;
     while(r.mimicSpots.length<m&&t2++<150){const x=rand(A.x+220,A.x+A.w-80),y=rand(A.y+40,A.y+A.h-40);
       if(Math.abs(y-MIDY)<70&&x>A.x+A.w-150)continue;
@@ -661,6 +696,19 @@ function makeFloor(r){const c=document.createElement('canvas');c.width=W*DPR;c.h
     spike(34,5);g.save();g.rotate(Math.PI/2);spike(34,5);g.restore();
     g.strokeStyle='rgba(239,234,226,.26)';g.beginPath();g.arc(0,0,6,0,6.283);g.stroke();
     g.restore()}
+  // 0.4.27: напольная маркировка схемы комнаты; не влияет на коллизии.
+  if(r.kind==='combat'&&r.layout>0){
+    g.save();g.lineWidth=1.5;g.setLineDash([10,8]);
+    g.strokeStyle=z4?'rgba(65,116,255,.23)':z3?'rgba(63,214,194,.16)':z2?'rgba(255,125,95,.16)':'rgba(230,190,130,.13)';
+    const cy=A.y+A.h/2;
+    if(r.layout===1){g.strokeRect(A.x+225,cy-56,A.w-450,112)}
+    else if(r.layout===2){g.beginPath();g.moveTo(A.x+220,cy+105);g.lineTo(A.x+A.w-220,cy-105);g.stroke()}
+    else {g.strokeRect(A.x+235,cy-137,A.w-470,274)}
+    g.setLineDash([]);
+    for(const k of r.rocks){g.strokeStyle=z4?'rgba(255,42,34,.27)':z3?'rgba(63,214,194,.24)':z2?'rgba(255,160,110,.2)':'rgba(235,200,135,.18)';
+      g.strokeRect(k.x-8,k.y-8,k.w+16,k.h+16)}
+    g.restore();
+  }
   g.strokeStyle=pal.edge;g.lineWidth=2;g.strokeRect(A.x-1,A.y-1,A.w+2,A.h+2);
   for(const k of r.rocks){g.fillStyle='rgba(0,0,0,.3)';g.fillRect(k.x+5,k.y+8,k.w,k.h);
     if(z3){
@@ -768,6 +816,7 @@ function damageEnemy(e,amt,opt){if(!e.alive)return;
   if(e.type==='mikeCore'&&e.rig&&!e.rig.shieldDown){if(!(opt&&opt.dot))text(e.x,e.y-e.r-14,'ЗАЩИЩЕНО',C.muted,13);return}
   if(e.type==='krakenCore'&&e.rig&&e.rig.phase<4){if(!(opt&&opt.dot))text(e.x,e.y-e.r-14,'ЗАЩИЩЕНО',C.muted,13);return}
   amt=Math.round(amt);e.hp-=amt;e.flash=.09;
+  if(e.type==='errorBoss'&&e.phase===3&&e.hp<=0){e.hp=1;if(!e.cmFinal){e.cmFinal={t:0,angle:0,shots:[],spawned:false};e.atk='cmFinal';e.at=0;banner('ПОСЛЕДНЯЯ НАДЕЖДА','Ложный Создатель не сдаётся');sfx('boss')}}
   if(e.type==='creatorman'&&e.hp<=0){if(!e.hopeUsed){e.hopeUsed=true;startCMHope(e)}e.hp=1}
   if(e.dummy){trainDmg.push({t:time,amt});trainTotal+=amt;if(e.hp<=0)e.hp=1}
   text(e.x+rand(-8,8),e.y-e.r-14,amt,opt&&opt.dot?C.lav:C.ember,opt&&opt.dot?13:19);if(!(opt&&opt.dot))sfx('hit');
@@ -2684,10 +2733,10 @@ function updErrorBoss(b,dt,dx,dy,d){const dm=run.hard?1.3:1;
     b.atk='trans2';b.at=0;b.armRot=0;b.trBodyAlpha=1;b.trRingDone=false;
     ui.cmLine={t:0,dur:7,txt:'Ты справляешься хорошо, но не расслабляйся! Настало время моего собственного творения!'};sfx('pick')}
   if(b.phase===2){
-    if(!enemies.some(e=>e.alive&&e.type==='pozhiratel')){b.phase=3;b.hidden=false;b.x=W/2;b.y=A.y+160;
-      shake=16;flashScreen=.35;banner('ЕРРОР ВОЗВРАЩАЕТСЯ','Он несёт на себе остатки ложного создателя');sfx('boss')}
+    if(!enemies.some(e=>e.alive&&e.type==='pozhiratel')){b.phase=3;b.hidden=false;b.x=W/2;b.y=A.y+160;b.hp=run.hard?2400:1800;b.maxHp=b.hp;b.atk=null;b.cd=1.4;b.cmRevived=true;b.cmLast=null;
+      shake=16;flashScreen=.35;banner('ЛОЖНЫЙ СОЗДАТЕЛЬ ВОЗРОЖДЁН','Третья фаза · Еррор ждёт своего часа');sfx('boss')}
     return}
-  if(b.phase===3&&b.hp<b.maxHp*(2/9)){b.phase=4;shake=18;flashScreen=.4;banner('ЕРРОР: ФИНАЛЬНАЯ ФОРМА','');sfx('boss')} // 2/9 от нового maxHp = прежний абсолютный порог (1280/1664), бюджеты фаз 3 и 4 не трогали
+  if(b.phase===3){updRevivedCreator(b,dt);return} // 2/9 от нового maxHp = прежний абсолютный порог (1280/1664), бюджеты фаз 3 и 4 не трогали
   if(!b.atk){const want=d>260?1:d<180?-1:0,sp=(46+b.phase*8)*(b.slowT>0?.65:1);b.x+=dx/d*want*sp*dt;b.y+=dy/d*want*sp*dt}
   b.x=clamp(b.x,A.x+170,A.x+A.w-150);b.y=clamp(b.y,A.y+90,A.y+A.h-120);
   if(d<b.r+P.r)hurtPlayer((14+b.phase*3)*dm);
@@ -2768,8 +2817,121 @@ function updErrorBoss(b,dt,dx,dy,d){const dm=run.hard?1.3:1;
     else if(b.atk==='cursors'){const n=9;
       if(b.count<n&&b.at>=.08+b.count*.1){eShoot(b.x,b.y,b.lockA+rand(-.04,.04),330,10*dm,'#ff2a22',5);b.count++;sfx('arrow')}
       if(b.count>=n&&b.at>=.08+n*.1+.3)endEB(b)}}}
+
+/* === Возрождённый Ложный Создатель: 5 утверждённых атак третьей фазы === */
+function cmReviveStart(b,name){b.atk=name;b.at=0;b.cmDarts=[];b.cmLines=[];b.cmOrbs=[];b.cmLasers=[];b.cmEye=null;b.cmFinal=null;b.cmOrigin={x:b.x,y:b.y};
+  if(name==='six'){
+    for(let i=0;i<6;i++)b.cmDarts.push({x:b.x+(i-2.5)*25,y:b.y-110,wait:.18+i*.22,active:false,dead:false,tx:0,ty:0,explode:false});
+  }else if(name==='grid'){
+    for(let i=0;i<6;i++){
+      const yy=A.y+48+(i+.5)*(A.h-96)/6,xx=A.x+48+(i+.5)*(A.w-96)/6;
+      b.cmLines.push({axis:'h',line:yy,dir:i%2?1:-1,pos:i%2?A.x-20:A.x+A.w+20,wait:.6+i*.1,state:'wait'});
+      b.cmLines.push({axis:'v',line:xx,dir:i%2?-1:1,pos:i%2?A.y+A.h+20:A.y-20,wait:.7+i*.1,state:'wait'});
+    }
+  }else if(name==='eye'){
+    b.cmEye={x:b.x,y:b.y,aim:b.x,angle:0};
+  }else if(name==='orbs'){
+    const rot=rand(0,Math.PI*2);for(let i=0;i<6;i++){
+      const a=rot+i*Math.PI/3+rand(-.23,.23),rr=rand(120,220);
+      b.cmOrbs.push({x:b.x,y:b.y-45,sx:b.x,sy:b.y-45,tx:clamp(b.x+Math.cos(a)*rr,A.x+60,A.x+A.w-60),ty:clamp(b.y-45+Math.sin(a)*rr,A.y+60,A.y+A.h-60)});
+    }
+  }
+  if(name==='eye'||name==='orbs')sfx('beamWarn');
+}
+function cmReviveDamage(b,x,y,r,amount){if(Math.hypot(P.x-x,P.y-y)<r+P.r)hurtPlayer(amount)}
+function cmReviveSegmentHit(x,y,angle,width){const dx=P.x-x,dy=P.y-y;return Math.abs(-Math.sin(angle)*dx+Math.cos(angle)*dy)<width+P.r}
+function cmReviveLaserLine(b,axis,line,life){b.cmLasers.push({axis,line,life,age:0})}
+function cmRevivePhase4(b){b.phase=4;b.cmFinal=null;b.cmRevived=false;b.atk=null;b.cd=1.3;b.hp=run.hard?1664:1280;b.maxHp=b.hp;
+  b.hidden=false;b.x=W/2;b.y=A.y+160;shake=18;flashScreen=.4;banner('ЕРРОР: ФИНАЛЬНАЯ ФОРМА','Ложный Создатель уничтожен');sfx('boss')}
+function updRevivedCreator(b,dt){const dm=run.hard?1.3:1;
+  if(!b.atk){const dx=P.x-b.x,dy=P.y-b.y,dd=Math.hypot(dx,dy)||1;
+    const want=dd>270?1:dd<155?-1:0,sp=85*(b.slowT>0?.65:1);
+    b.x+=dx/dd*want*sp*dt;b.y+=dy/dd*want*sp*dt;
+    b.x=clamp(b.x,A.x+110,A.x+A.w-110);b.y=clamp(b.y,A.y+105,A.y+A.h-105);
+    if(dd<75+P.r)hurtPlayer(17*dm);
+    b.cd-=dt;if(b.cd<=0){let pool=['six','grid','eye','orbs'].filter(a=>a!==b.cmLast);const a=pick(pool);b.cmLast=a;cmReviveStart(b,a)}return}
+  b.at+=dt;const t=b.at;
+  if(b.atk==='six'){
+    for(const q of b.cmDarts){if(q.dead||t<q.wait)continue;
+      if(!q.active){q.active=true;q.tx=P.x;q.ty=P.y;const a=Math.atan2(q.ty-q.y,q.tx-q.x);q.vx=Math.cos(a)*750;q.vy=Math.sin(a)*750;q.endX=q.tx+Math.cos(a)*46;q.endY=q.ty+Math.sin(a)*46}
+      q.x+=q.vx*dt;q.y+=q.vy*dt;cmReviveDamage(b,q.x,q.y,17,15*dm);
+      const passed=(q.x-q.endX)*q.vx+(q.y-q.endY)*q.vy>=0;
+      if(passed){q.dead=true;q.explode=true;q.explodeT=.25;cmReviveDamage(b,q.x,q.y,37,22*dm);burst(q.x,q.y,13,['#efeae2','#a98bff'],170,4,.3)}}
+    if(b.cmDarts.every(q=>q.dead)&&t>2.7){b.atk=null;b.cd=.9}
+  }else if(b.atk==='grid'){
+    for(const q of b.cmLines){if(q.state==='wait'&&t>=q.wait)q.state='fly';
+      if(q.state!=='fly')continue;q.pos+=q.dir*650*dt;
+      const x=q.axis==='h'?q.pos:q.line,y=q.axis==='h'?q.line:q.pos;
+      cmReviveDamage(b,x,y,17,16*dm);
+      const end=q.dir>0?(q.axis==='h'?A.x+A.w:A.y+A.h):(q.axis==='h'?A.x:A.y);
+      if((q.dir>0&&q.pos>=end)||(q.dir<0&&q.pos<=end)){q.state='done';cmReviveLaserLine(b,q.axis,q.line,.5)}}
+    for(const l of b.cmLasers){l.age+=dt;if(l.age<l.life){if(l.axis==='h'&&Math.abs(P.y-l.line)<15+P.r)hurtPlayer(18*dm);
+      if(l.axis==='v'&&Math.abs(P.x-l.line)<15+P.r)hurtPlayer(18*dm)}}
+    b.cmLasers=b.cmLasers.filter(l=>l.age<l.life);
+    if(b.cmLines.every(q=>q.state==='done')&&!b.cmLasers.length){b.atk=null;b.cd=.9}
+  }else if(b.atk==='eye'){
+    // Подъём, треугольное предупреждение, вращение двух лучей от верхних диагоналей вниз.
+    const targetY=A.y+145;b.y+=(targetY-b.y)*Math.min(1,dt*4);b.x+=(W/2-b.x)*Math.min(1,dt*4);
+    if(t>=2.0&&t<4.6){const p=(t-2)/2.6,ang=.85+p*1.45;
+      const ox=b.x,oy=b.y-58;
+      if(cmReviveSegmentHit(ox,oy,-ang,15)||cmReviveSegmentHit(ox,oy,Math.PI+ang,15)){
+        // Только передние лучи (положительная проекция вдоль направления).
+        const a1=-ang,a2=Math.PI+ang,dx=P.x-ox,dy=P.y-oy;
+        if(dx*Math.cos(a1)+dy*Math.sin(a1)>0&&cmReviveSegmentHit(ox,oy,a1,15) || dx*Math.cos(a2)+dy*Math.sin(a2)>0&&cmReviveSegmentHit(ox,oy,a2,15))hurtPlayer(9999)
+      }
+    }
+    if(t>4.9){b.atk=null;b.cd=1.1}
+  }else if(b.atk==='orbs'){
+    const age=t-.65;
+    if(age>=0){for(const q of b.cmOrbs){const p=Math.min(1,age/.7),k=1-Math.pow(1-p,3);q.x=q.sx+(q.tx-q.sx)*k;q.y=q.sy+(q.ty-q.sy)*k;
+        if(age>=1.5&&age<2.08){if(cmReviveSegmentHit(q.x,q.y,Math.PI/4,13)||cmReviveSegmentHit(q.x,q.y,-Math.PI/4,13))hurtPlayer(20*dm)}}}
+    if(age>2.15){b.atk=null;b.cd=1.0}
+  }else if(b.atk==='cmFinal'){
+    const f=b.cmFinal;if(!f)return;
+    b.x+=(W/2-b.x)*Math.min(1,dt*5);b.y+=(A.y+180-b.y)*Math.min(1,dt*5);
+    const beamStart=2.4,beamEnd=7.9,burstAt=10.5;
+    if(t>=beamStart&&t<beamEnd){const a=f.angle+(t-beamStart)*Math.PI*2/5.5;
+      if(cmReviveSegmentHit(b.x,b.y-58,a,16)||cmReviveSegmentHit(b.x,b.y-58,a+Math.PI/2,16))hurtPlayer(24*dm)}
+    if(t>=burstAt&&!f.spawned){f.spawned=true;shake=26;flashScreen=.8;sfx('ult');
+      burst(b.x,b.y,110,['#fff','#efeae2','#a98bff'],440,8,1.5);
+      for(let i=0;i<36;i++)eShoot(b.x,b.y,i*Math.PI*2/36,340,18*dm,'#fff',8,3.5)}
+    if(t>burstAt+.65)cmRevivePhase4(b)
+  }
+}
+function drawRevivedCreator(b,x,y){const g=ctx,t=b.at||0;
+  if(b.atk==='cmFinal'&&t>=7.9&&t<10.5){g.save();g.translate(rand(-8,8),rand(-8,8));drawCreatorMan(b,x,y);g.restore()}
+  else drawCreatorMan(b,x,y);
+  g.save();g.lineCap='round';
+  if(b.atk==='six'){for(const q of b.cmDarts)if(q.active&&!q.dead){g.fillStyle='#f3f1f7';g.beginPath();g.moveTo(q.x+13,q.y);g.lineTo(q.x-10,q.y-9);g.lineTo(q.x-10,q.y+9);g.closePath();g.fill()}}
+  if(b.atk==='grid'){
+    for(const q of b.cmLines){if(q.state==='wait'&&q.wait-t<.5){g.setLineDash([7,9]);g.strokeStyle='rgba(190,170,255,.4)';g.lineWidth=2;g.beginPath();if(q.axis==='h'){g.moveTo(A.x,q.line);g.lineTo(A.x+A.w,q.line)}else{g.moveTo(q.line,A.y);g.lineTo(q.line,A.y+A.h)}g.stroke();g.setLineDash([])}
+      if(q.state==='fly'){const px=q.axis==='h'?q.pos:q.line,py=q.axis==='h'?q.line:q.pos;g.fillStyle='#efeae2';g.beginPath();g.arc(px,py,12,0,7);g.fill()}}
+    for(const l of b.cmLasers){g.strokeStyle='rgba(235,225,255,.85)';g.lineWidth=13;g.beginPath();if(l.axis==='h'){g.moveTo(A.x,l.line);g.lineTo(A.x+A.w,l.line)}else{g.moveTo(l.line,A.y);g.lineTo(l.line,A.y+A.h)}g.stroke()}
+  }
+  if(b.atk==='eye'){
+    const ox=x,oy=y-58;
+    if(t<2){const spread=95;g.fillStyle='rgba(175,230,30,.28)';g.beginPath();g.moveTo(ox,oy);g.lineTo(ox-spread,A.y+A.h);g.lineTo(ox+spread,A.y+A.h);g.closePath();g.fill()}
+    else if(t<4.6){const ang=.85+(t-2)/2.6*1.45;g.strokeStyle='#fff';g.shadowColor='#fff';g.shadowBlur=22;g.lineWidth=20;
+      for(const a of [-ang,Math.PI+ang]){g.beginPath();g.moveTo(ox,oy);g.lineTo(ox+Math.cos(a)*1800,oy+Math.sin(a)*1800);g.stroke()}}
+  }
+  if(b.atk==='orbs'){
+    const age=t-.65;
+    if(age<0){g.fillStyle='#fff';g.shadowColor='#fff';g.shadowBlur=35;g.beginPath();g.arc(x,y-58,12+age/.65*8,0,7);g.fill()}
+    else{for(const q of b.cmOrbs){if(age>.45&&age<2.08){g.strokeStyle=age<1.5?'#e21b2b':'#f7f6fc';g.lineWidth=age<1.5?3:20;g.shadowColor=g.strokeStyle;g.shadowBlur=age<1.5?4:18;
+      for(const a of [Math.PI/4,-Math.PI/4]){g.beginPath();g.moveTo(q.x-Math.cos(a)*1500,q.y-Math.sin(a)*1500);g.lineTo(q.x+Math.cos(a)*1500,q.y+Math.sin(a)*1500);g.stroke()}}
+      g.shadowBlur=12;g.fillStyle='#fff';g.beginPath();g.arc(q.x,q.y,15,0,7);g.fill()}}
+  }
+  if(b.atk==='cmFinal'){
+    if(t>=2.4&&t<7.9){const a=(t-2.4)*Math.PI*2/5.5;g.strokeStyle='#fff';g.lineWidth=23;g.shadowColor='#fff';g.shadowBlur=26;
+      for(const aa of [a,a+Math.PI/2]){g.beginPath();g.moveTo(x-Math.cos(aa)*1600,y-58-Math.sin(aa)*1600);g.lineTo(x+Math.cos(aa)*1600,y-58+Math.sin(aa)*1600);g.stroke()}}
+    if(t>=7.9&&t<10.5){g.fillStyle='rgba(255,255,255,'+Math.min(1,.3+(t-7.9)*.3)+')';g.shadowColor='#fff';g.shadowBlur=50;g.beginPath();g.arc(x,y-58,24+(t-7.9)*13,0,7);g.fill()}
+  }
+  g.restore();
+}
+
 function drawErrorBoss(b,x,y){const g=ctx,t=b.t||time;if(b.hidden)return;
   const bob=Math.sin(t*2)*3,fin=b.phase===4;
+  if(b.phase===3){drawRevivedCreator(b,x,y);return}
   if(b.phase!==1)shadow(x,y+62,38); // фаза 1 рисует свою тень сама (ниже), в масштабе спрайта — иначе эта отдельная тень от старого плейсхолдера повисала бы у него посреди торса
   if(b.phase===1){ // покрашенный спрайт фазы 1 (замена старой плоской тени-плейсхолдера); спрайт из этюда был в разы крупнее игровых пропорций — ужимаем его тут
     const k=ERR_P1_SCALE;
@@ -5601,12 +5763,12 @@ function drawHUD(){ctx.fillStyle='#141316';ctx.fillRect(0,0,W,room.cam?50:A.y-24
     label(`ЭЙДАЛОНСКИЙ КРАКЕН · ЩИТ ${boss.rig.shieldHp}/${boss.rig.maxShieldHp}`,W/2,y-8,14,C.ink);
     bar(x,y,w,14,boss.rig.shieldHp/boss.rig.maxShieldHp,'#5ac8ff')}
   else if(boss){const w=520,x=W/2-w/2,y=H-26,tOpen=boss.type==='titanCore'&&boss.rig.armLDead&&boss.rig.armRDead;
-    const lbl=boss.type==='mini'?'ГЛАВАРЬ СКЕЛЕТОВ':boss.type==='mikeCore'?'МАЙК':boss.type==='mikeArm'?'МАЙК · РУКА':boss.type==='mikeStation'?'ЛАЗЕРНАЯ СТАНЦИЯ':boss.type==='titanArmL'?'АРХИТЕКТОР ТИТАН · ЛЕВАЯ РУКА':boss.type==='titanArmR'?'АРХИТЕКТОР ТИТАН · ПРАВАЯ РУКА':boss.type==='titanCore'?('АРХИТЕКТОР ТИТАН'+(tOpen?' · ЯДРО ОТКРЫТО':'')):boss.type==='levi'?'ЛЕВИАФАН':boss.type==='leviSeg'?'ЭЙДАЛОНСКИЙ ЛЕВИАФАН':boss.type==='leviCrystal'?'ЧИСТЫЙ КРИСТАЛЛ БЕЗДНЫ':boss.type==='krakenCore'?'ЭЙДАЛОНСКИЙ КРАКЕН':boss.type==='creatorman'?'ЛОЖНЫЙ СОЗДАТЕЛЬ':boss.type==='errorBoss'?'ЕРРОР':boss.type==='pozhiratel'?'ПОЖИРАТЕЛЬ МЕТАДАННЫХ':'ЗВЕЗДА СМЕРТИ';
+    const lbl=boss.type==='mini'?'ГЛАВАРЬ СКЕЛЕТОВ':boss.type==='mikeCore'?'МАЙК':boss.type==='mikeArm'?'МАЙК · РУКА':boss.type==='mikeStation'?'ЛАЗЕРНАЯ СТАНЦИЯ':boss.type==='titanArmL'?'АРХИТЕКТОР ТИТАН · ЛЕВАЯ РУКА':boss.type==='titanArmR'?'АРХИТЕКТОР ТИТАН · ПРАВАЯ РУКА':boss.type==='titanCore'?('АРХИТЕКТОР ТИТАН'+(tOpen?' · ЯДРО ОТКРЫТО':'')):boss.type==='levi'?'ЛЕВИАФАН':boss.type==='leviSeg'?'ЭЙДАЛОНСКИЙ ЛЕВИАФАН':boss.type==='leviCrystal'?'ЧИСТЫЙ КРИСТАЛЛ БЕЗДНЫ':boss.type==='krakenCore'?'ЭЙДАЛОНСКИЙ КРАКЕН':boss.type==='creatorman'?'ЛОЖНЫЙ СОЗДАТЕЛЬ':boss.type==='errorBoss'?(boss.phase===3?'ЛОЖНЫЙ СОЗДАТЕЛЬ · ВОЗРОЖДЁН':'ЕРРОР'):boss.type==='pozhiratel'?'ПОЖИРАТЕЛЬ МЕТАДАННЫХ':'ЗВЕЗДА СМЕРТИ';
     let hpFrac=boss.hp/boss.maxHp;
     if(boss.type==='errorBoss'){ // полоска внизу — HP именно текущей фазы (её собственный бюджет), а не всего боя целиком
       const P1_LO=11/36,P3_LO=2/9,P3_HI=11/36,P4_HI=2/9,frac0=boss.hp/boss.maxHp;
       if(boss.phase===1)hpFrac=(frac0-P1_LO)/(1-P1_LO);
-      else if(boss.phase===3)hpFrac=(frac0-P3_LO)/(P3_HI-P3_LO);
+      else if(boss.phase===3)hpFrac=boss.cmFinal?0:frac0;
       else if(boss.phase===4)hpFrac=frac0/P4_HI;
       hpFrac=Math.max(0,Math.min(1,hpFrac))}
     label(lbl,W/2,y-8,14,tOpen||boss.phase===2?C.ember:C.ink);bar(x,y,w,14,hpFrac,tOpen||boss.phase===2?C.ember:'#e8e3da')}
