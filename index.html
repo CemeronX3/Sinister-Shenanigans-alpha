@@ -6661,8 +6661,16 @@ function update(dt){time+=dt;touchFrame();shake=Math.max(0,shake-dt*40);flashScr
   else if(state==='debugIntro')updDebugIntro(dt)}
 function render(){ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle='#141316';ctx.fillRect(0,0,W,H);
   ctx.save();if(shake>0)ctx.translate(rand(-shake,shake)*.5,rand(-shake,shake)*.5);
-  if(room)drawWorld();ctx.restore();
-  drawHUD();
+  let renderFailure=null;
+  if(room){try{drawWorld()}catch(err){renderFailure=err;console.error('World render:',err)}}ctx.restore();
+  try{drawHUD()}catch(err){renderFailure=renderFailure||err;console.error('HUD render:',err)}
+  if(renderFailure){
+    ctx.save();ctx.setTransform(DPR,0,0,DPR,0,0);
+    ctx.fillStyle='rgba(16,0,0,.93)';ctx.fillRect(12,96,Math.min(W-24,820),86);
+    ctx.font='bold 16px monospace';ctx.fillStyle='#ff7a75';ctx.fillText('ОШИБКА ОТРИСОВКИ — пришли скриншот этого сообщения',22,121);
+    ctx.font='13px monospace';ctx.fillStyle='#fff';ctx.fillText(String(renderFailure.name+': '+renderFailure.message).slice(0,108),22,150);
+    ctx.restore();
+  }
   if(room&&room.officeCutscene)drawOfficeCutsceneUI();
   if(room&&room.bossFadeIn&&room.bossIntro!=null){ctx.fillStyle=`rgba(0,0,0,${room.bossIntro/1.6})`;ctx.fillRect(0,0,W,H)}
   if(flashScreen>0){ctx.fillStyle=`rgba(255,140,60,${flashScreen*.5})`;ctx.fillRect(0,0,W,H)}
