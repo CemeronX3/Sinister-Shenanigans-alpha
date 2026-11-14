@@ -2743,6 +2743,7 @@ function updErrorBoss(b,dt,dx,dy,d){const dm=run.hard?1.3:1;
     ui.cmLine={t:0,dur:7,txt:'Ты справляешься хорошо, но не расслабляйся! Настало время моего собственного творения!'};sfx('pick')}
   if(b.phase===2){
     if(!enemies.some(e=>e.alive&&e.type==='pozhiratel')){b.phase=3;b.hidden=false;b.x=W/2;b.y=A.y+160;b.hp=run.hard?3600:3700;b.maxHp=b.hp;b.atk=null;b.cd=1.4;b.cmRevived=true;b.cmLast=null;b.cmFinal=null;
+      ui.cmLine={t:0,dur:7,txt:'Вот чёрт... а ты сильнее чем я думал, но мне кажется тебе нужно повидаться с тем кого ты победил ранее...'};
       shake=16;flashScreen=.35;banner('ЛОЖНЫЙ СОЗДАТЕЛЬ ВОЗРОЖДЁН','Третья фаза · Еррор ждёт своего часа');sfx('boss')}
     return}
   if(b.phase===3){updRevivedCreator(b,dt);return} // 2/9 от нового maxHp = прежний абсолютный порог (1280/1664), бюджеты фаз 3 и 4 не трогали
@@ -3035,6 +3036,7 @@ function cm29EyeBeams(b,progress){
 function cmRevivePhase4(b){
   b.phase=4;b.cmFinal=null;b.cmRevived=false;b.atk=null;b.cd=1.3;
   b.hp=run.hard?1664:1280;b.maxHp=b.hp;b.hidden=false;b.x=W/2;b.y=A.y+160;
+  ui.cmLine={t:0,dur:7,txt:'ДОВОЛЬНО! С МЕНЯ ХВАТИТ, Я ПОКАЖУ НА ЧТО Я ДЕЙСТВИТЕЛЬНО СПОСОБЕН!'};
   shake=18;flashScreen=.4;banner('ЕРРОР: ФИНАЛЬНАЯ ФОРМА','Ложный Создатель уничтожен');sfx('boss');
 }
 function updRevivedCreator(b,dt){
