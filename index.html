@@ -2819,6 +2819,13 @@ function updErrorBoss(b,dt,dx,dy,d){const dm=run.hard?1.3:1;
       if(b.count<n&&b.at>=.08+b.count*.1){eShoot(b.x,b.y,b.lockA+rand(-.04,.04),330,10*dm,'#ff2a22',5);b.count++;sfx('arrow')}
       if(b.count>=n&&b.at>=.08+n*.1+.3)endEB(b)}}}
 
+function drip(g,x,y,len,width,t,seed,fill,stroke){
+  g.save();g.fillStyle=fill;g.strokeStyle=stroke;g.lineWidth=1;
+  g.beginPath();g.moveTo(x-width/2,y);g.lineTo(x+width/2,y);
+  g.lineTo(x+width*.25,y+len);
+  g.quadraticCurveTo(x,y+len+2+Math.sin(t*2+seed)*2,x-width*.25,y+len);
+  g.closePath();g.fill();g.stroke();g.restore();
+}
 function drawRevivedEtudeMan(b,x,y){const g=ctx,t=b.t||time,fl=b.flash>0,hot=b.phase===2;
   const SUIT=fl?'#efeae2':(hot?'#2a1413':'#17151b'), SUIT_LINE=fl?'#0c0b0d':(hot?'#ff2a22':'#2a2730');
   const TORSO=fl?'#efeae2':(hot?'#2a1413':'#0c0f24'), TORSO_LINE=fl?'#0c0b0d':(hot?'#ff2a22':'#1a1f42');
