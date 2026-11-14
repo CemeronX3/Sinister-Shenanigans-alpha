@@ -3580,7 +3580,7 @@ function updRun(dt){
   if(pressed.has('KeyL')||pressed.has('KeyД'))debugJumpErrorPhase3();
   if(room.kind==='training'&&pressed.has('KeyR')){trainDmg=[];trainTotal=0;trainStart=time;text(P.x,P.y-60,'Счётчик сброшен',C.acid,14);sfx('pick')}
   if(ui.banner){ui.banner.time-=dt;if(ui.banner.time<=0)ui.banner=null}
-  if(ui.cmLine)ui.cmLine.t=(ui.cmLine.t||0)+dt;
+  if(ui.cmLine){ui.cmLine.t=(ui.cmLine.t||0)+dt;if(ui.cmLine.t>=(ui.cmLine.dur||3.4))ui.cmLine=null;}
   if(room.endT!=null){room.endT-=dt;updWorld(dt);if(room.endT<=0){
       if(room.endKind==='zonePortal'){finalize(true);room.endT=null;room.portalReady=true;
         banner('ПОРТАЛ ОТКРЫТ',`Иди к центру комнаты, чтобы войти в ${room.portalZone===3?'Глубоководье':'Мир архитекторов'}`)}
@@ -6084,13 +6084,14 @@ function drawHUD(){ctx.fillStyle='#141316';ctx.fillRect(0,0,W,room.cam?50:A.y-24
     ctx.fillText(title,W/2,by+(b.s?23:bh/2),bw-28);
     if(b.s){ctx.font=`13px ${FM}`;ctx.fillStyle=C.muted;ctx.fillText(subtitle,W/2,by+47,bw-28)}
     ctx.restore();ctx.restore()}
-  if(ui.cmLine){const L=ui.cmLine,t=L.t||0,dur=L.dur||3.4,a=Math.max(0,Math.min(1,t*4,(dur-t)*2));
-    ctx.save();ctx.globalAlpha=a;ctx.font=`16px ${FM}`;
-    const tw=ctx.measureText(L.txt).width,boxW=Math.min(W-40,tw+48),boxH=52,bx=W/2-boxW/2,by=H-128;
-    ctx.fillStyle='rgba(12,11,13,.9)';ctx.fillRect(bx,by,boxW,boxH);
-    ctx.strokeStyle=Math.sin(time*19)>.7?'#fff':'rgba(255,42,34,.65)';ctx.lineWidth=1;ctx.strokeRect(bx,by,boxW,boxH);
-    const flick=Math.sin(time*27)>.82;
-    label(L.txt,W/2,by+boxH/2+6,16,flick?'#fff':C.red,'center',FM);
+  if(ui.cmLine){const L=ui.cmLine,t=L.t||0,dur=L.dur||3.4,a=clamp(Math.min(t*4,(dur-t)*2),0,1);
+    ctx.save();ctx.setTransform(DPR,0,0,DPR,0,0);ctx.globalAlpha=a;
+    const bw=Math.min(W-48,650),bh=52,bx=(W-bw)/2,by=H-110;
+    ctx.fillStyle='rgba(12,11,13,.9)';ctx.fillRect(bx,by,bw,bh);
+    ctx.strokeStyle='rgba(255,42,34,.65)';ctx.lineWidth=1;ctx.strokeRect(bx,by,bw,bh);
+    ctx.beginPath();ctx.rect(bx+12,by+4,bw-24,bh-8);ctx.clip();
+    ctx.font=`16px ${FM}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=C.red;
+    ctx.fillText(String(L.txt||''),W/2,by+bh/2,bw-28);
     ctx.restore()}
   if(room&&room.crystalGet!=null){const k=room.crystalGet,a=Math.min(1,(2.8-k)*2,k*2);
     ctx.save();ctx.globalAlpha=a;ctx.fillStyle='rgba(12,11,13,.55)';ctx.fillRect(0,0,W,H);
