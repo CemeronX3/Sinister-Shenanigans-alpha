@@ -2950,22 +2950,22 @@ function drawRevivedEtudeMan(b,x,y){const g=ctx,t=b.t||time,fl=b.flash>0,hot=b.p
   g.fillStyle=hot?'#3a0f0c':'#1c0f0e';hexPath(g,-1,0,4.2,3.6);g.fill();
   g.strokeStyle='#c23b4a';g.lineWidth=1;hexPath(g,-1,0,4.2,3.6);g.stroke();
   {
-    // Белый глаз из этюда. Координаты игрока переводятся в локальную систему головы.
-    const eyeCenter={x:-1,y:0};
+    // Чётко видимый белый следящий глаз внутри шестиугольной головы.
     const mtx=g.getTransform();
-    const playerLocal=mtx.inverse().transformPoint({x:P.x*DPR,y:P.y*DPR});
-    const target=Math.atan2(playerLocal.y-eyeCenter.y,playerLocal.x-eyeCenter.x);
-    if(!Number.isFinite(b.cmEyeAngle))b.cmEyeAngle=target;
-    const delta=Math.atan2(Math.sin(target-b.cmEyeAngle),Math.cos(target-b.cmEyeAngle));
-    b.cmEyeAngle+=delta*.18;
-    const ex=-1+Math.cos(b.cmEyeAngle)*1.8,ey=Math.sin(b.cmEyeAngle)*1.8;
+    const target=mtx.inverse().transformPoint({x:P.x*DPR,y:P.y*DPR});
+    const ang=Math.atan2(target.y,target.x+1);
+    if(!Number.isFinite(b.cmEyeAngle))b.cmEyeAngle=ang;
+    b.cmEyeAngle+=Math.atan2(Math.sin(ang-b.cmEyeAngle),Math.cos(ang-b.cmEyeAngle))*.25;
+    const ex=-1+Math.cos(b.cmEyeAngle)*1.45,ey=Math.sin(b.cmEyeAngle)*1.1;
     g.save();
-    g.globalAlpha=1;g.shadowColor='#ffffff';g.shadowBlur=15;
-    g.fillStyle='rgba(255,255,255,.26)';g.beginPath();g.arc(ex,ey,3.5,0,Math.PI*2);g.fill();
-    g.translate(ex,ey);g.scale(.31,.31);g.fillStyle='#fff';
-    const star=()=>{g.beginPath();g.moveTo(-2.2,0);g.lineTo(0,-13);g.lineTo(2.2,0);g.lineTo(0,13);g.closePath();g.fill()};
-    star();g.save();g.rotate(Math.PI/2);star();g.restore();
-    g.beginPath();g.arc(0,0,3.3,0,Math.PI*2);g.fill();
+    g.translate(ex,ey);
+    g.globalAlpha=1;
+    g.shadowColor='#ffffff';g.shadowBlur=18;
+    g.fillStyle='#ffffff';
+    g.beginPath();g.arc(0,0,2.15,0,Math.PI*2);g.fill();
+    g.beginPath();g.moveTo(0,-4.1);g.lineTo(1.1,-1.1);g.lineTo(4.1,0);
+    g.lineTo(1.1,1.1);g.lineTo(0,4.1);g.lineTo(-1.1,1.1);
+    g.lineTo(-4.1,0);g.lineTo(-1.1,-1.1);g.closePath();g.fill();
     g.restore();
   }
   g.restore();
