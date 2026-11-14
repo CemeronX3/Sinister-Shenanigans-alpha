@@ -6692,14 +6692,8 @@ function render(){ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle='#141316';ctx.
   let renderFailure=null;
   if(room){try{drawWorld()}catch(err){renderFailure=err;console.error('World render:',err)}}ctx.restore();
   try{drawHUD()}catch(err){renderFailure=renderFailure||err;console.error('HUD render:',err)}
-  if(renderFailure){
-    ctx.save();ctx.setTransform(DPR,0,0,DPR,0,0);
-    ctx.textAlign='left';ctx.textBaseline='alphabetic';ctx.globalAlpha=1;
-    ctx.fillStyle='rgba(16,0,0,.88)';ctx.fillRect(12,96,Math.min(W-24,740),64);
-    ctx.font='bold 13px monospace';ctx.fillStyle='#ff7a75';ctx.fillText('ОШИБКА ОТРИСОВКИ',22,116);
-    ctx.font='12px monospace';ctx.fillStyle='#fff';ctx.fillText(String(renderFailure.name+': '+renderFailure.message),22,141,Math.min(W-48,710));
-    ctx.restore();
-  }
+  // Render errors are reported to the browser console, not drawn over the arena.
+  // The previous debug overlay covered the boss and persisted every frame.
   if(room&&room.officeCutscene)drawOfficeCutsceneUI();
   if(room&&room.bossFadeIn&&room.bossIntro!=null){ctx.fillStyle=`rgba(0,0,0,${room.bossIntro/1.6})`;ctx.fillRect(0,0,W,H)}
   if(flashScreen>0){ctx.fillStyle=`rgba(255,140,60,${flashScreen*.5})`;ctx.fillRect(0,0,W,H)}
