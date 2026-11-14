@@ -3126,7 +3126,7 @@ function updRevivedCreator(b,dt){
         Math.abs(Math.cos(a)*dx+Math.sin(a)*dy)<17)cm29Damage(24*dm);
     }
     if(t>=beamEnd&&t<burstAt){shake=Math.max(shake,t>=beamEnd+whiteout?11:3)}
-    if(t>=burstAt&&!f.spawned){f.spawned=true;shake=26;flashScreen=.8;sfx('ult');
+    if(t>=burstAt&&!f.spawned){f.spawned=true;b.hidden=true;shake=26;flashScreen=.8;sfx('ult');
       burst(b.x,b.y,110,['#fff','#efeae2','#a98bff'],440,8,1.5);
       for(let i=0;i<36;i++)eShoot(b.x,b.y,i*Math.PI*2/36,340,18*dm,'#fff',8,3.5);
     }
@@ -6070,6 +6070,7 @@ function drawHUD(){ctx.fillStyle='#141316';ctx.fillRect(0,0,W,room.cam?50:A.y-24
       else if(boss.phase===3)hpFrac=boss.cmFinal?0:frac0;
       else if(boss.phase===4)hpFrac=frac0/P4_HI;
       hpFrac=Math.max(0,Math.min(1,hpFrac))}
+    if(boss.type==='errorBoss'&&boss.phase===3&&!boss.cmFinal)lbl+=' · '+Math.ceil(Math.max(0,boss.hp))+'/'+Math.ceil(boss.maxHp)+' HP';
     label(lbl,W/2,y-8,14,tOpen||boss.phase===2?C.ember:C.ink);bar(x,y,w,14,hpFrac,tOpen||boss.phase===2?C.ember:'#e8e3da')}
   if(ui.banner){const b=ui.banner,a=Math.min(1,b.time*2,(2.4-b.time)*4);ctx.globalAlpha=a;ctx.fillStyle='rgba(12,11,13,.75)';ctx.fillRect(0,MIDY-56,W,b.s?82:62);
     label(b.t,W/2,MIDY-14,30,b.t.startsWith('УЛЬТ')||b.t.includes('ПЫЛАЕТ')?C.ember:C.ink);if(b.s)label(b.s,W/2,MIDY+14,14,C.muted,'center',FM);ctx.globalAlpha=1}
