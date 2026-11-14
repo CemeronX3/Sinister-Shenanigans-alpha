@@ -2742,7 +2742,7 @@ function updErrorBoss(b,dt,dx,dy,d){const dm=run.hard?1.3:1;
     b.atk='trans2';b.at=0;b.armRot=0;b.trBodyAlpha=1;b.trRingDone=false;
     ui.cmLine={t:0,dur:7,txt:'Ты справляешься хорошо, но не расслабляйся! Настало время моего собственного творения!'};sfx('pick')}
   if(b.phase===2){
-    if(!enemies.some(e=>e.alive&&e.type==='pozhiratel')){b.phase=3;b.hidden=false;b.x=W/2;b.y=A.y+160;b.hp=run.hard?3600:2700;b.maxHp=b.hp;b.atk=null;b.cd=1.4;b.cmRevived=true;b.cmLast=null;b.cmFinal=null;
+    if(!enemies.some(e=>e.alive&&e.type==='pozhiratel')){b.phase=3;b.hidden=false;b.x=W/2;b.y=A.y+160;b.hp=run.hard?3600:3700;b.maxHp=b.hp;b.atk=null;b.cd=1.4;b.cmRevived=true;b.cmLast=null;b.cmFinal=null;
       shake=16;flashScreen=.35;banner('ЛОЖНЫЙ СОЗДАТЕЛЬ ВОЗРОЖДЁН','Третья фаза · Еррор ждёт своего часа');sfx('boss')}
     return}
   if(b.phase===3){updRevivedCreator(b,dt);return} // 2/9 от нового maxHp = прежний абсолютный порог (1280/1664), бюджеты фаз 3 и 4 не трогали
@@ -3567,7 +3567,7 @@ function debugJumpErrorPhase3(){
   // Убираем оставшихся врагов второй фазы, чтобы они не мешали тесту.
   for(let i=enemies.length-1;i>=0;i--)if(enemies[i]!==b)enemies.splice(i,1);
   b.phase=3;b.hidden=false;b.x=W/2;b.y=A.y+160;
-  b.hp=run.hard?3600:2700;b.maxHp=b.hp;
+  b.hp=run.hard?3600:3700;b.maxHp=b.hp;
   b.atk=null;b.at=0;b.cd=1.4;b.cmRevived=true;b.cmLast=null;b.cmFinal=null;
   b.cmDarts=[];b.cmLines=[];b.cmOrbs=[];b.cmLasers=[];b.cmEye=null;
   b.stunT=0;b.slowT=0;b.dotT=0;b.dotAcc=0;
@@ -6070,9 +6070,8 @@ function drawHUD(){ctx.fillStyle='#141316';ctx.fillRect(0,0,W,room.cam?50:A.y-24
       else if(boss.phase===3)hpFrac=boss.cmFinal?0:frac0;
       else if(boss.phase===4)hpFrac=frac0/P4_HI;
       hpFrac=Math.max(0,Math.min(1,hpFrac))}
-    if(boss.type==='errorBoss'&&boss.phase===3&&!boss.cmFinal)lbl+=' · '+Math.ceil(Math.max(0,boss.hp))+'/'+Math.ceil(boss.maxHp)+' HP';
     label(lbl,W/2,y-8,14,tOpen||boss.phase===2?C.ember:C.ink);bar(x,y,w,14,hpFrac,tOpen||boss.phase===2?C.ember:'#e8e3da');
-    if(boss.type==='errorBoss'&&boss.phase===3)label(`${Math.max(0,Math.ceil(boss.hp))} / ${boss.maxHp} HP`,W/2,y+12,11,C.ink,'center',FM)}
+}
   if(ui.banner){const b=ui.banner,a=clamp(Math.min(b.time*2,(2.4-b.time)*4),0,1);
     ctx.save();ctx.setTransform(DPR,0,0,DPR,0,0);ctx.globalAlpha=a;
     const bw=Math.min(W-48,640),bh=b.s?66:48,bx=(W-bw)/2,by=96;
