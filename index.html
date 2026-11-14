@@ -2051,7 +2051,7 @@ function drawCreatorMan(b,x,y){const g=ctx,t=b.t||time,fl=b.flash>0,hot=b.phase=
   const GREY1=fl?'#efeae2':'#5c586a';
   const S=.82;
   const breathe=1+Math.sin(t*1.6)*.015, bob=Math.sin(t*1.6)*2;
-  shadow(x,y+120*S,23);
+  shadow(x,y+120*S,30*S/1.7);
   g.save();g.translate(x,y+bob);
   g.save();g.scale(S,S*breathe);
 
@@ -2154,7 +2154,7 @@ function drawCreatorMan(b,x,y){const g=ctx,t=b.t||time,fl=b.flash>0,hot=b.phase=
     const angLocal=Math.atan2(target.y,target.x+1);
     const range=1.8;
     g.save();g.globalAlpha=eyeGlow;
-    g.shadowColor='#f2efe9';g.shadowBlur=9;
+    g.shadowColor='#f2efe9';g.shadowBlur=14;
     g.translate(-1+Math.cos(angLocal)*range,Math.sin(angLocal)*range);g.scale(5.5/22,5.5/22);
     g.fillStyle=hot?'#ff2a22':'#f2efe9';
     const spike=(len,w)=>{g.beginPath();g.moveTo(-w,0);g.lineTo(0,-len);g.lineTo(w,0);g.lineTo(0,len);g.closePath();g.fill()};
@@ -2827,12 +2827,20 @@ function updErrorBoss(b,dt,dx,dy,d){const dm=run.hard?1.3:1;
       if(b.count<n&&b.at>=.08+b.count*.1){eShoot(b.x,b.y,b.lockA+rand(-.04,.04),330,10*dm,'#ff2a22',5);b.count++;sfx('arrow')}
       if(b.count>=n&&b.at>=.08+n*.1+.3)endEB(b)}}}
 
-function drip(g,x,y,len,width,t,seed,fill,stroke){
-  g.save();g.fillStyle=fill;g.strokeStyle=stroke;g.lineWidth=1;
-  g.beginPath();g.moveTo(x-width/2,y);g.lineTo(x+width/2,y);
-  g.lineTo(x+width*.25,y+len);
-  g.quadraticCurveTo(x,y+len+2+Math.sin(t*2+seed)*2,x-width*.25,y+len);
-  g.closePath();g.fill();g.stroke();g.restore();
+function drip(g,x0,y0,len,w,t,seed,col,lineCol){
+  const wob=Math.sin(t*1.3+seed)*1.4,wob2=Math.sin(t*1.7+seed*1.6)*.8;
+  g.beginPath();g.moveTo(x0-w/2,y0);g.lineTo(x0+w/2,y0);
+  g.quadraticCurveTo(x0+w*.3+wob2,y0+len*.55,x0+wob,y0+len*.88);
+  g.quadraticCurveTo(x0+w*.22+wob,y0+len*.97,x0,y0+len);
+  g.quadraticCurveTo(x0-w*.22+wob,y0+len*.97,x0-wob,y0+len*.88);
+  g.quadraticCurveTo(x0-w*.3+wob2,y0+len*.55,x0-w/2,y0);
+  g.closePath();g.fillStyle=col;g.fill();
+  if(lineCol){g.beginPath();g.moveTo(x0+w/2,y0);
+    g.quadraticCurveTo(x0+w*.3+wob2,y0+len*.55,x0+wob,y0+len*.88);
+    g.quadraticCurveTo(x0+w*.22+wob,y0+len*.97,x0,y0+len);
+    g.quadraticCurveTo(x0-w*.22+wob,y0+len*.97,x0-wob,y0+len*.88);
+    g.quadraticCurveTo(x0-w*.3+wob2,y0+len*.55,x0-w/2,y0);
+    g.strokeStyle=lineCol;g.lineWidth=1;g.stroke()}
 }
 function drawRevivedEtudeMan(b,x,y){const g=ctx,t=b.t||time,fl=b.flash>0,hot=b.phase===2;
   const SUIT=fl?'#efeae2':(hot?'#2a1413':'#17151b'), SUIT_LINE=fl?'#0c0b0d':(hot?'#ff2a22':'#2a2730');
@@ -2840,7 +2848,7 @@ function drawRevivedEtudeMan(b,x,y){const g=ctx,t=b.t||time,fl=b.flash>0,hot=b.p
   const SHIRT='#efeae2', ERR_BLUE=fl?'#0c0b0d':(hot?'#ff2a22':'#2a52ff'), ERR_BLUE_DARK=fl?'#0c0b0d':(hot?'#8a0f0a':'#15306b');
   const SKIN_GLOVE='#efeae2', GLOVE_LINE=fl?'#0c0b0d':'#8d8890';
   const GREY1=fl?'#efeae2':'#5c586a';
-  const S=.72;
+  const S=.92; // Exact etude model, scaled uniformly for arena.
   const breathe=1+Math.sin(t*1.6)*.015, bob=Math.sin(t*1.6)*2;
   shadow(x,y+120*S,30);
   g.save();g.translate(x,y+bob);
