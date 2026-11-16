@@ -2738,7 +2738,7 @@ function spawnErrorBoss(){const hp=run.hard?7488:5760; // фаза 1 тепер�
   banner('ЕРРОР','Отладка · финал')}
 function endEB(b){b.atk=null;b.cd=b.phase>=3?.85:1.1;b.armRot=0;b.eyeGlow=0;b.firedRep=-1;b.megaFired=false;
   b.avSide=null;b.avSideLocked=false;b.avHitDone=false}
-function updErrorBoss(b,dt,dx,dy,d){if(b.phase===4&&!b.phase4Etude)cmRevivePhase4(b);if(b.phase===4&&b.phase4Etude){const p=b.phase4Etude.update(dt,P.x,P.y,b.phase4FinalStarted?0:b.hp);b.x=p.x;b.y=p.y;if(b.hp>1&&b.phase4Etude.towerCount()>0)b.hp=Math.min(b.maxHp,b.hp+dt*4*b.phase4Etude.towerCount());if(p.final&&b.hp<=0)b.hp=1;return;}const dm=run.hard?1.3:1;
+function updErrorBoss(b,dt,dx,dy,d){if(b.phase===4&&!b.phase4Etude)cmRevivePhase4(b);if(b.phase===4&&b.phase4Etude){const p=b.phase4Etude.update(dt,P.x,P.y,b.phase4FinalStarted?0:b.hp);b.x=p.x;b.y=p.y;if(!b.phase4FinalStarted&&b.hp>0&&b.hp<b.maxHp&&b.phase4Etude.towerCount()>0)b.hp=Math.min(b.maxHp,b.hp+dt*35*b.phase4Etude.towerCount());if(p.final&&b.hp<=0)b.hp=1;return;}const dm=run.hard?1.3:1;
   if(b.eg)updErrGlitch(b.eg,dt);if(b.dashGlitch)updDashGlitch(b.dashGlitch,dt);
   if(b.phase===1&&b.hp<b.maxHp*(11/36)&&b.atk!=='trans2'){ // 11/36 от нового maxHp = ровно 1760/2288 остатка, то есть фаза 1 съедает именно 4000/5200 HP
     b.atk='trans2';b.at=0;b.armRot=0;b.trBodyAlpha=1;b.trRingDone=false;
@@ -4733,8 +4733,8 @@ function bridgeDraw(){
   }
 
 }
-function bridgeClick(){if(finale&&finale.stage===4&&finale.grey>=1){finale.deflected=true;advanceFinalStage(5);return true;}return false;}
-function bridgeTowerHit(x,y,damage){for(const tw of summonTowers){if(tw.dead)continue;if(Math.abs(x-tw.x)<30&&Math.abs(y-tw.y)<91){tw.hp-=damage;tw.flash=.14;if(tw.hp<=0){tw.dead=true;if(summonRunning&&!summonReverting&&summonTowers.every(t=>t.dead)&&(!summonCombo||summonOtherActive())){summonSwingAt=summonTime+.32;summonNextCastAt=summonTime+.42;}}return true;}}return false;}
+function bridgeClick(x,y){if(finale&&finale.stage===4&&finale.grey>=1){finale.deflected=true;advanceFinalStage(5);return true;}if(Number.isFinite(x)&&Number.isFinite(y))return bridgeTowerHit(x,y,35);return false;}
+function bridgeTowerHit(x,y,damage){for(const tw of summonTowers){if(tw.dead)continue;if(Math.abs(x-tw.x)<38&&Math.abs(y-tw.y)<105){tw.hp-=damage;tw.flash=.14;if(tw.hp<=0){tw.dead=true;if(summonRunning&&!summonReverting&&summonTowers.every(t=>t.dead)&&(!summonCombo||summonOtherActive())){summonSwingAt=summonTime+.32;summonNextCastAt=summonTime+.42;}}return true;}}return false;}
 return {update:bridgeUpdate,draw:bridgeDraw,click:bridgeClick,towerHit:bridgeTowerHit,towerCount:()=>summonTowers.filter(tw=>!tw.dead).length};
 
 }
@@ -5023,7 +5023,7 @@ function updWorld(dt){
   for(const pr of errBlades){pr.x+=pr.vx*dt;pr.y+=pr.vy*dt;pr.age+=dt;
     if(!P.dead&&Math.hypot(pr.x-P.x,pr.y-(P.y-6))<pr.r*.75){hurtPlayer(pr.dmg);pr.age=pr.life}}
   errBlades=errBlades.filter(pr=>pr.age<pr.life);
-  for(const b of pbul){b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;for(const er of enemies){if(er.alive&&er.type==='errorBoss'&&er.phase===4&&er.phase4Etude&&er.phase4Etude.towerHit(b.x,b.y,28)){b.life=0;break;}}if(b.life<=0)continue;
+  for(const b of pbul){b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;for(const er of enemies){if(er.alive&&er.type==='errorBoss'&&er.phase===4&&er.phase4Etude&&er.phase4Etude.towerHit(b.x,b.y,Math.max(1,b.dmg||28))){b.life=0;break;}}if(b.life<=0)continue;
     if(b.x<A.x||b.x>A.x+A.w||b.y<A.y||b.y>A.y+A.h||inRock(b.x,b.y)){b.life=0;burst(b.x,b.y,2,[C.ember],80,3,.2);continue}
     {const hp=hitProp(b.x,b.y,4);if(hp){damageProp(hp,b.dmg);b.life=0;continue}}
     for(const e of enemies){if(!e.alive||e.hidden)continue;const ey=e.type==='boss'?e.y-10:e.y;
@@ -8217,7 +8217,7 @@ function drawOfficeCutsceneUI(){
 }
 
 /* ---------- loop ---------- */
-function update(dt){if(mouse.clicked&&room){for(const b of enemies)if(b.alive&&b.type==='errorBoss'&&b.phase===4&&b.phase4Etude)b.phase4Etude.click();}time+=dt;cmAnimateEtudeGlitches(dt);touchFrame();shake=Math.max(0,shake-dt*40);flashScreen=Math.max(0,flashScreen-dt);
+function update(dt){if(mouse.clicked&&room){for(const b of enemies)if(b.alive&&b.type==='errorBoss'&&b.phase===4&&b.phase4Etude)b.phase4Etude.click(mouse.x,mouse.y);}time+=dt;cmAnimateEtudeGlitches(dt);touchFrame();shake=Math.max(0,shake-dt*40);flashScreen=Math.max(0,flashScreen-dt);
   if(pressed.has('KeyM')){muted=!muted;if(bossMusic)bossMusic.muted=muted;musVolume()}
   syncPause();
   if(state==='lobby')updLobby(dt);
