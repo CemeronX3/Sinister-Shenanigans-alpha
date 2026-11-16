@@ -4400,8 +4400,8 @@ function spawnFinalTargetSword(){
 function finalBeam(y,side){finalBeams.push({y,side,age:0,warn:.23,fire:.26});}
 function advanceFinalStage(stage){
  const oldStage=finale.stage;
- finale.transition=(stage===4||stage===5)?0.35:0.7;
- finale.transitionLabel=stage===1?'ПРИЦЕЛЬНЫЕ КЛИНКИ':stage===2?'ЛАЗЕРНЫЙ ШТОРМ':stage===3?'ПОСЛЕДНЯЯ ЛОВУШКА':stage===4?'':stage===5?'ОТРАЖЕНИЕ':stage===6?'ERROR // SYSTEM FAILURE':'';
+ finale.transition=stage===6?0:(stage===4||stage===5)?0.35:0.7;
+ finale.transitionLabel=stage===1?'ПРИЦЕЛЬНЫЕ КЛИНКИ':stage===2?'ЛАЗЕРНЫЙ ШТОРМ':stage===3?'ПОСЛЕДНЯЯ ЛОВУШКА':stage===4?'':stage===5?'ОТРАЖЕНИЕ':stage===6?'':'';
  if(stage===3){
   bossX=480;bossY=215;bossVX=0;bossVY=0;bossMoveTimer=0;
   // В начале ловушки переносим игрока в центр арены. После переноса
@@ -4466,16 +4466,16 @@ function updateFinale(dt){
   // Hold the scene for 0.85s of impact, then one FULL second before the first line.
   f.eyesOut=true;eyesOutPersist=true;f.grey=0;
   if(!f.impactSpawned){
-   f.impactSpawned=true;shake=Math.max(shake,24);flashScreen=Math.max(flashScreen,.25);
+   f.impactSpawned=true;shake=Math.max(shake,32);flashScreen=Math.max(flashScreen,.9);
    sfx('boss');
    for(let i=0;i<155;i++){
     const a=rand(0,Math.PI*2),v=rand(100,520);
     f.particles.push({x:bossX+rand(-35,35),y:bossY+rand(-70,55),vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:rand(.28,.95),col:['#152eaa','#ffffff','#ff3044','#d9e33b'][i%4]});
    }
   }
-  if(f.time<.85)shake=Math.max(shake,17*(1-f.time/.85)+3);
+  if(f.time<1.10)shake=Math.max(shake,30*(1-f.time/1.10)+4);
   for(const p of f.particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=dt*80;p.life-=dt;}
-  if(f.time>=1.85&&!f.endingTriggered){
+  if(f.time>=2.10&&!f.endingTriggered){
    f.endingTriggered=true;
    statusEl.textContent='Еррор повержен · финальная атака завершена';
    stopFinale();onVictory();return;
@@ -4571,15 +4571,30 @@ function drawFinale(){
   ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(285,80,390,44);ctx.textAlign='center';ctx.font='bold 22px monospace';ctx.fillStyle='#fff';ctx.fillText('НАЖМИ ЛКМ — ОТРАЗИТЬ КОСУ',480,109);
  }
  if(f.stage===6){
-  const impact=Math.max(0,1-f.time/.85);
+  // The scythe remains visibly embedded for a split second: this isn't a title-card cut.
+  const tHit=f.time,impact=Math.max(0,1-tHit/1.10);
+  if(tHit<.24){
+   ctx.save();ctx.globalAlpha=1-tHit/.24;drawHeldScythe(ctx,bossX,bossY-35,-Math.PI/2+tHit*5,.52);ctx.restore();
+  }
   if(impact>0){
-   ctx.save();ctx.globalAlpha=impact*.85;ctx.shadowColor='#597aff';ctx.shadowBlur=36;
-   ctx.strokeStyle='#edf0ff';ctx.lineWidth=5+impact*13;
-   ctx.beginPath();ctx.arc(bossX,bossY-35,18+(1-impact)*480,0,Math.PI*2);ctx.stroke();
-   ctx.strokeStyle='#ff304b';ctx.lineWidth=3+impact*8;ctx.stroke();ctx.restore();
+   const r=20+(1-impact)*510;
+   ctx.save();ctx.globalAlpha=impact*.9;ctx.shadowColor='#597aff';ctx.shadowBlur=58;
+   ctx.strokeStyle='#edf0ff';ctx.lineWidth=5+impact*17;
+   ctx.beginPath();ctx.arc(bossX,bossY-35,r,0,Math.PI*2);ctx.stroke();
+   ctx.strokeStyle='#ff304b';ctx.lineWidth=4+impact*10;ctx.stroke();
+   // Cross-shaped crack and energy streaks radiate from the exact collision point.
+   ctx.globalAlpha=impact*.85;ctx.translate(bossX,bossY-35);
+   for(let i=0;i<12;i++){
+    const a=i*Math.PI/6+tHit*1.7;
+    ctx.save();ctx.rotate(a);ctx.fillStyle=i%3===0?'#ff3157':i%2?'#ffffff':'#447aff';
+    ctx.fillRect(25+80*(1-impact),-3,55+impact*150,6);ctx.restore();
+   }
+   ctx.restore();
   }
   for(const p of f.particles){if(p.life<=0)continue;ctx.fillStyle=p.col;ctx.globalAlpha=Math.min(1,p.life);ctx.fillRect(p.x,p.y,6,4);}
   ctx.globalAlpha=1;
+  // Brief aftershock dims naturally; leave the boss in the arena during the quiet beat.
+  if(tHit>.95&&tHit<1.25){ctx.fillStyle=`rgba(5,6,20,${.20*(1-Math.abs(tHit-1.10)/.15)})`;ctx.fillRect(16,74,928,518);}
  }
  ctx.restore();
 }
@@ -8315,7 +8330,8 @@ function drawErrorEnding(){
  const e=room.errorEnding;if(!e)return;
  ctx.save();ctx.setTransform(DPR,0,0,DPR,0,0);
  if(e.phase==='prefinal'||e.phase==='lastWords'){
-   const w=800,h=92,x=(W-w)/2,y=(P&&P.y>H*.68?86:H-h-12);
+   const w=800,h=92,x=(W-w)/2,baseY=(P&&P.y>H*.68?86:H-h-12),appear=Math.min(1,e.t/.38),smooth=appear*appear*(3-2*appear),y=baseY+(1-smooth)*22;
+   ctx.globalAlpha=smooth;
    ctx.fillStyle='rgba(10,8,17,.97)';ctx.fillRect(x,y,w,h);ctx.strokeStyle='#ff3434';ctx.lineWidth=2;ctx.strokeRect(x,y,w,h);
    ctx.font='bold 14px '+FD;ctx.textAlign='left';ctx.fillStyle='#ff5555';ctx.fillText('ЕРРОР',x+18,y+22);
    ctx.font='17px '+FM;ctx.fillStyle='#f3edf7';ctx.textAlign='center';
