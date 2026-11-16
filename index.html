@@ -3614,7 +3614,7 @@ function moveBoss(dt){
  bossX=clamp(bossX+bossVX*dt,330,610);bossY=clamp(bossY+bossVY*dt,240,370);
 }
 function cannonPivot(){
- const sway=Math.sin(t*.7)*.015,bob=Math.sin(t*.9)*2,scale=.69;
+ const sway=Math.sin(t*.7)*.015,bob=Math.sin(t*.9)*2,scale=.62;
  return {x:bossX+(CANNON_LOCAL_X*Math.cos(sway)-CANNON_LOCAL_Y*Math.sin(sway))*scale,y:bossY+bob+(CANNON_LOCAL_X*Math.sin(sway)+CANNON_LOCAL_Y*Math.cos(sway))*scale};
 }
 function hurtPlayer(){onHurt(false);}
@@ -3650,8 +3650,8 @@ function cannonMount(side=cannonSide){
 function cannonWorldMuzzle(){
  const m=cannonMount(),bob=Math.sin(t*.9)*2,sway=Math.sin(t*.7)*.015;
  const dx=m.elbowX+Math.sin(cannonAim)*805*.30,dy=m.elbowY-Math.cos(cannonAim)*805*.30;
- return {x:bossX+.69*(dx*Math.cos(sway)-dy*Math.sin(sway)),
- y:bossY+bob+.69*(dx*Math.sin(sway)+dy*Math.cos(sway))};
+ return {x:bossX+.62*(dx*Math.cos(sway)-dy*Math.sin(sway)),
+ y:bossY+bob+.62*(dx*Math.sin(sway)+dy*Math.cos(sway))};
 }
 function updateCannonAttack(dt){
  if(cannonReverting){
@@ -3768,7 +3768,7 @@ function drawCannonBase(g){
 }
 function drawCannon(g){
  if(!attackRunning)return;
- const m=cannonMount(),playerX=(mouseX-bossX)/.69,playerY=(mouseY-bossY)/.69;
+ const m=cannonMount(),playerX=(mouseX-bossX)/.62,playerY=(mouseY-bossY)/.62;
  cannonAim=Math.atan2(playerX-m.elbowX,-(playerY-m.elbowY));
  const weaponScale=.30;
  g.save();g.globalAlpha*=cannonTransformProgress();g.translate(m.elbowX,m.elbowY);g.rotate(cannonAim);g.scale(cannonSide,1);
@@ -3855,7 +3855,7 @@ function stopSword(immediate=false){
 }
 function swordWorldPivot(){
  const m=cannonMount(swordSide),sway=Math.sin(t*.7)*.015,bob=Math.sin(t*.9)*2;
- return {x:bossX+.69*(m.elbowX*Math.cos(sway)-m.elbowY*Math.sin(sway)),y:bossY+bob+.69*(m.elbowX*Math.sin(sway)+m.elbowY*Math.cos(sway))};
+ return {x:bossX+.62*(m.elbowX*Math.cos(sway)-m.elbowY*Math.sin(sway)),y:bossY+bob+.62*(m.elbowX*Math.sin(sway)+m.elbowY*Math.cos(sway))};
 }
 function updateSword(dt){
  if(!swordRunning)return;
@@ -3871,8 +3871,8 @@ function updateSword(dt){
   const sway=Math.sin(t*.7)*.015;
   const bx=localTipX*Math.cos(bladeAngle)-localTipY*Math.sin(bladeAngle);
   const by=localTipX*Math.sin(bladeAngle)+localTipY*Math.cos(bladeAngle);
-  const tipX=pivot.x+.69*(bx*Math.cos(sway)-by*Math.sin(sway));
-  const tipY=pivot.y+.69*(bx*Math.sin(sway)+by*Math.cos(sway));
+  const tipX=pivot.x+.62*(bx*Math.cos(sway)-by*Math.sin(sway));
+  const tipY=pivot.y+.62*(bx*Math.sin(sway)+by*Math.cos(sway));
   const angle=Math.atan2(mouseY-tipY,mouseX-tipX);
   const x=tipX,y=tipY;
   swordSlashes.push({x,y,angle,vx:Math.cos(angle)*510,vy:Math.sin(angle)*510,age:0,hit:false});
@@ -3909,7 +3909,7 @@ function drawSword(g){
  g.save();g.globalAlpha*=alpha;g.translate(m.elbowX,m.elbowY);g.rotate(angle);g.scale(swordSide,1);
  if(swordSprite.complete&&swordSprite.naturalWidth)g.drawImage(swordSprite,-124.5*scale,-942*scale,261*scale,946*scale);
  const ex=(120.9-124.5)*scale,ey=(478.3-942)*scale;
- const localX=(mouseX-bossX)/.69-m.elbowX,localY=(mouseY-bossY)/.69-m.elbowY;
+ const localX=(mouseX-bossX)/.62-m.elbowX,localY=(mouseY-bossY)/.62-m.elbowY;
  const a=Math.atan2(localY-ey,localX-ex);
  g.save();g.shadowColor='#f0f0ff';g.shadowBlur=13;drawErrorEye(g,ex+Math.cos(a)*2,ey+Math.sin(a)*2,.32);g.restore();
  queueWeaponGlitch(g,swordSprite,-124.5*scale,-942*scale,261*scale,946*scale,alpha);
@@ -3952,7 +3952,7 @@ function staffSwingAngle(){
 function staffTipWorld(){
  const m=cannonMount(staffSide),angle=staffSwingAngle(),sway=Math.sin(t*.7)*.015,bob=Math.sin(t*.9)*2;
  const dx=m.elbowX+Math.sin(angle)*995*.30,dy=m.elbowY-Math.cos(angle)*995*.30;
- return {x:bossX+.69*(dx*Math.cos(sway)-dy*Math.sin(sway)),y:bossY+bob+.69*(dx*Math.sin(sway)+dy*Math.cos(sway))};
+ return {x:bossX+.62*(dx*Math.cos(sway)-dy*Math.sin(sway)),y:bossY+bob+.62*(dx*Math.sin(sway)+dy*Math.cos(sway))};
 }
 function createStaffMarks(){
  staffMarks=[];staffShot=0;
@@ -4003,7 +4003,7 @@ function drawStaff(g){
  g.save();g.globalAlpha*=staffProgress();g.translate(m.elbowX,m.elbowY);g.rotate(angle);g.scale(staffSide,1);
  if(staffSprite.complete&&staffSprite.naturalWidth)g.drawImage(staffSprite,-155*sc,-1020*sc,275*sc,1024*sc);
  const ex=(152.6-155)*sc,ey=(578.9-1020)*sc;
- const localX=(mouseX-bossX)/.69-m.elbowX,localY=(mouseY-bossY)/.69-m.elbowY;
+ const localX=(mouseX-bossX)/.62-m.elbowX,localY=(mouseY-bossY)/.62-m.elbowY;
  const a=Math.atan2(localY-ey,localX-ex);
  g.save();g.shadowColor='#f2f0ff';g.shadowBlur=12;drawErrorEye(g,ex+Math.cos(a)*2,ey+Math.sin(a)*2,.34);g.restore();
  queueWeaponGlitch(g,staffSprite,-155*sc,-1020*sc,275*sc,1024*sc,staffProgress());
@@ -4084,7 +4084,7 @@ function drawSummon(g){
  if(summonSprite.complete&&summonSprite.naturalWidth){const w=summonSprite.naturalWidth,h=summonSprite.naturalHeight;g.drawImage(summonSprite,-w*.5*sc,-h*sc,w*sc,h*sc);}
  // Светящийся глаз строго внутри шестиугольной оправы посоха (центр спрайта x=59, y=490).
  const ex=0,ey=(490-916)*sc;
- const localX=(mouseX-bossX)/.69-m.elbowX,localY=(mouseY-bossY)/.69-m.elbowY;
+ const localX=(mouseX-bossX)/.62-m.elbowX,localY=(mouseY-bossY)/.62-m.elbowY;
  const angle=Math.atan2(localY-ey,localX-ex);
  g.save();g.shadowColor='#f2f0ff';g.shadowBlur=16;
  drawErrorEye(g,ex+Math.cos(angle)*1.5,ey+Math.sin(angle)*1.5,.34);
@@ -4668,7 +4668,7 @@ function bridgeUpdate(dt,px,py,hp){
 }
 function bridgeDraw(){
   const bossLocked=!!(finale&&finale.stage>=3);
-  const sway=bossLocked?0:Math.sin(t*.7)*.015,bob=bossLocked?0:Math.sin(t*.9)*2,scale=.69,px=bossX,py=bossY;
+  const sway=bossLocked?0:Math.sin(t*.7)*.015,bob=bossLocked?0:Math.sin(t*.9)*2,scale=.62,px=bossX,py=bossY;
   // позиция курсора в локальных координатах тела (без учёта мелкого поворота/покачивания — им можно пренебречь)
   const eyeBaseX=-6,eyeBaseY=-76,maxOff=5;
   const localMouseX=(mouseX-px)/scale,localMouseY=(mouseY-(py+bob))/scale;
