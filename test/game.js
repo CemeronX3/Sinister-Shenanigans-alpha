@@ -4694,7 +4694,14 @@ function bridgeDraw(){
 }
 function bridgeClick(x,y){if(finale&&finale.stage===4&&finale.grey>=1){finale.deflected=true;advanceFinalStage(5);return true;}if(Number.isFinite(x)&&Number.isFinite(y))return bridgeTowerHit(x,y,40);return false;}
 function bridgeTowerHit(x,y,damage){for(const tw of summonTowers){if(tw.dead)continue;if(Math.abs(x-tw.x)<46&&y>=tw.y-125&&y<=tw.y+88){tw.hp-=damage;tw.flash=.14;if(tw.hp<=0){tw.dead=true;if(summonRunning&&!summonReverting&&summonTowers.every(t=>t.dead)&&(!summonCombo||summonOtherActive())){summonSwingAt=summonTime+.32;summonNextCastAt=summonTime+.42;}}return true;}}return false;}
-return {update:bridgeUpdate,draw:bridgeDraw,click:bridgeClick,towerHit:bridgeTowerHit,towerCount:()=>summonTowers.filter(tw=>!tw.dead).length,beginFinale:()=>{if(!finalStarted){finalPending=false;finalStarted=true;startFinale();}}};
+return {update:bridgeUpdate,draw:bridgeDraw,click:bridgeClick,towerHit:bridgeTowerHit,towerCount:()=>summonTowers.filter(tw=>!tw.dead).length,
+ // Cinematic idle: keep the authentic boss model, breathing, glitches and sway alive,
+ // but do not run damage, weapons or attack state machines during the dialogue.
+ dialogueTick:(dt,px,py)=>{
+   t+=dt;mouseX=px;mouseY=py;
+   updErrGlitch(eg,dt);updDashGlitch(dashGlitch,dt);updDashGlitch(dashGlitch2,dt);
+   updDashGlitch(armDashL,dt);updDashGlitch(armDashR,dt);
+ },beginFinale:()=>{if(!finalStarted){finalPending=false;finalStarted=true;startFinale();}}};
 
 }
 function drawErrorBoss(b,x,y){if(b.phase===4&&b.phase4Etude){if(!(room&&room.errorEnding&&['crumble','medal','door'].includes(room.errorEnding.phase)))b.phase4Etude.draw();return;}const g=ctx,t=b.t||time;if(b.hidden)return;
@@ -8182,22 +8189,27 @@ function drawOfficeCutsceneUI(){
 const ERROR_LAST_WORDS=['...','хех... а ты сильнее чем я думал...','если ты смог одолеть меня... значит способен на что то большее...','а сейчас... возьми это...','это поможет тебе преодолеть оствшиеся преграды...','удачи...'];
 function startErrorPreFinal(b){
   if(room.errorEnding)return;
-  room.errorEnding={phase:'prefinal',boss:b,lines:['ДА КАКОЙ ЖЕ ТЫ ЖИВУЧИЙ, ПРОСТО СДОХНИ УЖЕ!'],line:0,t:0};
+  room.errorEnding={phase:'prefinal',boss:b,lines:['ДА КАКОЙ ЖЕ ТЫ ЖИВУЧИЙ, ПРОСТО СДОХНИ УЖЕ!'],line:0,t:0,lineT:0};
   ui.banner=null;ui.cmLine=null;
   ebul=[];beams=[];spawns=[];rings=[];spikes=[];errBlades=[];
 }
 function startErrorEnding(b){
   if(room.errorEnding)return;
-  room.errorEnding={phase:'lastWords',boss:b,lines:ERROR_LAST_WORDS,line:0,t:0};
+  room.errorEnding={phase:'lastWords',boss:b,lines:ERROR_LAST_WORDS,line:0,t:0,lineT:0};
   ui.banner=null;ui.cmLine=null;
   ebul=[];beams=[];spawns=[];rings=[];spikes=[];errBlades=[];
   musicStop();musStop(.8);
 }
 function errorEndingNext(){
  const e=room.errorEnding;if(!e)return;
+ if(e.phase==='prefinal'||e.phase==='lastWords'){
+   // First click reveals the current line, next click advances.
+   const current=e.lines[e.line];
+   if(e.lineT*ERROR_DIALOG_CHARS_PER_SEC<current.length){e.lineT=current.length/ERROR_DIALOG_CHARS_PER_SEC;return;}
+ }
  if(e.phase==='prefinal'){room.errorEnding=null;e.boss.phase4Etude.beginFinale();return;}
  if(e.phase==='lastWords'){
-   if(++e.line<e.lines.length){e.t=0;return;}
+   if(++e.line<e.lines.length){e.t=0;e.lineT=0;sfx('pick');return;}
    e.phase='crumble';e.t=0;e.shards=[];
    const x=e.boss.x,y=e.boss.y;
    for(let i=0;i<155;i++){const a=rand(0,6.283),v=rand(30,250);e.shards.push({x:x+rand(-55,55),y:y+rand(-95,80),vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:rand(.65,2.2),col:pick(['#ff2929','#274dff','#fff','#f9dc35','#8c34d4'])});}
@@ -8205,10 +8217,31 @@ function errorEndingNext(){
  }
  if(e.phase==='medal'&&e.t>1.0){e.phase='door';e.t=0;return;}
 }
+const ERROR_DIALOG_CHARS_PER_SEC=44;
 function updErrorEnding(dt){
  const e=room.errorEnding;e.t+=dt;
  if(e.phase==='prefinal'||e.phase==='lastWords'){
-   if(mouse.clicked||pressed.has('KeyE')||pressed.has('Enter')||pressed.has('Space')){if(e.t>.25)errorEndingNext();}
+   e.lineT+=dt;
+   // Keep the original selected player's animated model on screen, not a snapshot.
+   // Movement is confined to the arena; attacking is disabled until the cinematic ends.
+   const dx=(keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0);
+   const dy=(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-(keys.has('KeyW')||keys.has('ArrowUp')?1:0);
+   const d=Math.hypot(dx,dy);
+   P.moving=d>0;
+   if(d){
+     const vx=dx/d,vy=dy/d;
+     P.x=clamp(P.x+vx*155*dt,A.x+P.r+4,A.x+A.w-P.r-4);
+     P.y=clamp(P.y+vy*155*dt,A.y+P.r+4,A.y+A.h-P.r-4);
+     P.walk+=dt*11;
+     if(Math.abs(vx)>Math.abs(vy)*.9){P.view='side';P.face=vx<0?-1:1;}
+     else{P.view=vy<0?'back':'front';P.face=vx<0?-1:1;}
+   }
+   P.flickerT=Math.max(0,(P.flickerT||0)-dt);
+   P.inv=Math.max(0,P.inv-dt);
+   if(e.boss&&e.boss.phase4Etude?.dialogueTick)e.boss.phase4Etude.dialogueTick(dt,P.x,P.y);
+   if(mouse.clicked||pressed.has('KeyE')||pressed.has('Enter')||pressed.has('Space')){
+     if(e.t>.2)errorEndingNext();
+   }
  }else if(e.phase==='crumble'){
    for(const p of e.shards){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=dt*85;p.life-=dt;}
    if(e.t>2.6){e.phase='medal';e.t=0;save.errorMedallion=true;persist();sfx('pick');}
@@ -8237,14 +8270,14 @@ function drawErrorEnding(){
  const e=room.errorEnding;if(!e)return;
  ctx.save();ctx.setTransform(DPR,0,0,DPR,0,0);
  if(e.phase==='prefinal'||e.phase==='lastWords'){
-   const w=800,h=92,x=(W-w)/2,y=H-h-12;
+   const w=800,h=92,x=(W-w)/2,y=(P&&P.y>H*.68?86:H-h-12);
    ctx.fillStyle='rgba(10,8,17,.97)';ctx.fillRect(x,y,w,h);ctx.strokeStyle='#ff3434';ctx.lineWidth=2;ctx.strokeRect(x,y,w,h);
    ctx.font='bold 14px '+FD;ctx.textAlign='left';ctx.fillStyle='#ff5555';ctx.fillText('ЕРРОР',x+18,y+22);
    ctx.font='17px '+FM;ctx.fillStyle='#f3edf7';ctx.textAlign='center';
-   const words=e.lines[e.line].split(' '),lines=[];let line='';
+   const fullLine=e.lines[e.line],reveal=Math.min(fullLine.length,Math.floor(e.lineT*ERROR_DIALOG_CHARS_PER_SEC)),words=fullLine.slice(0,reveal).split(' '),lines=[];let line='';
    for(const word of words){const next=line?line+' '+word:word;if(line&&ctx.measureText(next).width>w-45){lines.push(line);line=word}else line=next;}if(line)lines.push(line);
    lines.forEach((v,i)=>ctx.fillText(v,W/2,y+49+i*21,w-35));
-   ctx.font='11px '+FM;ctx.textAlign='right';ctx.fillStyle='#a99cba';ctx.fillText('E / ЛКМ — далее',x+w-16,y+h-9);
+   ctx.font='11px '+FM;ctx.textAlign='right';ctx.fillStyle='#a99cba';ctx.fillText(reveal<fullLine.length?'E / ЛКМ — показать текст':'E / ЛКМ — далее',x+w-16,y+h-9);
  }else if(e.phase==='crumble'){
    for(const p of e.shards)if(p.life>0){ctx.globalAlpha=Math.min(1,p.life);ctx.fillStyle=p.col;ctx.fillRect(p.x-3,p.y-3,6,6);}ctx.globalAlpha=1;
  }else if(e.phase==='medal'){
