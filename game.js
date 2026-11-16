@@ -8222,6 +8222,10 @@ function drawOfficeCutsceneUI(){
 // The fight is over, but EXISTING projectiles must still move and despawn.
 // Do not run enemy AI or generate new bullets during the ending.
 function updErrorRemainingProjectiles(dt){
+ // Laser zap traces used to be updated only by updWorld(). During endings
+ // updRun() bypasses updWorld, leaving these traces painted forever.
+ for(const b of bolts)b.t+=dt;
+ bolts=bolts.filter(b=>b.t<.16);
  const inside=(x,y,margin=25)=>x>=A.x-margin&&x<=A.x+A.w+margin&&y>=A.y-margin&&y<=A.y+A.h+margin;
  for(const b of ebul){b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;}
  ebul=ebul.filter(b=>b.life>0&&inside(b.x,b.y));
@@ -8255,7 +8259,7 @@ function startErrorEnding(b){
   if(room.errorEnding)return;
   room.errorEnding={phase:'lastWords',boss:b,lines:ERROR_LAST_WORDS,line:0,t:0,lineT:0};
   ui.banner=null;ui.cmLine=null;
-  // No abrupt removal of existing projectiles: let them fly out and expire.
+  // Existing shots fly out naturally; laser traces fade in 0.16 seconds.
   spawns=[];
   musicStop();musStop(.8);
 }
@@ -8313,6 +8317,8 @@ function updErrorEnding(dt){
    const d=errorEndingDoorRect();
    if(P.x>d.x-22&&P.x<d.x+d.w+22&&P.y>d.y-22&&P.y<d.y+d.h+24){
      room.errorEnding=null;save.errorMedallion=true;save.errorZoneCleared=true;persist();
+     // Clear all stale battlefield visuals before showing the normal victory result.
+     clearArrays();
      finalize(true);state='win';ui.banner=null;
    }
  }
