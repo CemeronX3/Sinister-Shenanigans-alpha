@@ -3733,14 +3733,17 @@ function queueWeaponGlitch(g,img,left,top,width,height,opacity,count=23){
   const ix=Math.min(mask.w-1,Math.floor(fx*mask.w)),iy=Math.min(mask.h-1,Math.floor(fy*mask.h));
   if(mask.data[(iy*mask.w+ix)*4+3]<105)continue;
   const lx=left+fx*width,ly=top+fy*height;
-  const tx=matrix.a*lx+matrix.c*ly+matrix.e,ty=matrix.b*lx+matrix.d*ly+matrix.f;
-  // Convert from the current canvas transform back to the game coordinate system.
-  // The glitch rectangles are drawn later, after the boss transform is restored.
-  const base=arsenalGlitchBaseTransform,det=base.a*base.d-base.b*base.c;
-  const wx=det?(base.d*(tx-base.e)-base.c*(ty-base.f))/det:tx;
-  const wy=det?(-base.b*(tx-base.e)+base.a*(ty-base.f))/det:ty;
-  const length=(i%4===0?20:6)+((n>>>8)&31)*(i%4===0?1.5:.36);
-  arsenalGlitchRects.push({x:wx,y:wy,w:length,h:1.5+((n>>>4)&3)*.8,color:ARSENAL_GLITCH_COLORS[(n>>>12)&3],alpha:opacity*(.65+((n>>>17)&3)*.1)});
+  // Draw the sprite-masked glitch directly under the same canvas transform
+  // as its weapon. No deferred world-coordinate conversion can drift.
+  const sx=Math.hypot(matrix.a,matrix.b)||1;
+  const sy=Math.hypot(matrix.c,matrix.d)||1;
+  const length=((i%4===0?20:6)+((n>>>8)&31)*(i%4===0?1.5:.36))/sx;
+  const thickness=(1.5+((n>>>4)&3)*.8)/sy;
+  g.save();
+  g.globalAlpha=opacity*(.65+((n>>>17)&3)*.1);
+  g.fillStyle=ARSENAL_GLITCH_COLORS[(n>>>12)&3];
+  g.fillRect(lx-length*.5,ly-thickness*.5,length,thickness);
+  g.restore();
  }
 }
 function drawArsenalGlitch(){
