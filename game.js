@@ -4462,14 +4462,24 @@ function updateFinale(dt){
   f.scytheY-=dt*510;
   if(f.scytheY<=bossY+35||f.time>1.6){advanceFinalStage(6);f.grey=0;cv.style.filter='none';}
  }else if(f.stage===6){
-  if(!f.endingTriggered){f.endingTriggered=true;eyesOutPersist=true;stopFinale();onVictory();return;}
-  // После попадания отражённой косы убираем фильтр со ВСЕГО экрана,
-  // даже если коса долетела до босса раньше окончания прежнего перехода.
-  f.grey=Math.max(0,1-f.time/.45);
-  f.eyesOut=true;
-  if(f.particles.length===0){for(let i=0;i<130;i++){const a=rand(0,Math.PI*2),v=rand(40,320);f.particles.push({x:bossX+rand(-55,55),y:bossY+rand(-120,140),vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:rand(.5,2.2),col:['#152eaa','#fff','#ff3044','#d9e33b'][i%4]});}}
-  for(const p of f.particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=dt*110;p.life-=dt;}
-  if(f.time>3.5){statusEl.textContent='Еррор повержен · финальная атака завершена';stopFinale();onVictory();}
+  // Real impact: the reflected scythe hits, sends out colored fragments and a shockwave.
+  // Hold the scene for 0.85s of impact, then one FULL second before the first line.
+  f.eyesOut=true;eyesOutPersist=true;f.grey=0;
+  if(!f.impactSpawned){
+   f.impactSpawned=true;shake=Math.max(shake,24);flashScreen=Math.max(flashScreen,.25);
+   sfx('boss');
+   for(let i=0;i<155;i++){
+    const a=rand(0,Math.PI*2),v=rand(100,520);
+    f.particles.push({x:bossX+rand(-35,35),y:bossY+rand(-70,55),vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:rand(.28,.95),col:['#152eaa','#ffffff','#ff3044','#d9e33b'][i%4]});
+   }
+  }
+  if(f.time<.85)shake=Math.max(shake,17*(1-f.time/.85)+3);
+  for(const p of f.particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=dt*80;p.life-=dt;}
+  if(f.time>=1.85&&!f.endingTriggered){
+   f.endingTriggered=true;
+   statusEl.textContent='Еррор повержен · финальная атака завершена';
+   stopFinale();onVictory();return;
+  }
  }
  // Первая часть: движущаяся стена из мечей с настоящим проёмом.
  for(const w of finalWalls){
@@ -4561,8 +4571,15 @@ function drawFinale(){
   ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(285,80,390,44);ctx.textAlign='center';ctx.font='bold 22px monospace';ctx.fillStyle='#fff';ctx.fillText('НАЖМИ ЛКМ — ОТРАЗИТЬ КОСУ',480,109);
  }
  if(f.stage===6){
-  for(const p of f.particles){if(p.life<=0)continue;ctx.fillStyle=p.col;ctx.globalAlpha=Math.min(1,p.life);ctx.fillRect(p.x,p.y,rand(3,9),rand(2,8));}
-  ctx.globalAlpha=1;ctx.textAlign='center';ctx.font='bold 28px monospace';ctx.fillStyle='#f2f3ff';ctx.fillText('ERROR // SYSTEM FAILURE',480,130);
+  const impact=Math.max(0,1-f.time/.85);
+  if(impact>0){
+   ctx.save();ctx.globalAlpha=impact*.85;ctx.shadowColor='#597aff';ctx.shadowBlur=36;
+   ctx.strokeStyle='#edf0ff';ctx.lineWidth=5+impact*13;
+   ctx.beginPath();ctx.arc(bossX,bossY-35,18+(1-impact)*480,0,Math.PI*2);ctx.stroke();
+   ctx.strokeStyle='#ff304b';ctx.lineWidth=3+impact*8;ctx.stroke();ctx.restore();
+  }
+  for(const p of f.particles){if(p.life<=0)continue;ctx.fillStyle=p.col;ctx.globalAlpha=Math.min(1,p.life);ctx.fillRect(p.x,p.y,6,4);}
+  ctx.globalAlpha=1;
  }
  ctx.restore();
 }
@@ -4614,8 +4631,9 @@ function bridgeUpdate(dt,px,py,hp){
    stopWallBeams();stopBombs();boomerangActive=false;boomerangProjectiles=[];
    stopSword(true);stopStaff(true);stopSummon(true);
    finishCannonReversion();attackSpheres=[];finalSwordShots=[];finalWalls=[];finalBeams=[];
-   onPreFinal();
-   return {x:bossX,y:bossY,final:true,stage:-2};
+   finalPending=false;finalStarted=true;
+   startFinale();onPreFinal();
+   return {x:bossX,y:bossY,final:true,stage:-1};
  }
  if(finalPending)return {x:bossX,y:bossY,final:true,stage:-2};
  t+=dt;
@@ -4662,7 +4680,8 @@ function bridgeDraw(){
   const introFade=finale&&finale.stage===-1
    ? Math.max(0,1-Math.max(0,finale.time-1.55)/1.10)
    : 1;
-  const bossAlpha=!finale?1:(finale.stage===-1?introFade:finale.stage===6?Math.max(0,1-finale.time/3.3):0);
+  const inPreDialogue=!!(room&&room.errorEnding&&room.errorEnding.phase==='prefinal');
+  const bossAlpha=inPreDialogue?1:!finale?1:(finale.stage===-1?introFade:finale.stage===6?1:0);
   if(bossAlpha>0){
    ctx.save();ctx.globalAlpha*=bossAlpha;
    ctx.fillStyle='rgba(0,0,0,.4)';ctx.beginPath();ctx.ellipse(2,306,130,18,0,0,6.283);ctx.fill();
@@ -8185,29 +8204,50 @@ function drawOfficeCutsceneUI(){
 }
 
 
+// The fight is over, but EXISTING projectiles must still move and despawn.
+// Do not run enemy AI or generate new bullets during the ending.
+function updErrorRemainingProjectiles(dt){
+ const inside=(x,y,margin=25)=>x>=A.x-margin&&x<=A.x+A.w+margin&&y>=A.y-margin&&y<=A.y+A.h+margin;
+ for(const b of ebul){b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;}
+ ebul=ebul.filter(b=>b.life>0&&inside(b.x,b.y));
+ for(const b of pbul){b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;}
+ pbul=pbul.filter(b=>b.life>0&&inside(b.x,b.y));
+ for(const b of errBlades){b.x+=b.vx*dt;b.y+=b.vy*dt;b.age+=dt;}
+ errBlades=errBlades.filter(b=>b.age<b.life&&inside(b.x,b.y));
+ for(const b of waves){b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;b.t+=dt;}
+ waves=waves.filter(b=>b.life>0&&inside(b.x,b.y));
+ for(const b of rockets){b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;}
+ rockets=rockets.filter(b=>b.life>0&&inside(b.x,b.y));
+ for(const b of beams)b.t+=dt;
+ beams=beams.filter(b=>b.t<b.warn+b.on);
+ for(const b of rings){b.t+=dt;b.r=b.max*Math.min(1,b.t/b.dur);}
+ rings=rings.filter(b=>b.t<b.dur+.25);
+ for(const b of spikes)b.t+=dt;
+ spikes=spikes.filter(b=>b.t<b.dur+.4);
+ updFx(dt);
+}
+
 /* ---------- Еррор: финальные реплики, медальон, выход в главный офис ---------- */
 const ERROR_LAST_WORDS=['...','хех... а ты сильнее чем я думал...','если ты смог одолеть меня... значит способен на что то большее...','а сейчас... возьми это...','это поможет тебе преодолеть оствшиеся преграды...','удачи...'];
 function startErrorPreFinal(b){
   if(room.errorEnding)return;
   room.errorEnding={phase:'prefinal',boss:b,lines:['ДА КАКОЙ ЖЕ ТЫ ЖИВУЧИЙ, ПРОСТО СДОХНИ УЖЕ!'],line:0,t:0,lineT:0};
   ui.banner=null;ui.cmLine=null;
-  ebul=[];beams=[];spawns=[];rings=[];spikes=[];errBlades=[];
+  // Existing projectiles remain in motion; no new regular attacks spawn.
+  spawns=[];
 }
 function startErrorEnding(b){
   if(room.errorEnding)return;
   room.errorEnding={phase:'lastWords',boss:b,lines:ERROR_LAST_WORDS,line:0,t:0,lineT:0};
   ui.banner=null;ui.cmLine=null;
-  ebul=[];beams=[];spawns=[];rings=[];spikes=[];errBlades=[];
+  // No abrupt removal of existing projectiles: let them fly out and expire.
+  spawns=[];
   musicStop();musStop(.8);
 }
 function errorEndingNext(){
  const e=room.errorEnding;if(!e)return;
- if(e.phase==='prefinal'||e.phase==='lastWords'){
-   // First click reveals the current line, next click advances.
-   const current=e.lines[e.line];
-   if(e.lineT*ERROR_DIALOG_CHARS_PER_SEC<current.length){e.lineT=current.length/ERROR_DIALOG_CHARS_PER_SEC;return;}
- }
- if(e.phase==='prefinal'){room.errorEnding=null;e.boss.phase4Etude.beginFinale();return;}
+ // A single E / left-click closes a line at once. The line also times out after 3s.
+ if(e.phase==='prefinal'){room.errorEnding=null;return;}
  if(e.phase==='lastWords'){
    if(++e.line<e.lines.length){e.t=0;e.lineT=0;sfx('pick');return;}
    e.phase='crumble';e.t=0;e.shards=[];
@@ -8220,6 +8260,7 @@ function errorEndingNext(){
 const ERROR_DIALOG_CHARS_PER_SEC=44;
 function updErrorEnding(dt){
  const e=room.errorEnding;e.t+=dt;
+ updErrorRemainingProjectiles(dt);
  if(e.phase==='prefinal'||e.phase==='lastWords'){
    e.lineT+=dt;
    // Keep the original selected player's animated model on screen, not a snapshot.
@@ -8238,10 +8279,14 @@ function updErrorEnding(dt){
    }
    P.flickerT=Math.max(0,(P.flickerT||0)-dt);
    P.inv=Math.max(0,P.inv-dt);
-   if(e.boss&&e.boss.phase4Etude?.dialogueTick)e.boss.phase4Etude.dialogueTick(dt,P.x,P.y);
-   if(mouse.clicked||pressed.has('KeyE')||pressed.has('Enter')||pressed.has('Space')){
-     if(e.t>.2)errorEndingNext();
+   if(e.phase==='prefinal'&&e.boss?.phase4Etude){
+     // The original final attack actually runs behind the pre-finale speech.
+     const pos=e.boss.phase4Etude.update(dt,P.x,P.y,0);
+     e.boss.x=pos.x;e.boss.y=pos.y;
+   }else if(e.boss&&e.boss.phase4Etude?.dialogueTick){
+     e.boss.phase4Etude.dialogueTick(dt,P.x,P.y);
    }
+   if(e.t>=3||((mouse.clicked||pressed.has('KeyE')||pressed.has('Enter'))&&e.t>.14))errorEndingNext();
  }else if(e.phase==='crumble'){
    for(const p of e.shards){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=dt*85;p.life-=dt;}
    if(e.t>2.6){e.phase='medal';e.t=0;save.errorMedallion=true;persist();sfx('pick');}
@@ -8253,7 +8298,7 @@ function updErrorEnding(dt){
    const d=errorEndingDoorRect();
    if(P.x>d.x-22&&P.x<d.x+d.w+22&&P.y>d.y-22&&P.y<d.y+d.h+24){
      room.errorEnding=null;save.errorMedallion=true;save.errorZoneCleared=true;persist();
-     finalize(true);toLobby();banner('ЧЕТВЁРТАЯ ЛОКАЦИЯ ПРОЙДЕНА','Медальон Еррора сохранён');
+     finalize(true);state='win';ui.banner=null;
    }
  }
 }
@@ -8277,7 +8322,7 @@ function drawErrorEnding(){
    const fullLine=e.lines[e.line],reveal=Math.min(fullLine.length,Math.floor(e.lineT*ERROR_DIALOG_CHARS_PER_SEC)),words=fullLine.slice(0,reveal).split(' '),lines=[];let line='';
    for(const word of words){const next=line?line+' '+word:word;if(line&&ctx.measureText(next).width>w-45){lines.push(line);line=word}else line=next;}if(line)lines.push(line);
    lines.forEach((v,i)=>ctx.fillText(v,W/2,y+49+i*21,w-35));
-   ctx.font='11px '+FM;ctx.textAlign='right';ctx.fillStyle='#a99cba';ctx.fillText(reveal<fullLine.length?'E / ЛКМ — показать текст':'E / ЛКМ — далее',x+w-16,y+h-9);
+   ctx.font='11px '+FM;ctx.textAlign='right';ctx.fillStyle='#a99cba';ctx.fillText('E / ЛКМ — далее · автоматически через 3 с',x+w-16,y+h-9);
  }else if(e.phase==='crumble'){
    for(const p of e.shards)if(p.life>0){ctx.globalAlpha=Math.min(1,p.life);ctx.fillStyle=p.col;ctx.fillRect(p.x-3,p.y-3,6,6);}ctx.globalAlpha=1;
  }else if(e.phase==='medal'){
