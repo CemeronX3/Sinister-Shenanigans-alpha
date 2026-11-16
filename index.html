@@ -3048,8 +3048,8 @@ function cmRevivePhase4(b){
   b.phase4Etude=createErrorPhase4Etude(cv,ctx,
     (instant,damage=18)=>{if(instant)cm29Kill();else cm29Damage(damage*(run.hard?1.3:1));},
     ()=>{if(b.alive)startErrorEnding(b);},
-    ()=>{startErrorPreFinal(b);},
-    (x,y)=>{P.x=clamp(x,A.x+P.r,A.x+A.w-P.r);P.y=clamp(y,A.y+P.r,A.y+A.h-P.r);});
+    (x,y)=>{P.x=clamp(x,A.x+P.r,A.x+A.w-P.r);P.y=clamp(y,A.y+P.r,A.y+A.h-P.r);},
+    ()=>{startErrorPreFinal(b);});
   ui.cmLine={t:0,dur:7,txt:'ДОВОЛЬНО! С МЕНЯ ХВАТИТ, Я ПОКАЖУ НА ЧТО Я ДЕЙСТВИТЕЛЬНО СПОСОБЕН!'};
   shake=18;flashScreen=.4;banner('ЕРРОР: ФИНАЛЬНАЯ ФОРМА','Ложный Создатель уничтожен');sfx('boss');
 }
