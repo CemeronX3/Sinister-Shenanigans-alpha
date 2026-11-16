@@ -3719,6 +3719,7 @@ function arsenalMask(img){
  const mask={w:c.width,h:c.height,data:cg.getImageData(0,0,c.width,c.height).data};
  arsenalSpriteMasks.set(img,mask);return mask;
 }
+let arsenalGlitchBaseTransform={a:1,b:0,c:0,d:1,e:0,f:0};
 function queueWeaponGlitch(g,img,left,top,width,height,opacity,count=23){
  if(opacity<.03)return;
  const mask=arsenalMask(img);if(!mask)return;
@@ -3732,7 +3733,12 @@ function queueWeaponGlitch(g,img,left,top,width,height,opacity,count=23){
   const ix=Math.min(mask.w-1,Math.floor(fx*mask.w)),iy=Math.min(mask.h-1,Math.floor(fy*mask.h));
   if(mask.data[(iy*mask.w+ix)*4+3]<105)continue;
   const lx=left+fx*width,ly=top+fy*height;
-  const wx=matrix.a*lx+matrix.c*ly+matrix.e,wy=matrix.b*lx+matrix.d*ly+matrix.f;
+  const tx=matrix.a*lx+matrix.c*ly+matrix.e,ty=matrix.b*lx+matrix.d*ly+matrix.f;
+  // Convert from the current canvas transform back to the game coordinate system.
+  // The glitch rectangles are drawn later, after the boss transform is restored.
+  const base=arsenalGlitchBaseTransform,det=base.a*base.d-base.b*base.c;
+  const wx=det?(base.d*(tx-base.e)-base.c*(ty-base.f))/det:tx;
+  const wy=det?(-base.b*(tx-base.e)+base.a*(ty-base.f))/det:ty;
   const length=(i%4===0?20:6)+((n>>>8)&31)*(i%4===0?1.5:.36);
   arsenalGlitchRects.push({x:wx,y:wy,w:length,h:1.5+((n>>>4)&3)*.8,color:ARSENAL_GLITCH_COLORS[(n>>>12)&3],alpha:opacity*(.65+((n>>>17)&3)*.1)});
  }
@@ -4667,6 +4673,7 @@ function bridgeUpdate(dt,px,py,hp){
  return {x:bossX,y:bossY,final:finalStarted,stage:finale?.stage??-2};
 }
 function bridgeDraw(){
+  arsenalGlitchBaseTransform=ctx.getTransform();
   const bossLocked=!!(finale&&finale.stage>=3);
   const sway=bossLocked?0:Math.sin(t*.7)*.015,bob=bossLocked?0:Math.sin(t*.9)*2,scale=.62,px=bossX,py=bossY;
   // позиция курсора в локальных координатах тела (без учёта мелкого поворота/покачивания — им можно пренебречь)
