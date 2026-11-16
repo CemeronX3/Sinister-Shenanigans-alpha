@@ -3293,10 +3293,10 @@ function drawErrorColoredBody(g,eyeOff,eye2Off,armEyeLBase,armEyeLOff,armEyeRBas
   if(headImg.complete&&headImg.naturalWidth)g.drawImage(headImg,-18,-115,62,85);
   // фирменный светящийся глаз Еррора — в разломе на фото, слегка едет к курсору/игроку (в пределах разлома)
   const eox=eyeOff?eyeOff.x:0,eoy=eyeOff?eyeOff.y:0;
-  if(!(finale&&finale.eyesOut))drawErrorEye(g,-6+eox,-76+eoy,.55);
+  if(!eyesOutPersist&&!(finale&&finale.eyesOut))drawErrorEye(g,-6+eox,-76+eoy,.55);
   // обычный (не светится) глаз — в правом разломе, тоже следит за курсором
   const e2x=eye2Off?eye2Off.x:0,e2y=eye2Off?eye2Off.y:0;
-  if(!(finale&&finale.eyesOut))drawErrorSquareEye(g,32+e2x,-73+e2y,9);
+  if(!eyesOutPersist&&!(finale&&finale.eyesOut))drawErrorSquareEye(g,32+e2x,-73+e2y,9);
   g.restore();
   poly(g,HEAD_PTS);g.strokeStyle=PAL.rim;g.lineWidth=2;g.stroke();
 }
@@ -4462,7 +4462,7 @@ function updateFinale(dt){
   f.scytheY-=dt*510;
   if(f.scytheY<=bossY+35||f.time>1.6){advanceFinalStage(6);f.grey=0;cv.style.filter='none';}
  }else if(f.stage===6){
-  if(!f.endingTriggered){f.endingTriggered=true;stopFinale();onVictory();return;}
+  if(!f.endingTriggered){f.endingTriggered=true;eyesOutPersist=true;stopFinale();onVictory();return;}
   // После попадания отражённой косы убираем фильтр со ВСЕГО экрана,
   // даже если коса долетела до босса раньше окончания прежнего перехода.
   f.grey=Math.max(0,1-f.time/.45);
@@ -4603,16 +4603,27 @@ function beginComboAttack(){
 
 
 
-let t=0,sequenceTimer=1.8,attackNumber=-1,finalStarted=false,finalPending=false;
+let t=0,sequenceTimer=1.8,attackNumber=-1,finalStarted=false,finalPending=false,eyesOutPersist=false;
 const attackStarters=[beginComboAttack,startBoomerang,startBombs,startWallBeams];
 function bridgeUpdate(dt,px,py,hp){
- t+=dt;mouseX=px;mouseY=py;
+ // 0 HP must open a dialogue BEFORE any more boss attacks or movement.
+ // Keep the boss drawn in its current arena position while dialogue is active.
+ mouseX=px;mouseY=py;
+ if(hp<=0&&!finalStarted&&!finalPending){
+   finalPending=true;sequenceTimer=1e9;
+   stopWallBeams();stopBombs();boomerangActive=false;boomerangProjectiles=[];
+   stopSword(true);stopStaff(true);stopSummon(true);
+   finishCannonReversion();attackSpheres=[];finalSwordShots=[];finalWalls=[];finalBeams=[];
+   onPreFinal();
+   return {x:bossX,y:bossY,final:true,stage:-2};
+ }
+ if(finalPending)return {x:bossX,y:bossY,final:true,stage:-2};
+ t+=dt;
  moveBoss(dt);updateCannonAttack(dt);updateSword(dt);updateStaff(dt);updateSummon(dt);
  updateBoomerang(dt);updateBombs(dt);updateWallBeams(dt);updateFinale(dt);
  updErrGlitch(eg,dt);updDashGlitch(dashGlitch,dt);updDashGlitch(dashGlitch2,dt);
  updDashGlitch(armDashL,dt);updDashGlitch(armDashR,dt);
  arsenalGlitchRects.length=0;
- if(hp<=0&&!finalStarted&&!finalPending){finalPending=true;onPreFinal();}
  if(!finalStarted){
   sequenceTimer-=dt;
   if(sequenceTimer<=0){
@@ -8172,11 +8183,13 @@ const ERROR_LAST_WORDS=['...','хех... а ты сильнее чем я дум
 function startErrorPreFinal(b){
   if(room.errorEnding)return;
   room.errorEnding={phase:'prefinal',boss:b,lines:['ДА КАКОЙ ЖЕ ТЫ ЖИВУЧИЙ, ПРОСТО СДОХНИ УЖЕ!'],line:0,t:0};
+  ui.banner=null;ui.cmLine=null;
   ebul=[];beams=[];spawns=[];rings=[];spikes=[];errBlades=[];
 }
 function startErrorEnding(b){
   if(room.errorEnding)return;
   room.errorEnding={phase:'lastWords',boss:b,lines:ERROR_LAST_WORDS,line:0,t:0};
+  ui.banner=null;ui.cmLine=null;
   ebul=[];beams=[];spawns=[];rings=[];spikes=[];errBlades=[];
   musicStop();musStop(.8);
 }
