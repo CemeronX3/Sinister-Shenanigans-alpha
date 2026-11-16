@@ -1,0 +1,63 @@
+<!doctype html><html><head><base href="../"><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Sinister Shenanigans (alpha)</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Russo+One&family=PT+Mono&display=swap">
+<style>
+/* Layout: one game screen centered on a dark field, controls strip under it. Single dark look on purpose. */
+:root{
+  --bg:#18171a; --frame:#38353c; --ink:#efeae2; --muted:#8d8890; --acid:#b6f24a; --ember:#ff7a1a;
+  --font-d:"Russo One", Impact, "Arial Black", sans-serif; --font-m:"PT Mono", ui-monospace, Consolas, monospace;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-m);box-sizing:border-box;margin:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;overflow:hidden;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px}
+#wrap{width:100%;max-width:min(1440px,calc((100vh - 70px) * 1.6))}
+canvas{display:block;width:100%;height:auto;aspect-ratio:8/5;background:#141316;border:2px solid var(--frame);cursor:crosshair;outline:none}
+canvas:focus-visible{border-color:var(--acid)}
+.keys{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 16px;font-size:12px;color:var(--muted);max-width:100%}
+.keys b{color:var(--ink);font-weight:400;font-family:var(--font-d);letter-spacing:.04em;font-size:11px}
+.tc [hidden],[hidden]{display:none!important}
+.tc{display:none;position:fixed;inset:0;pointer-events:none;z-index:5;font-family:var(--font-d)}
+body.touch{touch-action:none;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+body.touch .tc{display:block}
+body.touch .keys{display:none}
+body.touch #wrap{max-width:min(1440px,calc((100vh - 20px) * 1.6))}
+canvas{touch-action:none}
+@media (orientation:portrait){body.touch{justify-content:flex-start;padding-block:max(12px,env(safe-area-inset-top,0px)) 12px}}
+.stick{position:absolute;bottom:max(14px,env(safe-area-inset-bottom,0px));width:120px;height:120px;border-radius:50%;pointer-events:auto;touch-action:none;
+  background:rgba(24,23,26,.45);border:2px solid rgba(182,242,74,.55)}
+.stick.l{left:max(14px,env(safe-area-inset-left,0px))}.stick.r{right:max(14px,env(safe-area-inset-right,0px))}
+.knob{position:absolute;left:35px;top:35px;width:50px;height:50px;border-radius:50%;background:rgba(239,234,226,.8);pointer-events:none}
+.stick span{position:absolute;left:0;right:0;top:-20px;text-align:center;font-size:11px;letter-spacing:.06em;color:rgba(239,234,226,.7)}
+.tb{position:absolute;width:58px;height:58px;border-radius:50%;pointer-events:auto;touch-action:none;display:grid;place-items:center;
+  background:rgba(24,23,26,.55);border:2px solid rgba(239,234,226,.55);color:var(--ink);font-size:13px;letter-spacing:.04em}
+.tb.on{background:rgba(239,234,226,.35)}
+.tb.shield{right:calc(max(14px,env(safe-area-inset-right,0px)) + 134px);bottom:max(18px,env(safe-area-inset-bottom,0px))}
+.tb.q{right:calc(max(14px,env(safe-area-inset-right,0px)) + 134px);bottom:calc(max(18px,env(safe-area-inset-bottom,0px)) + 68px)}
+.tb.ult{right:calc(max(14px,env(safe-area-inset-right,0px)) + 31px);bottom:calc(max(14px,env(safe-area-inset-bottom,0px)) + 136px);border-color:rgba(255,122,26,.5);color:#ffb070}
+.tb.ult.ready{background:rgba(255,122,26,.75);border-color:#ff7a1a;color:#1a1310;animation:pulse .6s ease-in-out infinite alternate}
+.tb.e{left:calc(max(14px,env(safe-area-inset-left,0px)) + 134px);bottom:max(18px,env(safe-area-inset-bottom,0px));border-color:rgba(182,242,74,.7);color:var(--acid)}
+.tb.f{left:calc(max(14px,env(safe-area-inset-left,0px)) + 134px);bottom:calc(max(18px,env(safe-area-inset-bottom,0px)) + 68px);border-color:rgba(42,158,110,.7);color:#4ad98f}
+.tb.pause{top:max(10px,env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));width:44px;height:44px}
+@media (orientation:portrait){.tb.pause{top:auto;right:auto;left:50%;margin-left:-22px;bottom:max(24px,env(safe-area-inset-bottom,0px))}}
+@keyframes pulse{to{transform:scale(1.08)}}
+@media (prefers-reduced-motion:reduce){.tb.ult.ready{animation:none}}
+</style>
+
+<div id="wrap"><canvas id="game" width="960" height="600" tabindex="0" aria-label="Игра Sinister Shenanigans (alpha)"></canvas></div>
+<div class="keys">
+  <span><b>WASD</b> ходьба</span><span><b>ЛКМ</b> копьё / лазеры</span><span><b>ПКМ</b> щит</span><span><b>Q</b> излучение (LV 3)</span>
+  <span><b>ПРОБЕЛ</b> ульт. форма</span><span><b>E</b> действие</span><span><b>F</b> рывок (усиление)</span><span><b>ESC</b> пауза</span><span><b>M</b> звук</span>
+</div>
+<div class="tc" id="tc">
+  <div class="stick l" id="stL" aria-label="Ходьба"><div class="knob"></div></div>
+  <div class="stick r" id="stR" aria-label="Прицел и атака"><div class="knob"></div></div>
+  <div class="tb shield" id="bSh">ЩИТ</div><div class="tb q" id="bQ">Q</div><div class="tb ult" id="bUlt">УЛЬТ</div>
+  <div class="tb e" id="bE">E</div><div class="tb f" id="bF">F</div><div class="tb pause" id="bP">II</div>
+</div>
+
+<script src="test/game.js"></script>
+
+</body></html>
