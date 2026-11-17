@@ -758,7 +758,7 @@ function damageEnemy(e,amt,opt){if(!e.alive)return;
   if(e.type==='krakenCore'&&e.rig&&e.rig.phase<4){if(!(opt&&opt.dot))text(e.x,e.y-e.r-14,'ЗАЩИЩЕНО',C.muted,13);return}
   if(e.type==='errorBoss'&&e.phase===3&&e.cmFinal)return;
   if(e.type==='errorBoss'&&e.phase===4&&e.phase4FinalStarted)return;
-  amt=Math.round(amt);if(run&&run.mods.electricChance>0&&!(opt&&opt.dot)&&Math.random()<run.mods.electricChance){burst(e.x,e.y,9,['#78d9ff','#fff'],140,3,.25);let hits=0;for(const n of enemies){if(n===e||!n.alive||n.hidden||hits>=12)continue;if(Math.hypot(n.x-e.x,n.y-e.y)<135){hits++;bolts.push({pts:zig(e.x,e.y,n.x,n.y),t:0});damageEnemy(n,Math.max(8,Math.round(amt*.35)),{dot:true})}}if(hits)sfx('zap')}e.hp-=amt;e.flash=.09;
+  amt=Math.round(amt);if(run&&run.mods.fireChance>0&&!(opt&&opt.dot))fireProc(e.x,e.y);if(run&&run.mods.electricChance>0&&!(opt&&opt.dot)&&Math.random()<run.mods.electricChance){burst(e.x,e.y,9,['#78d9ff','#fff'],140,3,.25);let hits=0;for(const n of enemies){if(n===e||!n.alive||n.hidden||hits>=12)continue;if(Math.hypot(n.x-e.x,n.y-e.y)<135){hits++;bolts.push({pts:zig(e.x,e.y,n.x,n.y),t:0});damageEnemy(n,Math.max(8,Math.round(amt*.35)),{dot:true})}}if(hits)sfx('zap')}e.hp-=amt;e.flash=.09;
   if(e.type==='errorBoss'&&e.phase===4&&e.phase4Etude&&e.hp<=0){e.hp=1;e.phase4FinalStarted=true;e.phase4Etude.update(0,P.x,P.y,0);}
   if(e.type==='errorBoss'&&e.phase===3&&e.hp<=0){e.hp=1;if(!e.cmFinal){e.cmFinal={t:0,angle:0,shots:[],spawned:false};e.atk='cmFinal';e.at=0;banner('ПОСЛЕДНЯЯ НАДЕЖДА','Ложный Создатель не сдаётся');sfx('boss')}}
   if(e.type==='creatorman'&&e.hp<=0){if(!e.hopeUsed){e.hopeUsed=true;startCMHope(e)}e.hp=1}
@@ -4908,7 +4908,7 @@ function updPlayer(dt){
       const ex=e.x-ox,ey=(e.type==='boss'?e.y-10:e.y)-oy;const along=ex*dx+ey*dy,perp=Math.abs(-ex*dy+ey*dx);
       if(along>-8&&along<s.reach+e.r&&perp<16*(run?run.mods.sizeMul:1)+e.r*.8){P.hitSet.add(e);const dmg=rand(s.dmgMin,s.dmgMax)*s.dmgMul;
         if(s.debuff){e.dotT=3;e.slowT=3}if(!BIG(e)){e.kx+=dx*280;e.ky+=dy*280}
-        burst(e.x-dx*e.r,e.y-dy*e.r,6,['#fff',C.ember],160,3,.25);damageEnemy(e,dmg);fireProc(e.x,e.y)}}
+        burst(e.x-dx*e.r,e.y-dy*e.r,6,['#fff',C.ember],160,3,.25);damageEnemy(e,dmg)}}
     for(const p of room.props){if(p.dead||P.hitSet.has(p))continue;const ex=p.x-ox,ey=p.y-oy;const along=ex*dx+ey*dy,perp=Math.abs(-ex*dy+ey*dx);
       if(along>-8&&along<s.reach+p.r&&perp<16*(run?run.mods.sizeMul:1)+p.r*.8){P.hitSet.add(p);damageProp(p,rand(s.dmgMin,s.dmgMax)*s.dmgMul)}}}
   if(run&&s.aoe&&pressed.has('KeyQ')&&!((P.kind==='tenn'||P.kind==='cain')&&P.ult)){
@@ -5061,7 +5061,7 @@ function updWorld(dt){
     for(const e of enemies){if(!e.alive||e.hidden||rc.hit.has(e))continue;const ex=e.x-rc.x,ey=e.y-rc.y,d=Math.hypot(ex,ey);if(d>rc.range+e.r)continue;
       let da=Math.atan2(ey,ex)-rc.a;while(da>Math.PI)da-=6.283;while(da<-Math.PI)da+=6.283;
       if(Math.abs(da)<rc.spread){rc.hit.add(e);
-        if(rc.debuff){e.dotT=3;e.slowT=3}burst(e.x,e.y,4,[C.ember,'#fff'],120,3,.2);damageEnemy(e,rc.dmg);fireProc(e.x,e.y)}}
+        if(rc.debuff){e.dotT=3;e.slowT=3}burst(e.x,e.y,4,[C.ember,'#fff'],120,3,.2);damageEnemy(e,rc.dmg)}}
     for(const p of room.props){if(p.dead||rc.hit.has(p))continue;const ex=p.x-rc.x,ey=p.y-rc.y,d=Math.hypot(ex,ey);if(d>rc.range+p.r)continue;
       let da=Math.atan2(ey,ex)-rc.a;while(da>Math.PI)da-=6.283;while(da<-Math.PI)da+=6.283;
       if(Math.abs(da)<rc.spread){rc.hit.add(p);damageProp(p,rc.dmg)}}}}
