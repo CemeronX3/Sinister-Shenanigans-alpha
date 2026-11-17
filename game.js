@@ -758,7 +758,7 @@ function damageEnemy(e,amt,opt){if(!e.alive)return;
   if(e.type==='krakenCore'&&e.rig&&e.rig.phase<4){if(!(opt&&opt.dot))text(e.x,e.y-e.r-14,'ЗАЩИЩЕНО',C.muted,13);return}
   if(e.type==='errorBoss'&&e.phase===3&&e.cmFinal)return;
   if(e.type==='errorBoss'&&e.phase===4&&e.phase4FinalStarted)return;
-  amt=Math.round(amt);if(run&&run.mods.fireChance>0&&!(opt&&opt.dot)){amt+=10;fireProc(e.x,e.y,e)}if(run&&run.mods.electricChance>0&&!(opt&&opt.dot)&&Math.random()<run.mods.electricChance){burst(e.x,e.y,9,['#78d9ff','#fff'],140,3,.25);let hits=0;for(const n of enemies){if(n===e||!n.alive||n.hidden||hits>=12)continue;if(Math.hypot(n.x-e.x,n.y-e.y)<135){hits++;bolts.push({pts:zig(e.x,e.y,n.x,n.y),t:0});damageEnemy(n,Math.max(8,Math.round(amt*.35)),{dot:true})}}if(hits)sfx('zap')}e.hp-=amt;e.flash=.09;
+  amt=Math.round(amt);if(run&&run.mods.fireChance>0&&!(opt&&opt.dot)){if(fireProc(e.x,e.y,e))amt+=10}if(run&&run.mods.electricChance>0&&!(opt&&opt.dot)&&Math.random()<run.mods.electricChance){burst(e.x,e.y,9,['#78d9ff','#fff'],140,3,.25);let hits=0;for(const n of enemies){if(n===e||!n.alive||n.hidden||hits>=12)continue;if(Math.hypot(n.x-e.x,n.y-e.y)<135){hits++;bolts.push({pts:zig(e.x,e.y,n.x,n.y),t:0});damageEnemy(n,Math.max(8,Math.round(amt*.35)),{dot:true})}}if(hits)sfx('zap')}e.hp-=amt;e.flash=.09;
   if(e.type==='errorBoss'&&e.phase===4&&e.phase4Etude&&e.hp<=0){e.hp=1;e.phase4FinalStarted=true;e.phase4Etude.update(0,P.x,P.y,0);}
   if(e.type==='errorBoss'&&e.phase===3&&e.hp<=0){e.hp=1;if(!e.cmFinal){e.cmFinal={t:0,angle:0,shots:[],spawned:false};e.atk='cmFinal';e.at=0;banner('ПОСЛЕДНЯЯ НАДЕЖДА','Ложный Создатель не сдаётся');sfx('boss')}}
   if(e.type==='creatorman'&&e.hp<=0){if(!e.hopeUsed){e.hopeUsed=true;startCMHope(e)}e.hp=1}
@@ -768,12 +768,12 @@ function damageEnemy(e,amt,opt){if(!e.alive)return;
   if(e.hp<=0&&!e.dummy){
     if(e.type==='pozhiratel'){e.hp=1;if(!e.dying){e.dying=true;pzStartDeath(e)}}
     else killEnemy(e)}}
-let grenadeProcFrame=-1;
+let grenadeProcTime=-100;
 function fireProc(x,y,exclude){if(!run||!(run.mods.fireChance>0)||Math.random()>=run.mods.fireChance)return;
-  if(grenadeProcFrame===Math.floor(time*60))return;
-  grenadeProcFrame=Math.floor(time*60);
+  if(time-grenadeProcTime<.10)return false;
+  grenadeProcTime=time;
   shake=Math.max(shake,4);burst(x,y,22,[C.ember,'#ffb066','#fff'],240,5,.45);
-  for(const e of enemies){if(e===exclude||!e.alive||e.hidden)continue;if(Math.hypot(e.x-x,e.y-y)<55)damageEnemy(e,10,{dot:true})}}
+  for(const e of enemies){if(e===exclude||!e.alive||e.hidden)continue;if(Math.hypot(e.x-x,e.y-y)<55)damageEnemy(e,10,{dot:true})}return true}
 function killEnemy(e){e.alive=false;run.kills++;sfx('kill');
   if(e.type==='mini'||e.type==='mike'||e.type==='creatorman'){shake=16;flashScreen=.3;burst(e.x,e.y,90,['#0c0b0d','#efeae2',C.green,C.red],380,7,1.2);addCoins(25,e.x,e.y-30,true);
     potions.push({x:e.x,y:e.y+50,t:0});addTension(run.hard?12:20);
