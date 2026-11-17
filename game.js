@@ -6384,31 +6384,46 @@ function perkIcon(id,cx,cy){const g=ctx;g.save();g.translate(cx,cy);g.lineCap='b
   else if(id==='leech'){g.save();g.rotate(.6);g.fillStyle='#1a1a1c';g.fillRect(-4,8,84,16);g.restore();g.fillStyle='#f4f2ee';g.fillRect(-24,-2,30,16);
     g.fillStyle='#0c0b0d';g.fillRect(-30,-32,34,32);g.strokeStyle='#efeae2';g.lineWidth=2.5;hexPath(g,-13,-16,11,9);g.stroke();L(-17,-20,-9,-12);L(-9,-20,-17,-12);
     g.fillStyle='#ff6a2a';g.fillRect(-26,-60,9,14);g.fillRect(-14,-60,9,14);g.fillRect(-24,-50,17,10)}
-  else if(id==='shaft'){ // Senton: red arm, yellow cannon instead of hand, giant cyan energy sphere
-    g.save();g.rotate(-.55);g.fillStyle='#d92c34';g.fillRect(-58,18,24,72);g.fillRect(-54,-3,30,36);
-    g.fillStyle='#f2bd2b';g.fillRect(-46,-29,38,36);g.fillRect(-12,-24,20,24);
-    g.fillStyle='#48d8f4';g.fillRect(3,-22,9,20);g.fillStyle='#09152b';g.fillRect(9,-18,3,12);g.restore();
-    g.strokeStyle='#7fe5ff';g.lineWidth=3;g.beginPath();g.arc(35,-25,33,0,6.283);g.stroke();
-    g.fillStyle='#b8f4ff';g.beginPath();g.arc(35,-25,25,0,6.283);g.fill();
-    g.fillStyle='#f5fbff';g.beginPath();g.arc(28,-34,11,0,6.283);g.fill();
-    g.fillStyle='#60c8fc';for(const [x,y] of [[-2,-57],[70,-42],[61,17],[3,11]])g.fillRect(x,y,5,5)}
-  else if(id==='greed'){for(const[a,b]of[[-40,10],[-14,12],[12,10],[38,12],[-30,-12],[0,-10],[30,-12],[-42,32],[-16,34],[10,32],[36,34],[-28,52],[0,52],[26,52]]){
+  else if(id==='shaft'){
+    // The cannon is the hand; the red forearm has no fingers.
+    g.save();g.translate(-43,29);g.rotate(.7);
+    g.fillStyle='#d41e2b';g.fillRect(-12,-4,26,96);
+    g.fillStyle='#f6d222';for(const y of [17,29,41])g.fillRect(-12,y,26,7);
+    g.fillStyle='#141b32';g.fillRect(-15,-12,32,9);
+    g.fillStyle='#f2cc20';g.fillRect(-20,-58,42,48);g.fillStyle='#f7e046';g.fillRect(-13,-55,28,36);
+    g.fillStyle='#49d5f6';g.fillRect(-21,-64,44,9);g.fillStyle='#0e3a64';g.fillRect(-12,-61,25,5);
+    g.restore();
+    g.fillStyle='#988bc9';g.beginPath();g.arc(33,-27,45,0,6.283);g.fill();
+    g.fillStyle='#b9a6e8';g.beginPath();g.arc(33,-27,40,0,6.283);g.fill();
+    g.fillStyle='#c8baf1';g.beginPath();g.arc(30,-30,31,0,6.283);g.fill();
+    g.strokeStyle='#ddd2fa';g.lineWidth=2;
+    for(let i=0;i<12;i++){const a=i*6.283/12;g.beginPath();g.moveTo(33+Math.cos(a)*39,-27+Math.sin(a)*39);g.lineTo(33+Math.cos(a)*47,-27+Math.sin(a)*47);g.stroke()}
+    g.fillStyle='#f0eaff';g.beginPath();g.arc(23,-40,10,0,6.283);g.fill();
+  }else if(id==='greed'){for(const[a,b]of[[-40,10],[-14,12],[12,10],[38,12],[-30,-12],[0,-10],[30,-12],[-42,32],[-16,34],[10,32],[36,34],[-28,52],[0,52],[26,52]]){
       g.fillStyle='#f2f04a';g.beginPath();g.arc(a,b,13,0,6.283);g.fill();g.strokeStyle='#b8b62a';g.lineWidth=2;g.beginPath();g.arc(a,b,9,0,6.283);g.stroke();
       g.fillStyle='#8a8a20';g.font=`11px ${FM}`;g.textAlign='center';g.textBaseline='middle';g.fillText('$',a,b+1)}
     g.save();g.translate(6,-38);g.rotate(-.3);g.fillStyle='#0c0b0d';g.fillRect(-16,-14,32,28);g.strokeStyle='#efeae2';g.lineWidth=2;hexPath(g,0,0,9,5);g.stroke();g.restore()}
-  else if(id==='signal'){ // Cartoon eye-cube struck by electricity; only skull revealed
-    g.fillStyle='#191c21';g.fillRect(-31,3,62,53);g.strokeStyle='#e2f4de';g.lineWidth=4;g.strokeRect(-31,3,62,53);
-    g.fillStyle='#e9fae1';g.beginPath();g.arc(0,26,19,0,6.283);g.fill();
-    g.fillStyle='#151b19';g.fillRect(-12,21,8,10);g.fillRect(4,21,8,10);g.fillRect(-6,37,12,8);
-    g.fillStyle='#f8ea56';g.beginPath();g.moveTo(15,-65);g.lineTo(-11,-15);g.lineTo(4,-15);g.lineTo(-16,22);g.lineTo(25,-23);g.lineTo(8,-23);g.closePath();g.fill();
-    g.strokeStyle='#fff7aa';g.lineWidth=3;for(const [a,b,c,d] of [[-51,4,-38,13],[38,7,53,-4],[-45,41,-59,54]])L(a,b,c,d)}
-  else if(id==='pet'){drawTennVision(-2,92,3.1,1,0,0,0,true)}
-  else if(id==='core'){ // Warden with robust shield
-    g.fillStyle='#101b31';g.fillRect(-30,-32,60,74);g.fillStyle='#4e7df6';g.fillRect(-20,-26,40,48);
-    g.fillStyle='#bdeeff';g.fillRect(-9,-14,18,14);g.fillStyle='#101b31';g.fillRect(-4,-11,8,8);
-    g.fillStyle='#13223b';g.fillRect(-46,40,32,18);g.fillRect(14,40,32,18);
-    g.strokeStyle='#bdf6ff';g.lineWidth=7;for(let k=0;k<3;k++){g.beginPath();g.arc(0,4,42+k*13,-1.2,1.2);g.stroke();g.beginPath();g.arc(0,4,42+k*13,Math.PI-1.2,Math.PI+1.2);g.stroke()}}
-  else if(id==='stunner'){g.fillStyle='#0c0b0d';g.fillRect(-34,-30,68,66);
+  else if(id==='signal'){
+    // Wasteland eye with a cartoon skull x-ray, not a full skeleton.
+    g.fillStyle='#d9dce0';g.beginPath();for(let i=0;i<24;i++){const a=i*6.283/24,r=i%2?45:56;g.lineTo(Math.cos(a)*r,Math.sin(a)*r+15)}g.closePath();g.fill();
+    g.save();g.translate(5,18);g.rotate(.13);
+    g.fillStyle='#08090c';g.fillRect(-35,-31,70,62);g.strokeStyle='#c9cdd0';g.lineWidth=3;g.strokeRect(-30,-26,60,52);
+    g.strokeStyle='#eff1f5';g.lineWidth=3;g.beginPath();g.moveTo(-23,-6);g.lineTo(-15,-18);g.lineTo(15,-18);g.lineTo(23,-6);g.lineTo(15,10);g.lineTo(-15,10);g.closePath();g.stroke();
+    g.fillStyle='#eff1f5';g.fillRect(-10,11,21,12);g.fillStyle='#0b0c0d';g.fillRect(-8,14,4,10);g.fillRect(0,14,4,10);g.fillRect(8,14,3,10);
+    g.strokeStyle='#ff3347';g.lineWidth=3;g.beginPath();g.moveTo(-5,-8);g.lineTo(5,2);g.moveTo(5,-8);g.lineTo(-5,2);g.stroke();g.restore();
+    g.strokeStyle='#f7f9fc';g.lineWidth=6;g.lineJoin='miter';g.beginPath();g.moveTo(16,-70);g.lineTo(2,-22);g.lineTo(20,-27);g.lineTo(3,2);g.stroke();
+    g.strokeStyle='#cfd4de';g.lineWidth=3;L(-40,10,-53,4);L(48,24,59,14);
+  }else if(id==='pet'){drawTennVision(-2,92,3.1,1,0,0,0,true)}
+  else if(id==='core'){
+    // Actual Warden: light square head, black humanoid body, little spear, white defense waves.
+    g.fillStyle='#121116';g.fillRect(-17,-16,30,61);g.fillRect(-23,40,12,21);g.fillRect(4,40,12,21);
+    g.save();g.translate(-20,-12);g.rotate(.32);g.fillRect(-5,0,10,38);g.restore();
+    g.save();g.translate(17,-12);g.rotate(-.35);g.fillRect(-5,0,10,36);g.restore();
+    g.fillStyle='#e1def4';g.fillRect(-14,-42,27,27);g.fillStyle='#b9b7da';g.fillRect(-14,-42,5,27);
+    g.strokeStyle='#d6ddf8';g.lineWidth=3;g.beginPath();g.moveTo(-28,17);g.lineTo(-48,35);g.lineTo(-44,25);g.moveTo(-48,35);g.lineTo(-37,32);g.stroke();
+    g.lineJoin='miter';g.lineWidth=6;g.strokeStyle='#e9e9fc';
+    for(let i=0;i<3;i++){const x=23+i*15;g.beginPath();g.moveTo(x-6,-48-i*2);g.lineTo(x+5,-29-i*2);g.lineTo(x+11,-9);g.lineTo(x+11,11);g.lineTo(x+4,30+i*2);g.lineTo(x-6,46+i*2);g.stroke()}
+  }else if(id==='stunner'){g.fillStyle='#0c0b0d';g.fillRect(-34,-30,68,66);
     g.strokeStyle='#efeae2';g.lineWidth=2.5;
     g.beginPath();hexPath(g,-2,2,24,19);g.stroke();
     g.beginPath();hexPath(g,-2,2,16,13);g.stroke();
