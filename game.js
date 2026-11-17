@@ -302,25 +302,25 @@ function cainStats(lv){return lv>=3?
   {hp:165,def:.15,dmgMin:40,dmgMax:45,speed:190,fireMul:155/190,reach:0,atkCd:.75,waveSpd:480,waveR:16,aoe:true,beamDmgMin:55,beamDmgMax:60}:lv>=2?
   {hp:150,def:.10,dmgMin:30,dmgMax:35,speed:195,fireMul:160/195,reach:0,atkCd:.75,waveSpd:480,waveR:16,aoe:false}:
   {hp:120,def:0,dmgMin:20,dmgMax:25,speed:200,fireMul:.825,reach:0,atkCd:.75,waveSpd:480,waveR:16,aoe:false}}
-function defMods(){return{dmg:1,def:0,speed:1,atkSpd:1,tension:1,lifesteal:0,reach:1,maxHp:0,coinMul:1,aoeDmg:1,aoeCd:1,dot:1,pet:0,skillStun:0,fireChance:0,dodge:0,potionChance:0,dash:false}}
+function defMods(){return{dmg:1,def:0,speed:1,atkSpd:1,tension:1,lifesteal:0,reach:1,sizeMul:1,maxHp:0,coinMul:1,aoeDmg:1,aoeCd:1,dot:1,pet:0,guard:false,electricChance:0,skillStun:0,fireChance:0,dodge:0,potionChance:0,dash:false}}
 const PERKS=[
  {id:'tip',name:'Заточенный наконечник',desc:'Урон копья и лазеров +20%',apply:m=>m.dmg*=1.2},
- {id:'plate',name:'Бронепластины',desc:'Защита +10%',apply:m=>m.def+=.1},
- {id:'cell',name:'Резервная батарея',desc:'+25 к макс. здоровью и полное лечение',apply:m=>m.maxHp+=25,heal:true},
+ {id:'plate',name:'Бронепластины',desc:'Защита +15%',apply:m=>m.def+=.15},
+ {id:'cell',name:'Резервная батарея',desc:'+30 к макс. здоровью и полное лечение',apply:m=>m.maxHp+=30,heal:true},
  {id:'servo',name:'Сапоги Гермеса',desc:'Скорость передвижения +15%',apply:m=>m.speed*=1.15},
  {id:'lunge',name:'Пулемёт',desc:'Скорость атаки +20%',apply:m=>m.atkSpd*=1.2},
  {id:'heat',name:'Перегрев',desc:'Напряжение копится на 50% быстрее',apply:m=>m.tension*=1.5},
- {id:'leech',name:'Поглощение',desc:'Каждое убийство лечит 3 здоровья',apply:m=>m.lifesteal+=3},
- {id:'shaft',name:'Большая шишка',desc:'Увеличивает дальность атаки',apply:m=>m.reach*=1.2},
- {id:'greed',name:'Жадность',desc:'Монет выпадает в 1,5 раза больше',apply:m=>m.coinMul*=1.5},
- {id:'pet',name:'Всегда яркий и в грязь не падкий',desc:'Питомец Тенн-вижен бьёт врагов молниями. Неуязвим',apply:m=>m.pet+=1},
- {id:'core',name:'Колебание ядра',desc:'Урон от распада +60%',need:2,apply:m=>m.dot*=1.6},
- {id:'signal',name:'Усилитель сигнала',desc:'Излучение: урон +40%, перезарядка −30%',need:3,apply:m=>{m.aoeDmg*=1.4;m.aoeCd*=.7}},
+ {id:'leech',name:'Поглощение',desc:'Каждое убийство лечит 5 здоровья',apply:m=>m.lifesteal+=5},
+ {id:'shaft',name:'Большая шишка',desc:'Увеличивает размер и ширину атак на 25%',apply:m=>m.sizeMul*=1.25},
+ {id:'greed',name:'Кто хочет стать миллионером',desc:'Монет выпадает в 1,5 раза больше',apply:m=>m.coinMul*=1.5},
+ {id:'pet',name:'Всегда яркий и в грязь не падкий',desc:'Питомец Тенн-вижен наносит повышенный урон молниями. Неуязвим',apply:m=>m.pet+=1},
+ {id:'core',name:'Телохранитель',desc:'Щит расходует вдвое меньше энергии',apply:m=>m.guard=true},
+ {id:'signal',name:'Электрошок',desc:'15% шанс электрической атаки: цепной урон ближайшим врагам',apply:m=>m.electricChance+=.15},
  {id:'stunner',name:'Станн-машина',desc:'Время станна от скилла [Q] +0.5 сек',apply:m=>m.skillStun+=.5},
- {id:'ember',name:'Огнешок',desc:'10% шанс при атаке нанести доп. урон слабым взрывом (25 ед.)',apply:m=>m.fireChance+=.1},
- {id:'confuse',name:'Мозг запутанности',desc:'10% шанс уклониться от урона. После уклонения — мигание 1.5 сек',apply:m=>m.dodge+=.1},
- {id:'treasure',name:'Остров сокровищ',desc:'Шанс выбить зелье лечения из декораций +10%',apply:m=>m.potionChance+=.1},
- {id:'dash',name:'Джарона',desc:'Рывок [F]: враги на пути получают 10 урона. Перезарядка 5 сек',apply:m=>m.dash=true},
+ {id:'ember',name:'Гранатомёт',desc:'Каждое попадание создаёт дополнительный взрыв (25 ед.)',apply:m=>m.fireChance=1},
+ {id:'confuse',name:'Мозг запутанности',desc:'20% шанс уклониться от урона. После уклонения — мигание 1.5 сек',apply:m=>m.dodge+=.2},
+ {id:'treasure',name:'Остров сокровищ',desc:'Шанс выбить зелье лечения из декораций +20%',apply:m=>m.potionChance+=.2},
+ {id:'dash',name:'Джарона',desc:'Рывок [F] проходит сквозь снаряды, перезарядка 3 сек, урон 10',apply:m=>m.dash=true},
 ];
 const EDEF={skeleton:{hp:70,r:15,spd:95,dmg:12,coin:2},eye:{hp:48,r:14,spd:85,dmg:9,coin:2},sprayer:{hp:62,r:15,spd:88,dmg:3,coin:3},worm:{hp:95,r:14,spd:150,dmg:11,coin:4},mimic:{hp:110,r:15,spd:300,dmg:16,coin:5},
   eyeBot:{hp:72,r:14,spd:90,dmg:11,coin:4},eyeTop:{hp:62,r:14,spd:90,dmg:4,coin:3},orbEye:{hp:36,r:13,spd:155,dmg:34,coin:4},
@@ -376,7 +376,7 @@ function stats(){const kind=P&&P.kind;const b=kind==='tenn'?tennStats(save.tennL
   if(P&&P.ult){if(kind==='cain'){dmgMul*=1.5;def+=.20;atkCd*=.8;maxHp=265}
     else if(kind==='senton'){dmgMul*=1.5;def=.30;spd=265;atkCd*=.8;maxHp=150}
     else{dmgMul*=1.5;def+=.25;spd*=1.25;atkCd*=.8;maxHp*=2}}
-  return Object.assign({},b,{dmgMul,def:Math.min(.75,def),spd,atkCd,reach,maxHp})}
+  return Object.assign({},b,{dmgMul,def:Math.min(.75,def),spd,atkCd,reach,maxHp,spread:(b.spread||0)*m.sizeMul,waveR:(b.waveR||0)*m.sizeMul})}
 function endUlt(silent){if(!P||!P.ult)return;const base=P.kind==='cain'?cainStats(save.cainLv).hp:P.kind==='senton'?sentonStats(save.sentonLv).hp:P.maxHp/2;
   P.hp=Math.min(base,P.hp+25);P.maxHp=base;P.ult=false;P.sentonCharging=false;
   if(!silent)text(P.x,P.y-70,'Ульт. форма спадает',C.ember,14)}
@@ -758,7 +758,7 @@ function damageEnemy(e,amt,opt){if(!e.alive)return;
   if(e.type==='krakenCore'&&e.rig&&e.rig.phase<4){if(!(opt&&opt.dot))text(e.x,e.y-e.r-14,'ЗАЩИЩЕНО',C.muted,13);return}
   if(e.type==='errorBoss'&&e.phase===3&&e.cmFinal)return;
   if(e.type==='errorBoss'&&e.phase===4&&e.phase4FinalStarted)return;
-  amt=Math.round(amt);e.hp-=amt;e.flash=.09;
+  amt=Math.round(amt);if(run&&run.mods.electricChance>0&&!(opt&&opt.dot)&&Math.random()<run.mods.electricChance){burst(e.x,e.y,9,['#78d9ff','#fff'],140,3,.25);let hits=0;for(const n of enemies){if(n===e||!n.alive||n.hidden||hits>=12)continue;if(Math.hypot(n.x-e.x,n.y-e.y)<135){hits++;bolts.push({pts:zig(e.x,e.y,n.x,n.y),t:0});damageEnemy(n,Math.max(8,Math.round(amt*.35)),{dot:true})}}if(hits)sfx('zap')}e.hp-=amt;e.flash=.09;
   if(e.type==='errorBoss'&&e.phase===4&&e.phase4Etude&&e.hp<=0){e.hp=1;e.phase4FinalStarted=true;e.phase4Etude.update(0,P.x,P.y,0);}
   if(e.type==='errorBoss'&&e.phase===3&&e.hp<=0){e.hp=1;if(!e.cmFinal){e.cmFinal={t:0,angle:0,shots:[],spawned:false};e.atk='cmFinal';e.at=0;banner('ПОСЛЕДНЯЯ НАДЕЖДА','Ложный Создатель не сдаётся');sfx('boss')}}
   if(e.type==='creatorman'&&e.hp<=0){if(!e.hopeUsed){e.hopeUsed=true;startCMHope(e)}e.hp=1}
@@ -862,7 +862,7 @@ function drawShield(){const g=ctx,cx=P.x,cy=P.y-16;
     g.lineWidth=3;for(let i=0;i<5;i++){const t=a-.9+i*.45;g.strokeStyle=i%2?`rgba(${col},.4)`:'rgba(143,138,149,.7)';g.beginPath();g.arc(cx,cy,28,t-.12,t+.12);g.stroke()}}
   if(P.shEn<100||P.shBroken>0){const w=36;g.fillStyle='rgba(12,11,13,.75)';g.fillRect(cx-w/2,P.y+20,w,5);g.fillStyle=P.shBroken>0?C.red:'#cfc7e6';g.fillRect(cx-w/2+1,P.y+21,(w-2)*Math.max(0,P.shEn)/100,3)}}
 function hurtPlayer(dmg){if(P.inv>0||P.dead||room.endT!=null)return;
-  if(P.kind==='senton'&&P.dashing)return;
+  if(P.dashing&&(P.kind==='senton'||(run&&run.mods.dash)))return;
   if(run&&run.mods.dodge>0&&Math.random()<run.mods.dodge){P.inv=.2;P.flickerT=1.5;text(P.x,P.y-56,'УКЛОНЕНИЕ',C.acid,15);sfx('pick');return}
   const s=stats();dmg*=1-s.def;P.hp-=dmg;P.inv=.65;shake=Math.max(shake,8);sfx('hurt');
   text(P.x,P.y-56,'-'+Math.round(dmg),C.red,17);burst(P.x,P.y-14,8,[C.red,'#fff'],160,4,.4);
@@ -1676,7 +1676,7 @@ function updBoss(b,dt,dx,dy,d){
       if(b.at>=warn&&b.count===0){b.count=1;shake=Math.max(shake,10);sfx('boss');
         rings.push({x:b.x,y:hy,r:0,max:640,t:0,dur:.45,dmg:0,hit:new Set(),col:b.eyeCol==='blue'?C.tech:C.ember,enemy:true,noClear:true});
         const bad=b.eyeCol==='blue'?P.moving:!P.moving;
-        if(bad){if(P.shield){P.shEn-=34;burst(P.x,P.y-16,16,['#fff',C.ember],220,4,.4);sfx('block');if(P.shEn<=0)shieldBreak()}
+        if(bad){if(P.shield){P.shEn-=(run&&run.mods.guard?0.5:1)*(34);burst(P.x,P.y-16,16,['#fff',C.ember],220,4,.4);sfx('block');if(P.shEn<=0)shieldBreak()}
           else hurtPlayer(22*dm)}
         else text(P.x,P.y-56,b.eyeCol==='blue'?'СТОЙ':'ДВИГАЙСЯ',C.acid,15)}
       if(b.at>warn+.6)endAtk(b)}
@@ -1692,7 +1692,7 @@ function updBoss(b,dt,dx,dy,d){
         const pa2=Math.atan2((P.y-6)-hy,P.x-hx);let da=pa2-a2;while(da>Math.PI)da-=6.283;while(da<-Math.PI)da+=6.283;
         const inCone=Math.abs(da)<spread;
         const wall=room.rocks[0];const blocked=inCone&&wall&&segHitsRock(hx,hy,P.x,P.y-6,wall);
-        if(inCone&&!blocked){if(P.shield){P.shEn-=34;burst(P.x,P.y-16,16,['#fff',C.ember],220,4,.4);sfx('block');if(P.shEn<=0)shieldBreak()}
+        if(inCone&&!blocked){if(P.shield){P.shEn-=(run&&run.mods.guard?0.5:1)*(34);burst(P.x,P.y-16,16,['#fff',C.ember],220,4,.4);sfx('block');if(P.shEn<=0)shieldBreak()}
           else{hurtPlayer(26*dm);text(P.x,P.y-56,'ОБЖИГАЕТ',C.ember,15)}}
         else if(blocked)text(P.x,P.y-56,'УКРЫТИЕ',C.acid,15)}
       if(b.at>warn+.5)endAtk(b)}}}
@@ -4812,7 +4812,7 @@ function updMikeCore(e,dt,dx,dy,d){const dm=run.hard?1.3:1,rig=e.rig;
       const n=5;for(let i=0;i<n;i++)beams.push({x:e.x,y:e.y,a:base+(i-(n-1)/2)*.32,t:0,warn:.65,on:.35,dmg:14*dm,hit:false})}
     if(e.at>1.2){e.atk=null;e.cd=1.5}}}
 function explodeRocket(r,blocked){shake=Math.max(shake,10);burst(r.x,r.y,26,[C.ember,'#fff','#ff5a2a'],280,6,.6);sfx('aoe');
-  if(blocked){P.shEn-=Math.min(14,r.dmg*.5+2);sfx('block');if(P.shEn<=0)shieldBreak()}
+  if(blocked){P.shEn-=(run&&run.mods.guard?0.5:1)*(Math.min(14,r.dmg*.5+2));sfx('block');if(P.shEn<=0)shieldBreak()}
   else if(Math.hypot(P.x-r.x,(P.y-6)-r.y)<50)hurtPlayer(r.dmg)}
 function updMimic(e,dt,dx,dy,d){
   if(e.state==='dormant'){e.open=0;if(d<90||e.hp<e.maxHp){e.state='wake';e.st=.5;text(e.x,e.y-44,e.type==='scallop'?'ВОДОЛАЗНЫЙ МИМИК!':'МИМИК!',C.ember,16);sfx('boss');burst(e.x,e.y-10,12,['#c9c3cf','#0c0b0d'],160,4,.4)}return}
@@ -4832,7 +4832,7 @@ function updPet(dt){const p=run&&run.pet;if(!p)return;
   if(tgt&&p.cd<=0){p.cd=1;p.zap=.15;const ox=p.x+p.face*9*PET_S+Math.cos(p.aim)*15*PET_S,oy=p.y-20*PET_S+Math.sin(p.aim)*15*PET_S;
     const hit=[tgt];let last=tgt;for(let i=1;i<run.mods.pet;i++){let nb=null,bd=170;for(const e of enemies){if(!e.alive||e.hidden||e.state==='dormant'||hit.includes(e))continue;
       const dd=Math.hypot(e.x-last.x,e.y-last.y);if(dd<bd){bd=dd;nb=e}}if(!nb)break;hit.push(nb);last=nb}
-    let px=ox,py=oy;const dmg=16*run.mods.dmg*(P.ult?1.5:1);
+    let px=ox,py=oy;const dmg=25*run.mods.dmg*(P.ult?1.5:1);
     for(const e of hit){const ey=BIG(e)?e.y-10:e.y;bolts.push({pts:zig(px,py,e.x,ey),t:0});px=e.x;py=ey;burst(e.x,ey,6,['#cfe0ff','#fff'],140,3,.25);damageEnemy(e,dmg)}sfx('zap')}}
 function updPlayer(dt){
   const s=stats();P.maxHp=s.maxHp;
@@ -4850,11 +4850,11 @@ function updPlayer(dt){
   if(run&&(run.mods.dash||P.kind==='senton')&&!P.dead&&!P.dashing&&!P.grabbed&&P.paraT<=0&&P.dashCd<=0&&pressed.has('KeyF')){
     let ddx=mx,ddy=my;if(!ddx&&!ddy){ddx=Math.cos(P.aim);ddy=Math.sin(P.aim)}
     const dl=Math.hypot(ddx,ddy)||1;P.dashDx=ddx/dl;P.dashDy=ddy/dl;
-    P.dashing=true;P.dashT=.16;P.dashCd=P.kind==='senton'?(run.mods.dash?2.5:4):5;P.dashHit=new Set();
+    P.dashing=true;P.dashT=.16;P.dashCd=P.kind==='senton'?(run.mods.dash?2:4):run.mods.dash?3:5;P.dashHit=new Set();
     shake=Math.max(shake,6);sfx('aoe');burst(P.x,P.y-14,16,[C.acid,'#fff'],220,5,.4)}
   if(P.shBroken>0)P.shBroken-=dt;
   P.shield=!!(mouse.rdown&&P.shBroken<=0&&P.shEn>0&&!P.dead);
-  if(P.shield){P.shEn-=28*dt;P.shDelay=.6;if(P.shEn<=0)shieldBreak()}
+  if(P.shield){P.shEn-=(run&&run.mods.guard?0.5:1)*(28*dt);P.shDelay=.6;if(P.shEn<=0)shieldBreak()}
   else{P.shDelay-=dt;if(P.shDelay<=0)P.shEn=Math.min(100,P.shEn+30*dt)}
   const tennFiring=P.kind==='tenn'&&!P.ult&&mouse.down&&!P.shield&&!P.dead;
   const cainFiring=P.kind==='cain'&&mouse.down&&!P.shield&&!P.dead;
@@ -4906,11 +4906,11 @@ function updPlayer(dt){
   else if(mouse.down&&!P.shield&&P.atkT<=0){P.atkT=s.atkCd;P.thrust=.16;P.hitSet=new Set();sfx('swing')}
   if(P.thrust>0&&!P.ult&&P.kind==='warden'&&run){for(const e of enemies){if(!e.alive||e.hidden||P.hitSet.has(e))continue;
       const ex=e.x-ox,ey=(e.type==='boss'?e.y-10:e.y)-oy;const along=ex*dx+ey*dy,perp=Math.abs(-ex*dy+ey*dx);
-      if(along>-8&&along<s.reach+e.r&&perp<16+e.r*.8){P.hitSet.add(e);const dmg=rand(s.dmgMin,s.dmgMax)*s.dmgMul;
+      if(along>-8&&along<s.reach+e.r&&perp<16*(run?run.mods.sizeMul:1)+e.r*.8){P.hitSet.add(e);const dmg=rand(s.dmgMin,s.dmgMax)*s.dmgMul;
         if(s.debuff){e.dotT=3;e.slowT=3}if(!BIG(e)){e.kx+=dx*280;e.ky+=dy*280}
         burst(e.x-dx*e.r,e.y-dy*e.r,6,['#fff',C.ember],160,3,.25);damageEnemy(e,dmg);fireProc(e.x,e.y)}}
     for(const p of room.props){if(p.dead||P.hitSet.has(p))continue;const ex=p.x-ox,ey=p.y-oy;const along=ex*dx+ey*dy,perp=Math.abs(-ex*dy+ey*dx);
-      if(along>-8&&along<s.reach+p.r&&perp<16+p.r*.8){P.hitSet.add(p);damageProp(p,rand(s.dmgMin,s.dmgMax)*s.dmgMul)}}}
+      if(along>-8&&along<s.reach+p.r&&perp<16*(run?run.mods.sizeMul:1)+p.r*.8){P.hitSet.add(p);damageProp(p,rand(s.dmgMin,s.dmgMax)*s.dmgMul)}}}
   if(run&&s.aoe&&pressed.has('KeyQ')&&!((P.kind==='tenn'||P.kind==='cain')&&P.ult)){
     const aoeCdBase=P.kind==='cain'?15:6;
     if(P.aoeCd<=0){P.aoeCd=aoeCdBase*run.mods.aoeCd;
@@ -5017,7 +5017,7 @@ function updWorld(dt){
   enemies=enemies.filter(e=>e.alive);
   for(const b of ebul){b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt;
     if(b.x<A.x||b.x>A.x+A.w||b.y<A.y||b.y>A.y+A.h||inRock(b.x,b.y)||hitProp(b.x,b.y,b.r))b.life=0;
-    else if(shieldBlocks(b.x,b.y,b.r)){b.life=0;P.shEn-=Math.min(12,b.dmg*.5+1);burst(b.x,b.y,5,['#fff',C.lav],140,3,.25);sfx('block');if(P.shEn<=0)shieldBreak()}
+    else if(shieldBlocks(b.x,b.y,b.r)){b.life=0;P.shEn-=(run&&run.mods.guard?0.5:1)*(Math.min(12,b.dmg*.5+1));burst(b.x,b.y,5,['#fff',C.lav],140,3,.25);sfx('block');if(P.shEn<=0)shieldBreak()}
     else if(Math.hypot(b.x-P.x,b.y-(P.y-6))<b.r+11&&!P.dead){hurtPlayer(b.dmg);b.life=0}}
   ebul=ebul.filter(b=>b.life>0);
   for(const pr of errBlades){pr.x+=pr.vx*dt;pr.y+=pr.vy*dt;pr.age+=dt;
@@ -5070,7 +5070,7 @@ function updWorld(dt){
   cbeams=cbeams.filter(cb=>cb.t<cb.dur);
   for(const bm of beams){bm.t+=dt;if(bm.t>bm.warn&&bm.t<bm.warn+bm.on&&!bm.hit){const px=P.x-bm.x,py=P.y-6-bm.y;const along=px*Math.cos(bm.a)+py*Math.sin(bm.a);
       const perp=Math.abs(-px*Math.sin(bm.a)+py*Math.cos(bm.a));if(along>0&&perp<16){bm.hit=true;let da=bm.a+Math.PI-P.aim;while(da>Math.PI)da-=6.283;while(da<-Math.PI)da+=6.283;
-      if(P.shield&&Math.abs(da)<1.15){P.shEn-=35;burst(P.x+Math.cos(P.aim)*30,P.y-16+Math.sin(P.aim)*30,16,['#fff',C.ember],220,4,.4);sfx('block');if(P.shEn<=0)shieldBreak()}else hurtPlayer(bm.dmg)}}
+      if(P.shield&&Math.abs(da)<1.15){P.shEn-=(run&&run.mods.guard?0.5:1)*(35);burst(P.x+Math.cos(P.aim)*30,P.y-16+Math.sin(P.aim)*30,16,['#fff',C.ember],220,4,.4);sfx('block');if(P.shEn<=0)shieldBreak()}else hurtPlayer(bm.dmg)}}
     if(bm.t>bm.warn&&!bm.shook){bm.shook=true;sfx('beamFire');shake=Math.max(shake,6)}}
   beams=beams.filter(b=>b.t<b.warn+b.on);
   for(const c of pickups){c.t+=dt;c.x+=c.vx*dt;c.y+=c.vy*dt;c.vx*=Math.pow(.02,dt);c.vy*=Math.pow(.02,dt);
@@ -6384,21 +6384,30 @@ function perkIcon(id,cx,cy){const g=ctx;g.save();g.translate(cx,cy);g.lineCap='b
   else if(id==='leech'){g.save();g.rotate(.6);g.fillStyle='#1a1a1c';g.fillRect(-4,8,84,16);g.restore();g.fillStyle='#f4f2ee';g.fillRect(-24,-2,30,16);
     g.fillStyle='#0c0b0d';g.fillRect(-30,-32,34,32);g.strokeStyle='#efeae2';g.lineWidth=2.5;hexPath(g,-13,-16,11,9);g.stroke();L(-17,-20,-9,-12);L(-9,-20,-17,-12);
     g.fillStyle='#ff6a2a';g.fillRect(-26,-60,9,14);g.fillRect(-14,-60,9,14);g.fillRect(-24,-50,17,10)}
-  else if(id==='shaft'){g.fillStyle='rgba(239,234,226,.85)';for(const[a,b]of[[-62,-40],[-44,32],[56,-34],[64,40],[-22,-58],[28,14],[-58,6],[60,0]])g.fillRect(a,b,3,3);
-    g.fillStyle='#f4f2ee';g.fillRect(-5,-30,10,92);g.beginPath();g.moveTo(-26,-18);g.lineTo(0,-62);g.lineTo(26,-18);g.lineTo(15,-18);g.lineTo(0,-44);g.lineTo(-15,-18);g.closePath();g.fill();
-    g.strokeStyle='#efeae2';g.lineWidth=1.5;g.beginPath();[[34,52],[34,-28],[26,-28],[40,-52],[54,-28],[46,-28],[46,52]].forEach((p,i)=>g[i?'lineTo':'moveTo'](p[0],p[1]));g.stroke();
-    g.save();g.translate(-50,-46);g.rotate(-.3);g.fillStyle='#e6e1d8';g.fillRect(-8,-8,16,16);g.fillStyle='#0c0b0d';g.fillRect(-5,-5,3,3);g.fillRect(2,2,3,3);g.restore()}
+  else if(id==='shaft'){ // Senton: red arm, yellow cannon instead of hand, giant cyan energy sphere
+    g.save();g.rotate(-.55);g.fillStyle='#d92c34';g.fillRect(-58,18,24,72);g.fillRect(-54,-3,30,36);
+    g.fillStyle='#f2bd2b';g.fillRect(-46,-29,38,36);g.fillRect(-12,-24,20,24);
+    g.fillStyle='#48d8f4';g.fillRect(3,-22,9,20);g.fillStyle='#09152b';g.fillRect(9,-18,3,12);g.restore();
+    g.strokeStyle='#7fe5ff';g.lineWidth=3;g.beginPath();g.arc(35,-25,33,0,6.283);g.stroke();
+    g.fillStyle='#b8f4ff';g.beginPath();g.arc(35,-25,25,0,6.283);g.fill();
+    g.fillStyle='#f5fbff';g.beginPath();g.arc(28,-34,11,0,6.283);g.fill();
+    g.fillStyle='#60c8fc';for(const [x,y] of [[-2,-57],[70,-42],[61,17],[3,11]])g.fillRect(x,y,5,5)}
   else if(id==='greed'){for(const[a,b]of[[-40,10],[-14,12],[12,10],[38,12],[-30,-12],[0,-10],[30,-12],[-42,32],[-16,34],[10,32],[36,34],[-28,52],[0,52],[26,52]]){
       g.fillStyle='#f2f04a';g.beginPath();g.arc(a,b,13,0,6.283);g.fill();g.strokeStyle='#b8b62a';g.lineWidth=2;g.beginPath();g.arc(a,b,9,0,6.283);g.stroke();
       g.fillStyle='#8a8a20';g.font=`11px ${FM}`;g.textAlign='center';g.textBaseline='middle';g.fillText('$',a,b+1)}
     g.save();g.translate(6,-38);g.rotate(-.3);g.fillStyle='#0c0b0d';g.fillRect(-16,-14,32,28);g.strokeStyle='#efeae2';g.lineWidth=2;hexPath(g,0,0,9,5);g.stroke();g.restore()}
-  else if(id==='signal'){g.strokeStyle='#8f8a95';g.lineWidth=3;L(-4,4,-4,-50);L(-4,-36,-16,-46);L(-4,-36,8,-46);L(-20,4,-30,-26);L(14,4,22,-24);
-    g.fillStyle='#ff6a2a';for(const[a,b]of[[-4,-52],[-30,-28],[22,-26]])g.fillRect(a-4,b-4,8,8);
-    g.fillStyle='#38402f';g.strokeStyle='#bdb7c2';g.lineWidth=4;g.beginPath();g.moveTo(-40,4);g.lineTo(30,4);g.lineTo(28,54);g.lineTo(-36,54);g.closePath();g.fill();g.stroke();
-    g.beginPath();g.moveTo(30,4);g.lineTo(44,12);g.lineTo(42,48);g.lineTo(28,54);g.stroke()}
+  else if(id==='signal'){ // Cartoon eye-cube struck by electricity; only skull revealed
+    g.fillStyle='#191c21';g.fillRect(-31,3,62,53);g.strokeStyle='#e2f4de';g.lineWidth=4;g.strokeRect(-31,3,62,53);
+    g.fillStyle='#e9fae1';g.beginPath();g.arc(0,26,19,0,6.283);g.fill();
+    g.fillStyle='#151b19';g.fillRect(-12,21,8,10);g.fillRect(4,21,8,10);g.fillRect(-6,37,12,8);
+    g.fillStyle='#f8ea56';g.beginPath();g.moveTo(15,-65);g.lineTo(-11,-15);g.lineTo(4,-15);g.lineTo(-16,22);g.lineTo(25,-23);g.lineTo(8,-23);g.closePath();g.fill();
+    g.strokeStyle='#fff7aa';g.lineWidth=3;for(const [a,b,c,d] of [[-51,4,-38,13],[38,7,53,-4],[-45,41,-59,54]])L(a,b,c,d)}
   else if(id==='pet'){drawTennVision(-2,92,3.1,1,0,0,0,true)}
-  else if(id==='core'){g.fillStyle='#f6e8ee';g.beginPath();for(let i=0;i<40;i++){const a=i/40*6.283,r=26+(i%2?2.5:0);g[i?'lineTo':'moveTo'](Math.cos(a)*r,Math.sin(a)*r)}g.closePath();g.fill();
-    g.strokeStyle='#f4f2ee';g.lineWidth=3;for(let i=0;i<8;i++){g.save();g.rotate(i/8*6.283+.3+Math.sin(time*6+i)*.05);g.beginPath();g.moveTo(36,0);g.lineTo(44,-5);g.lineTo(50,4);g.lineTo(58,-2);g.stroke();g.restore()}}
+  else if(id==='core'){ // Warden with robust shield
+    g.fillStyle='#101b31';g.fillRect(-30,-32,60,74);g.fillStyle='#4e7df6';g.fillRect(-20,-26,40,48);
+    g.fillStyle='#bdeeff';g.fillRect(-9,-14,18,14);g.fillStyle='#101b31';g.fillRect(-4,-11,8,8);
+    g.fillStyle='#13223b';g.fillRect(-46,40,32,18);g.fillRect(14,40,32,18);
+    g.strokeStyle='#bdf6ff';g.lineWidth=7;for(let k=0;k<3;k++){g.beginPath();g.arc(0,4,42+k*13,-1.2,1.2);g.stroke();g.beginPath();g.arc(0,4,42+k*13,Math.PI-1.2,Math.PI+1.2);g.stroke()}}
   else if(id==='stunner'){g.fillStyle='#0c0b0d';g.fillRect(-34,-30,68,66);
     g.strokeStyle='#efeae2';g.lineWidth=2.5;
     g.beginPath();hexPath(g,-2,2,24,19);g.stroke();
@@ -6408,15 +6417,13 @@ function perkIcon(id,cx,cy){const g=ctx;g.save();g.translate(cx,cy);g.lineCap='b
     const star=(x,y,s)=>{g.save();g.translate(x,y);g.fillStyle='#8bdc5a';
       g.beginPath();g.moveTo(0,-s);g.lineTo(s*.26,-s*.26);g.lineTo(s,0);g.lineTo(s*.26,s*.26);g.lineTo(0,s);g.lineTo(-s*.26,s*.26);g.lineTo(-s,0);g.lineTo(-s*.26,-s*.26);g.closePath();g.fill();g.restore()};
     star(-28,-46,8);star(-10,-58,9);star(10,-58,9);star(28,-48,8);star(-42,-30,7);star(42,-28,7)}
-  else if(id==='ember'){g.fillStyle='#6b3a18';g.beginPath();
-    g.moveTo(-30,56);g.lineTo(-30,10);g.lineTo(-20,-30);g.lineTo(-12,4);g.lineTo(-2,-52);g.lineTo(8,2);g.lineTo(18,-34);g.lineTo(28,8);g.lineTo(30,56);
-    g.closePath();g.fill();
-    g.fillStyle='#8ed65a';g.beginPath();
-    g.moveTo(-24,52);g.lineTo(-24,12);g.lineTo(-16,-22);g.lineTo(-9,6);g.lineTo(-1,-44);g.lineTo(7,4);g.lineTo(15,-26);g.lineTo(23,10);g.lineTo(24,52);
-    g.closePath();g.fill();
-    g.save();g.translate(4,30);g.rotate(.5);g.fillStyle='#0c0b0d';g.fillRect(-13,-13,26,26);
-    g.strokeStyle='#efeae2';g.lineWidth=2;g.beginPath();hexPath(g,0,0,9,7);g.stroke();
-    g.fillStyle='#ff4a3a';g.beginPath();g.arc(0,0,2.4,0,6.283);g.fill();g.restore()}
+  else if(id==='ember'){ // Helmeted wasteland eye with thousand-yard stare and explosion
+    g.fillStyle='#f8b22c';for(const [x,y,w,h] of [[-54,-36,24,29],[37,-44,20,40],[-43,11,26,32],[17,26,33,28]])g.fillRect(x,y,w,h);
+    g.fillStyle='#f1582c';g.fillRect(-55,-6,110,39);g.fillRect(-36,-48,72,66);
+    g.fillStyle='#1b2630';g.fillRect(-32,-14,64,65);g.strokeStyle='#eae9da';g.lineWidth=3;g.strokeRect(-32,-14,64,65);
+    g.fillStyle='#5d6c46';g.fillRect(-40,-32,80,23);g.fillRect(-27,-49,54,22);g.fillRect(-40,-9,80,7);
+    g.fillStyle='#e7eddf';g.beginPath();g.arc(0,16,18,0,6.283);g.fill();
+    g.fillStyle='#18222b';g.beginPath();g.arc(0,16,2.5,0,6.283);g.fill()}
   else if(id==='confuse'){g.strokeStyle='#8bdc5a';g.lineWidth=5;g.lineCap='round';
     g.beginPath();g.moveTo(-6,-66);g.quadraticCurveTo(16,-74,18,-56);g.quadraticCurveTo(20,-42,2,-38);g.lineTo(2,-30);g.stroke();
     g.beginPath();g.moveTo(2,-16);g.lineTo(2,-12);g.stroke();g.lineCap='butt';
