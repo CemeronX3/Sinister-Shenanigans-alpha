@@ -3,7 +3,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'patches/*.patch'
+      - 'patches/*.json'
   workflow_dispatch:
 
 permissions:
@@ -17,13 +17,12 @@ jobs:
   apply:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out main
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
           persist-credentials: true
-      - name: Apply newly added patches
+      - name: Apply new replacement patches
         shell: bash
         env:
           BEFORE: ${{ github.event.before }}
@@ -31,25 +30,31 @@ jobs:
           EVENT: ${{ github.event_name }}
         run: |
           set -euo pipefail
-          if [[ "$EVENT" == "workflow_dispatch" ]]; then
-            echo "Manual runs do not apply historical patches."
+          if [[ "$EVENT" != "push" ]]; then
+            echo "No patches queued by manual run"
             exit 0
           fi
-          mapfile -d '' patches < <(git diff --name-only --diff-filter=A -z "$BEFORE" "$AFTER" -- 'patches/*.patch')
-          if (( ${#patches[@]} == 0 )); then
-            echo "No new patch files."
-            exit 0
-          fi
-          for patch in "${patches[@]}"; do
-            echo "Applying $patch"
-            git apply --check -- "$patch"
-            git apply -- "$patch"
-          done
+          git diff --name-only --diff-filter=A "$BEFORE" "$AFTER" -- 'patches/*.json' > /tmp/patch-list
+          python3 - <<'PY'
+          import json, pathlib
+          for filename in pathlib.Path('/tmp/patch-list').read_text().splitlines():
+              changes = json.loads(pathlib.Path(filename).read_text())
+              for change in changes:
+                  target = pathlib.Path(change['file'])
+                  if target.as_posix() != 'game.js':
+                      raise ValueError('Only game.js is allowed')
+                  content = target.read_text()
+                  old, new = change['old'], change['new']
+                  count = content.count(old)
+                  if count != 1:
+                      raise ValueError(f'{filename}: expected one match for {old[:70]!r}, got {count}')
+                  target.write_text(content.replace(old, new, 1))
+          PY
           node --check game.js
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add game.js
           if ! git diff --cached --quiet; then
-            git commit -m "Apply game patch updates"
+            git commit -m "Apply verified game updates"
             git push origin HEAD:main
           fi
