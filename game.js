@@ -4843,8 +4843,8 @@ function updObserver(dt){
   if(o.mode==='approach'){o.face=dx>=0?1:-1;if(d>r+25){const v=Math.min(d-r-24,550*dt);o.x+=dx/d*v;o.y+=dy/d*v}
    else{o.mode='ram';o.dir=o.x<=e.x?1:-1;o.hitDone=false}}
   if(o.mode==='ram'){o.face=o.dir;const x=e.x+o.dir*(r+42),y=ey,vx=x-o.x,vy=y-o.y,l=Math.hypot(vx,vy);
-   if(l>.1){const v=Math.min(l,660*dt);o.x+=vx/l*v;o.y+=vy/l*v}
-   if(!o.hitDone&&Math.hypot(o.x-e.x,o.y-ey)<=r+22){o.hitDone=true;o.flash=.2;damageEnemy(e,Math.round(15*run.mods.dmg));burst(e.x,ey,7,['#ff4260','#fff0ee','#a61935'],150,3,.3);
+   if(l>.1){const v=Math.min(l,495*dt);o.x+=vx/l*v;o.y+=vy/l*v}
+   if(!o.hitDone&&Math.hypot(o.x-e.x,o.y-ey)<=r+22){o.hitDone=true;o.flash=.2;damageEnemy(e,Math.round(12*run.mods.dmg));burst(e.x,ey,7,['#ff4260','#fff0ee','#a61935'],150,3,.3);
      if(!e.alive){o.target=null;o.mode='approach';o.hitDone=false}}
    if(o.target&&Math.hypot(x-o.x,y-o.y)<4){o.dir*=-1;o.hitDone=false}
   }
