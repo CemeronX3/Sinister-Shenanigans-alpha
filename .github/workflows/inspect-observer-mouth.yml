@@ -16,6 +16,8 @@ jobs:
           from pathlib import Path
           lines=Path('game.js').read_text().splitlines()
           for i,line in enumerate(lines):
+              if 6215 <= i+1 <= 6275:
+                  print('CONTEXT',i+1,repr(line[:1600]))
               if 'tip' in line and ('lineTo' in line or 'moveTo' in line):
                   print('LINE',i+1,repr(line[:1200]))
               if 'observer' in line.lower() and ('mouth' in line.lower() or 'fang' in line.lower()):
