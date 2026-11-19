@@ -1,0 +1,7 @@
+[
+  {
+    "file": "game.js",
+    "old": "for(let i=0;i<5;i++){const x=-4+i*5.5,tip=2+(i%2)*2;g.fillStyle='#fff4e8';g.beginPath();g.moveTo(x,-16);g.lineTo(x+4,-16);g.lineTo(x+tip+3,-6+(i%2));g.closePath();g.fill();g.beginPath();g.moveTo(x,10);g.lineTo(x+4,10);g.lineTo(x+tip+3,0-(i%2));g.closePath();g.fill()}",
+    "new": "for(let i=0;i<5;i++){const x=-4+i*5.5,shift=(i%2)*1.5;g.fillStyle='#fff4e8';g.beginPath();g.moveTo(x,-16);g.quadraticCurveTo(x+2,-18,x+4,-16);g.quadraticCurveTo(x+3.2,-9,x+1.7+shift,-1+(i%2)*2);g.quadraticCurveTo(x+.5,-9,x,-16);g.fill();g.beginPath();g.moveTo(x,10);g.quadraticCurveTo(x+2,12,x+4,10);g.quadraticCurveTo(x+3.2,4,x+1.7+shift,-5+(i%2)*2);g.quadraticCurveTo(x+.5,4,x,10);g.fill()}"
+  }
+]
