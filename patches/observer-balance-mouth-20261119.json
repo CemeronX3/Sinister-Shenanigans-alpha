@@ -1,0 +1,17 @@
+[
+  {
+    "file": "game.js",
+    "old": "Math.min(l,495*dt)",
+    "new": "Math.min(l,300*dt)"
+  },
+  {
+    "file": "game.js",
+    "old": "damageEnemy(e,Math.round(12*run.mods.dmg))",
+    "new": "damageEnemy(e,Math.round(10*run.mods.dmg))"
+  },
+  {
+    "file": "game.js",
+    "old": "g.moveTo(x,-16);g.lineTo(x+4,-16);g.lineTo(x+tip+3,-6+(i%2));g.closePath();g.fill();g.beginPath();g.moveTo(x,10);g.lineTo(x+4,10);g.lineTo(x+tip+3,0-(i%2));g.closePath();g.fill()",
+    "new": "g.moveTo(x,-16);g.lineTo(x+4,-16);g.lineTo(x+2.5+tip*.28,-7+(i%2));g.closePath();g.fill();g.beginPath();g.moveTo(x,10);g.lineTo(x+4,10);g.lineTo(x+2.5+tip*.28,1-(i%2));g.closePath();g.fill()"
+  }
+]
