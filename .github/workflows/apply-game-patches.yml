@@ -1,0 +1,55 @@
+name: Apply game patches
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'patches/*.patch'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: game-patches-main
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Apply newly added patches
+        shell: bash
+        env:
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT" == "workflow_dispatch" ]]; then
+            echo "Manual runs do not apply historical patches."
+            exit 0
+          fi
+          mapfile -d '' patches < <(git diff --name-only --diff-filter=A -z "$BEFORE" "$AFTER" -- 'patches/*.patch')
+          if (( ${#patches[@]} == 0 )); then
+            echo "No new patch files."
+            exit 0
+          fi
+          for patch in "${patches[@]}"; do
+            echo "Applying $patch"
+            git apply --check -- "$patch"
+            git apply -- "$patch"
+          done
+          node --check game.js
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add game.js
+          if ! git diff --cached --quiet; then
+            git commit -m "Apply game patch updates"
+            git push origin HEAD:main
+          fi
