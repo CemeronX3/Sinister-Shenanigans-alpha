@@ -4857,7 +4857,7 @@ function drawObserver(o){
  g.beginPath();g.arc(0,-3,21,0,6.283);g.fillStyle='#f7f0f3';g.fill();g.strokeStyle='#35151d';g.lineWidth=3;g.stroke();
  for(let i=0;i<9;i++){const a=i*6.283/9;g.beginPath();g.moveTo(Math.cos(a)*18,Math.sin(a)*18-3);g.lineTo(Math.cos(a)*12,Math.sin(a)*12-3);g.strokeStyle='#c93649';g.lineWidth=1.7;g.stroke()}
  if(!o.maw){const a=Math.atan2(P.y-46-o.y,P.x-o.x),xx=Math.cos(a)*6*o.face,yy=Math.sin(a)*6;g.beginPath();g.arc(xx,yy-3,11,0,6.283);g.fillStyle='#c22539';g.fill();g.strokeStyle='#601525';g.lineWidth=2;g.stroke();g.fillStyle='#1b0710';g.fillRect(xx-4,yy-12,8,17);g.fillStyle='#fff';g.fillRect(xx-2,yy-10,3,4)}
- else{g.beginPath();g.ellipse(9,-3,15,16,0,0,6.283);g.fillStyle='#290710';g.fill();g.strokeStyle='#8b1b33';g.lineWidth=2.5;g.stroke();g.beginPath();g.ellipse(11,-3,7,9,0,0,6.283);g.fillStyle='#a21631';g.fill();for(let i=0;i<5;i++){const x=-4+i*5.5;g.fillStyle='#fff4e8';g.beginPath();g.moveTo(x,-16);g.lineTo(x+4,-16);g.lineTo(x+2,-8);g.closePath();g.fill();g.beginPath();g.moveTo(x,10);g.lineTo(x+4,10);g.lineTo(x+2,2);g.closePath();g.fill()}}
+ else{g.beginPath();g.ellipse(9,-3,15,16,0,0,6.283);g.fillStyle='#290710';g.fill();g.strokeStyle='#8b1b33';g.lineWidth=2.5;g.stroke();g.beginPath();g.ellipse(11,-3,7,9,0,0,6.283);g.fillStyle='#a21631';g.fill();for(let i=0;i<5;i++){const x=-4+i*5.5;g.fillStyle='#fff4e8';g.beginPath();g.moveTo(x,-16);g.lineTo(x+5,-16);g.quadraticCurveTo(x+5,-8,x+1,-2);g.quadraticCurveTo(x+1,-9,x,-16);g.closePath();g.fill();g.beginPath();g.moveTo(x,10);g.lineTo(x+5,10);g.quadraticCurveTo(x+5,3,x+1,-5);g.quadraticCurveTo(x+1,3,x,10);g.closePath();g.fill()}}
  g.restore()
 }
 
