@@ -6683,6 +6683,41 @@ function drawMikeEye(e,x,y,kind){const g=ctx,a=Math.atan2(P.y-e.y,P.x-e.x),
     g.fillStyle=fl;g.fillRect(-9,-9,18,18);g.strokeStyle='#8f8a95';g.lineWidth=1;g.strokeRect(-9,-9,18,18);
     g.save();g.rotate(a*.2);g.fillStyle=hot?col:'#141316';g.fillRect(-2.2,-3.6,4.4,7.2);g.restore()}
   g.restore()}
+function drawMechanicalWorm(e){
+  const g=ctx,bright=e.flash>0,steel=bright?'#fff':'#6f7078',edge=bright?'#fff':'#a9a6a5';
+  const points=[e,...e.segs];
+  const aim=(front,back,fallback)=>Math.hypot(front.x-back.x,front.y-back.y)>.01
+    ?Math.atan2(front.y-back.y,front.x-back.x):fallback;
+  const heading=aim(e,points[1]||e,Math.atan2(P.y-e.y,P.x-e.x));
+  const box=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x,y,w,h)};
+  const plate=(points,color)=>{
+    g.beginPath();points.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));
+    g.closePath();g.fillStyle=color;g.fill();
+  };
+  for(let i=points.length-1;i>0;i--){
+    const front=points[i-1],rear=points[i];
+    const width=5+5*(1-i/points.length);
+    g.save();g.translate(rear.x,rear.y-4);g.rotate(aim(front,rear,heading));
+    box(-4,-width,10,width*2,'#292731');
+    box(3,-3,7,6,'#43373a');
+    plate([[-5,-width+2],[-2,-width],[3,-width],[5,-width+3],[5,width-3],[3,width],[-3,width],[-5,width-2]],steel);
+    box(-2,-width+1,4,2,edge);
+    box(1,-2,2,4,i%3===0?'#ed9b55':'#403f48');
+    g.restore();
+  }
+  shadow(e.x,e.y+e.r,14);
+  g.save();g.translate(e.x,e.y-4);g.rotate(heading);
+  plate([[-10,-8],[-4,-13],[8,-12],[15,-6],[15,6],[8,12],[-4,13],[-10,8]],'#262532');
+  plate([[-8,-7],[-3,-11],[7,-10],[12,-6],[12,6],[7,10],[-3,11],[-8,7]],steel);
+  box(-5,-9,8,2,edge);box(2,-5,7,10,'#302831');box(7,-4,3,8,'#ffad62');
+  const aperture=3+Math.sin(e.t*13)*1.5;
+  for(const side of [-1,1]){
+    plate([[8,side*5],[14,side*(6+aperture)],[23,side*(4+aperture)],[19,side*3],[12,side*2]],edge);
+    box(12,side*5-1,3,2,'#423744');
+  }
+  g.restore();
+}
+
 function drawWastelandEnemy(e){
   const g=ctx,flash=e.flash>0,bob=Math.sin(e.t*5)*2,hot=e.state==='wind'||e.state==='spray'||e.fuse!=null;
   const box=(x,y,w,h,c)=>{g.fillStyle=flash?'#fff':c;g.fillRect(x,y,w,h)};
@@ -6699,14 +6734,6 @@ function drawWastelandEnemy(e){
     shape([[-10,-28],[-6,-35],[8,-35],[11,-28],[7,-20],[-8,-20]],'#d5ad86');
     box(-8,-28,15,5,dark);box(2,-27,4,3,light);
     box(10,-15,12+claw,5,metal);box(20+claw,-15,6,3,edge);box(20+claw,-9,7,2,edge);
-  }else if(e.type==='worm'){
-    const aim=e.ang??Math.atan2(P.y-e.y,P.x-e.x);g.rotate(aim);
-    for(let i=3;i>=0;i--){
-      const x=-i*8,y=Math.sin(e.t*9-i)*3,sz=12-i;
-      shape([[x-sz,y],[x-sz+4,y-sz],[x+6,y-sz],[x+10,y],[x+5,y+sz],[x-sz+4,y+sz]],i%2?metal:dark);
-      box(x-3,y-sz+2,4,4,edge);
-    }
-    box(4,-4,5,3,light);box(4,3,5,3,light);
   }else{
     const spray=e.type==='sprayer',orb=e.type==='orbEye';
     const a=Math.atan2(P.y-e.y,P.x-e.x);
@@ -6728,7 +6755,7 @@ function drawWastelandEnemy(e){
 }
 
 function drawEnemy(e){
-  if(run?.zone===1&&['skeleton','eye','sprayer','worm','orbEye'].includes(e.type)){drawWastelandEnemy(e);return}
+  if(run?.zone===1&&['skeleton','eye','sprayer','orbEye'].includes(e.type)){drawWastelandEnemy(e);return}
   const g=ctx;const fill=e.flash>0?'#fff':'#0c0b0d';
   if(e.type==='skeleton'){const bob=Math.sin(e.t*4)*2;shadow(e.x,e.y+e.r,14);g.save();g.translate(e.x,e.y+bob);g.scale(e.face,1);g.fillStyle=fill;g.strokeStyle=fill;
     g.beginPath();g.moveTo(-14,14);g.lineTo(14,14);g.lineTo(4,0);g.lineTo(-4,0);g.closePath();g.fill();
@@ -6843,6 +6870,7 @@ function drawEnemy(e){
   else if(e.type==='worm'){
     if(e.hidden){g.fillStyle=e.state==='emerge'?'rgba(255,74,58,.25)':'rgba(92,77,63,.55)';g.beginPath();g.ellipse(e.x,e.y,16,7,0,0,6.283);g.fill();
       if(e.state==='emerge'){g.strokeStyle=C.red;g.lineWidth=2;g.setLineDash([5,4]);g.beginPath();g.arc(e.x,e.y,e.r+18,0,6.283);g.stroke();g.setLineDash([])}return}
+    if(run?.zone===1){drawMechanicalWorm(e);return}
     for(let i=e.segs.length-1;i>=0;i--){const s=e.segs[i],sz=12-i*.6;shadow(s.x,s.y+sz*.6,sz*.7);g.fillStyle=fill;g.fillRect(s.x-sz/2,s.y-sz/2-6,sz,sz);
       g.fillStyle=e.flash>0?'#0c0b0d':'#efeae2';g.fillRect(s.x-sz/4,s.y-sz/4-6,sz/2,sz/2)}
     const a=Math.atan2(e.y-e.segs[0].y,e.x-e.segs[0].x),open=.35+Math.sin(e.t*10)*.25;g.save();g.translate(e.x,e.y-6);g.rotate(a);g.fillStyle=fill;g.fillRect(-8,-8,16,16);
