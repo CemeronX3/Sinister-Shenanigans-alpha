@@ -58,25 +58,5 @@ canvas{touch-action:none}
   <div class="tb e" id="bE">E</div><div class="tb f" id="bF">F</div><div class="tb pause" id="bP">II</div>
 </div>
 
-<script src="game.js?v=doublepay-grid-5010d34"></script>
-
-<script>
-/* Original user-supplied illustration for Double Payment. */
-{
- const doublePayArt=new Image();
- doublePayArt.src='sprites/doublepay-original.png?v=9738e20';
- BOSS_PERK_ART.doublepay=doublePayArt;
- const oldPerkIcon=perkIcon;
- perkIcon=function(id,cx,cy){
-   if(id!=='doublepay')return oldPerkIcon(id,cx,cy);
-   if(!doublePayArt.complete||!doublePayArt.naturalWidth)return oldPerkIcon(id,cx,cy);
-   const g=ctx;
-   g.save();
-   const width=128,height=110,aspect=doublePayArt.naturalWidth/doublePayArt.naturalHeight;
-   const w=Math.min(width,height*aspect),h=w/aspect;
-   g.drawImage(doublePayArt,cx-w/2,cy-h/2,w,h);
-   g.restore();
- };
-}
-</script>
+<script src="game.js?v=doublepay-render-9738e20"></script>
 </body></html>

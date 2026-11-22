@@ -6452,7 +6452,7 @@ function drawTennVision(x,y,s,face,wheel,aim,zap,head){const g=ctx;g.save();g.tr
   g.fillStyle='#f2efe9';g.beginPath();g.moveTo(-6*s,-23.5*s);g.quadraticCurveTo(.5*s,-13*s,7.5*s,-24.5*s);g.quadraticCurveTo(.8*s,-19.5*s,-6*s,-23.5*s);g.fill();
   g.strokeStyle='#0d0f1c';g.lineWidth=.35*s;for(const tx of[-3.2,-.6,2,4.6]){g.beginPath();g.moveTo(tx*s,-23*s);g.lineTo(tx*s,-16*s);g.stroke()}
   g.restore()}
-const BOSS_PERK_ART={};for(const [id,path] of [['observer','sprites/perk_observer.png'],['devastating','sprites/perk_devastating_seconds.png']]){const img=new Image();img.src=path;BOSS_PERK_ART[id]=img}
+const BOSS_PERK_ART={};for(const [id,path] of [['observer','sprites/perk_observer.png'],['devastating','sprites/perk_devastating_seconds.png'],['doublepay','sprites/doublepay-original.png?v=9738e20']]){const img=new Image();img.src=path;BOSS_PERK_ART[id]=img}
 const PCOL={observer:'#941328',devastating:'#c0252d',tip:'#ff5a2a',plate:'#e3c9f2',cell:'#efee4f',servo:'#36d936',lunge:'#e0473a',heat:'#f0882e',leech:'#36d936',shaft:'#1d2850',greed:'#a6f062',doublepay:'#080e73',signal:'#d9d9dc',pet:'#2a64f0',core:'#0d1120',stunner:'#1c3fd4',ember:'#e8641f',confuse:'#c0203a',treasure:'#d62a8c',dash:'#3aa8d6'};
 function perkIcon(id,cx,cy){const g=ctx;g.save();g.translate(cx,cy);g.lineCap='butt';g.lineJoin='miter';
   const L=(a,b,c,d)=>{g.beginPath();g.moveTo(a,b);g.lineTo(c,d);g.stroke()};
@@ -6490,29 +6490,12 @@ function perkIcon(id,cx,cy){const g=ctx;g.save();g.translate(cx,cy);g.lineCap='b
     for(let i=0;i<12;i++){const a=i*6.283/12;g.beginPath();g.moveTo(33+Math.cos(a)*39,-27+Math.sin(a)*39);g.lineTo(33+Math.cos(a)*47,-27+Math.sin(a)*47);g.stroke()}
     g.fillStyle='#f0eaff';g.beginPath();g.arc(23,-40,10,0,6.283);g.fill();
   }else if(id==='doublepay'){
-    g.save();g.rotate(.09);
-    g.fillStyle='#060d70';g.fillRect(-64,-55,128,110);
-    // Subtle economic-chart grid behind the line.
-    g.strokeStyle='rgba(95,145,245,.32)';g.lineWidth=1;g.beginPath();
-    for(let x=-64;x<=64;x+=16){g.moveTo(x,-55);g.lineTo(x,55)}
-    for(let y=-55;y<=55;y+=16){g.moveTo(-64,y);g.lineTo(64,y)}
-    g.stroke();
-    // The graph starts at the bottom-left corner and rises toward the token.
-    g.strokeStyle='#f1f2ff';g.lineWidth=5;g.lineCap='square';g.lineJoin='miter';
-    g.beginPath();g.moveTo(-64,54);g.lineTo(-44,30);g.lineTo(-31,38);
-    g.lineTo(-10,9);g.lineTo(4,22);g.lineTo(19,-6);
-    g.lineTo(29,2);g.lineTo(45,-30);g.stroke();
-    g.save();g.translate(43,-31);g.rotate(-.18);
-    g.shadowColor='#5ee9ff';g.shadowBlur=9;
-    g.fillStyle='#0551a4';g.strokeStyle='#39eaff';g.lineWidth=4;
-    g.beginPath();for(let i=0;i<8;i++){const a=Math.PI/8+i*Math.PI/4;
-      i?g.lineTo(Math.cos(a)*23,Math.sin(a)*23):g.moveTo(Math.cos(a)*23,Math.sin(a)*23)}
-    g.closePath();g.fill();g.stroke();g.shadowBlur=0;
-    g.fillStyle='#4df3ff';g.beginPath();g.moveTo(0,-14);g.lineTo(14,0);
-    g.lineTo(0,14);g.lineTo(-14,0);g.closePath();g.fill();
-    g.fillStyle='#0750a0';g.beginPath();g.moveTo(0,-7);g.lineTo(7,0);
-    g.lineTo(0,7);g.lineTo(-7,0);g.closePath();g.fill();
-    g.restore();g.restore();
+    const art=BOSS_PERK_ART.doublepay;
+    if(art.complete&&art.naturalWidth){
+      const aspect=art.naturalWidth/art.naturalHeight;
+      const width=Math.min(256,150*aspect),height=width/aspect;
+      g.drawImage(art,-width/2,-height/2,width,height);
+    }
   }else if(id==='greed'){for(const[a,b]of[[-40,10],[-14,12],[12,10],[38,12],[-30,-12],[0,-10],[30,-12],[-42,32],[-16,34],[10,32],[36,34],[-28,52],[0,52],[26,52]]){
       g.fillStyle='#f2f04a';g.beginPath();g.arc(a,b,13,0,6.283);g.fill();g.strokeStyle='#b8b62a';g.lineWidth=2;g.beginPath();g.arc(a,b,9,0,6.283);g.stroke();
       g.fillStyle='#8a8a20';g.font=`11px ${FM}`;g.textAlign='center';g.textBaseline='middle';g.fillText('$',a,b+1)}
