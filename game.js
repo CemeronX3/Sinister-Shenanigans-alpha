@@ -94,7 +94,7 @@ const tuiLast={};function tset(id,prop,val){const k=id+prop;if(tuiLast[k]===val)
 function touchFrame(){if(!touch.on)return;const play=(state==='run'&&!paused&&room&&room.endT==null)||state==='lobby';
   if(play&&P){if(touch.aim!=null){mouse.x=P.x+Math.cos(touch.aim)*140;mouse.y=P.y-20+Math.sin(touch.aim)*140}mouse.down=touch.aiming;mouse.rdown=touch.shield}
   const inRun=state==='run';tset('stL','hidden',!play);tset('stR','hidden',!play);tset('bSh','hidden',!play);tset('bQ','hidden',!(inRun&&P&&((P.kind==='warden'&&save.lv>=3)||(P.kind==='cain'&&save.cainLv>=3)||(P.kind==='tenn'&&P.ult)||P.kind==='senton')));tset('bUlt','hidden',!inRun);
-  tset('bE','hidden',state!=='lobby');tset('bP','hidden',!(inRun||state==='upgrade'||state==='bosspick'));tset('bUlt','ready',!!(inRun&&P&&P.tension>=100&&!P.ult))}
+  tset('bE','hidden',state!=='lobby'&&!(state==='run'&&room?.kind==='shop'));tset('bP','hidden',!(inRun||state==='upgrade'||state==='bosspick'));tset('bUlt','ready',!!(inRun&&P&&P.tension>=100&&!P.ult))}
 cv.addEventListener('contextmenu',e=>e.preventDefault());
 addEventListener('blur',()=>{keys.clear();mouse.down=mouse.rdown=false;if(state==='run'&&!room.endT)paused=true});
 
@@ -325,6 +325,7 @@ const PERKS=[
  {id:'observer',name:'Наблюдатель',desc:'Глаз следует за игроком и смотрит на него, а при угрозе раскрывает пасть и таранит врагов до полной зачистки.',bossOnly:true,apply:m=>m.observer=true},
  {id:'devastating',name:'Разгромные секунды',desc:'Ультимативная форма длится на 3 секунды дольше, даже в боссфайте.',bossOnly:true,apply:m=>m.ultBonus+=3},
 ];
+const shop=createShop(ctx,W,H,PERKS,shuffle);
 const EDEF={skeleton:{hp:70,r:15,spd:95,dmg:12,coin:2},eye:{hp:48,r:14,spd:85,dmg:9,coin:2},sprayer:{hp:62,r:15,spd:88,dmg:3,coin:3},worm:{hp:95,r:14,spd:150,dmg:11,coin:4},mimic:{hp:110,r:15,spd:300,dmg:16,coin:5},
   eyeBot:{hp:72,r:14,spd:90,dmg:11,coin:4},eyeTop:{hp:62,r:14,spd:90,dmg:4,coin:3},orbEye:{hp:36,r:13,spd:155,dmg:34,coin:4},
   gunner:{hp:58,r:15,spd:95,dmg:10,coin:3},turret:{hp:60,r:16,spd:0,dmg:14,coin:4},saw:{hp:68,r:14,spd:130,dmg:12,coin:4},drillworm:{hp:40,r:17,spd:0,dmg:0,coin:3},
@@ -419,7 +420,7 @@ function newRoom(kind){A=roomBounds(kind);const r={kind,rocks:[],props:[],solids
     r.rocks.push({x:wx,y:wy,w:ww,h:wh})}
   if(kind==='lobby'){r.solids=[{x:A.x,y:A.y,w:A.w,h:78},{x:LT.x-8,y:A.y+78,w:LT.w+16,h:84}];for(const t of SMALL)r.solids.push({x:t.x-38,y:t.y-58,w:76,h:76});
     r.solids.push({x:VEND.x-24,y:VEND.y-54,w:48,h:100});for(const c of CHAIRS)r.solids.push({x:c.x-18,y:c.y-50,w:36,h:46})}
-  else if(kind!=='training'){const zb=run&&run.zone,sets=zb===2?PROP_SETS_Z2:zb===3?PROP_SETS_Z3:zb===4?PROP_SETS_Z4:PROP_SETS,set=sets[run?run.level:1]||sets[1];
+  else if(kind!=='training'&&kind!=='shop'){const zb=run&&run.zone,sets=zb===2?PROP_SETS_Z2:zb===3?PROP_SETS_Z3:zb===4?PROP_SETS_Z4:PROP_SETS,set=sets[run?run.level:1]||sets[1];
     const denser=zb===2||zb===3;
     const n=denser?(kind==='boss'?8:randi(9,13)):(kind==='boss'?5:randi(5,8));let tries=0;
     while(r.props.length<n&&tries++<160){const x=rand(A.x+60,A.x+A.w-60),y=rand(A.y+36,A.y+A.h-30);
@@ -728,10 +729,25 @@ function freeSpot(minD){for(let i=0;i<80;i++){const x=rand(A.x+40,A.x+A.w-40),y=
 function spawnWave(){room.wavesLeft--;const n=3+Math.floor(run.level*.8)+run.roomIdx+(run.hard?1:0);
   for(let i=0;i<n;i++){const p=freeSpot(180);spawns.push({type:pickType(),x:p.x,y:p.y,t:.8+i*.09})}sfx('spawn')}
 function banner(t,s){ui.banner={t:t,s:s,time:2.4}}
-function openChoice(cb){const pool=shuffle(PERKS.filter(p=>!p.bossOnly&&(!p.need||save.lv>=p.need)&&!run.picked.includes(p.name)));if(!pool.length){cb();return}ui.choices=pool.slice(0,3);ui.choiceCb=cb;state='choice';sfx('pick')}
-function choose(i){const p=ui.choices[i];if(!p)return;p.apply(run.mods);run.picked.push(p.name);
-  if(p.id==='pet'&&!run.pet)run.pet={x:P.x-30,y:P.y+20,cd:1,face:1,wheel:0,aim:.4,zap:0};if(p.id==='observer'&&!run.observer)run.observer=newObserver();
-  const st=stats();P.maxHp=st.maxHp;if(p.heal)P.hp=P.maxHp;P.hp=Math.min(P.hp,P.maxHp);state='run';sfx('pick');ui.choiceCb()}
+function buyPerk(p){
+  p.apply(run.mods);run.picked.push(p.name);
+  if(p.id==='pet'&&!run.pet)run.pet={x:P.x-30,y:P.y+20,cd:1,face:1,wheel:0,aim:.4,zap:0};
+  if(p.id==='observer'&&!run.observer)run.observer=newObserver();
+  P.maxHp=stats().maxHp;
+  P.hp=p.heal?P.maxHp:Math.min(P.hp,P.maxHp);
+  sfx('pick');
+}
+function choose(i){const p=ui.choices[i];if(!p)return;buyPerk(p);state='run';ui.choiceCb()}
+function enterShop(next){
+  clearArrays();
+  room=newRoom('shop');
+  room.exitOpen=true;room.shopNext=next;
+  P.x=A.x+40;P.y=MIDY;P.grabbed=false;
+  if(run.pet){run.pet.x=P.x-10;run.pet.y=P.y+40}
+  if(run.observer){run.observer.x=P.x-42;run.observer.y=P.y-50}
+  room.solids=shop.enter(run,P);
+  banner('МАГАЗИН','');
+}
 function finalize(won){
   if(run.rewarded)return;
   run.rewarded=true;
@@ -5179,6 +5195,12 @@ function updRun(dt){
   if(room.kind==='training'&&pressed.has('KeyR')){trainDmg=[];trainTotal=0;trainStart=time;text(P.x,P.y-60,'Счётчик сброшен',C.acid,14);sfx('pick')}
   if(ui.banner){ui.banner.time-=dt;if(ui.banner.time<=0)ui.banner=null}
   if(ui.cmLine){ui.cmLine.t=(ui.cmLine.t||0)+dt;if(ui.cmLine.t>=(ui.cmLine.dur||3.4))ui.cmLine=null;}
+  if(room.kind==='shop'){
+    updPlayer(dt);updPet(dt);updObserver(dt);updWorld(dt);
+    shop.update(dt,pressed.has('KeyE')||pressed.has('Enter'),buyPerk);
+    if(P.x>A.x+A.w+4)room.shopNext();
+    return;
+  }
   if(room.endT!=null){room.endT-=dt;updWorld(dt);if(room.endT<=0){
       if(room.endKind==='zonePortal'){finalize(true);room.endT=null;room.portalReady=true;
         banner('ПОРТАЛ ОТКРЫТ',`Иди к центру комнаты, чтобы войти в ${room.portalZone===3?'Глубоководье':'Мир архитекторов'}`)}
@@ -5217,7 +5239,7 @@ function updRun(dt){
     const go=()=>{if(nextLevel)enterLevel(run.level+1);else enterRoom()};
     run.stages=(run.stages||0)+1;const enteringBoss=nextLevel&&run.level+1===6;
     if(enteringBoss)musicPrep(run.zone===2?'mus/titan.mp3':run.zone===3?'mus/levi12.mp3':run.zone===4?'mus/error_boss.mp3':'mus/boss.mp3');/* грузим трек боя заранее, чтобы он звучал сразу при входе в комнату, без задержки на буферизацию */
-    if(enteringBoss||run.stages%4===0)openChoice(go);else go()}}
+    if(enteringBoss||run.stages%4===0)enterShop(go);else go()}}
 
 /* ---------- lobby ---------- */
 const ST={term:{x:A.x+130,y:A.y+150,label:'УЛУЧШЕНИЯ'},portal:{x:A.x+A.w-120,y:MIDY-45,label:'НАЧАТЬ ЗАБЕГ'},charSel:{x:480,y:A.y+233,label:'ВЫБОР ПЕРСОНАЖА'},
@@ -7513,7 +7535,8 @@ function drawWorld(){
     ctx.save();ctx.translate(-Math.round(camX),-Math.round(camY));drawWorldInner();ctx.restore();return}
   drawWorldInner()}
 function drawWorldInner(){
-  ctx.drawImage(room.floor,0,0,room.floor.width/DPR,room.floor.height/DPR);if(room.kind!=='officeApproach')drawDoors();
+  if(room.kind==='shop')shop.draw(A,drawDoors);
+  else{ctx.drawImage(room.floor,0,0,room.floor.width/DPR,room.floor.height/DPR);if(room.kind!=='officeApproach')drawDoors();}
   if(room.kind==='lobby')drawLobby();
   if(room.errorEnding&&room.errorEnding.phase==='door')drawErrorEndingDoor();
   if(room.portalReady){const pt=Math.sin(time*3)*4;portalFrame(W/2,MIDY+pt,100,148,'#1c140d','#4a3420',C.red);
@@ -7672,9 +7695,12 @@ function drawHUD(){ctx.fillStyle='#141316';ctx.fillRect(0,0,W,room.cam?50:A.y-24
     label(`DPS: ${dps3.toFixed(0)}`,W-24,38,20,C.ember,'right',FM);
     label(`средний ${avgDps.toFixed(0)} · всего ${Math.floor(trainTotal)} · [R] сброс`,W-24,62,11,C.muted,'right',FM);
   }else{
+  if(room.kind==='shop')label('МАГАЗИН',W/2,30,16,C.ink);
+  else{
   label(`${run.zone===2?'МИР АРХИТЕКТОРОВ':run.zone===3?'ГЛУБОКОВОДЬЕ':run.zone===4?'ОТЛАДКА':'ПУСТОШЬ'} · УРОВЕНЬ ${run.level}/6`,W/2,30,16,C.ink);
   const n=roomsIn(run.level);for(let i=0;i<n;i++){const x=W/2-(n-1)*14+i*28;ctx.fillStyle=i<run.roomIdx?C.acid:i===run.roomIdx?C.ink:'#3a373d';ctx.fillRect(x-8,42,16,10)}
   if(run.level===6){ctx.fillStyle=C.ember;ctx.fillRect(W/2-8,42,16,10)}
+  }
   tokenIcon(W-34,30,11);label(String(Math.floor(run.coins)),W-52,38,20,C.tech,'right');
   if(run.hard)label('ХАРДМОД',W-24,62,11,C.red,'right',FM);}
   if((P.kind==='tenn')||(P.kind==='warden'&&save.lv>=3)||(P.kind==='cain'&&save.cainLv>=3)){const x=W-200,y=26;ctx.fillStyle='#0c0b0d';ctx.fillRect(x,y,40,40);const cd=P.aoeCd/((P.kind==='cain'?15:6)*run.mods.aoeCd);ctx.fillStyle=cd>0?'#2a272c':(P.kind==='tenn'?C.tech:P.kind==='cain'?C.red:'#efeae2');ctx.fillRect(x+3,y+3,34,34);
@@ -8477,7 +8503,7 @@ function render(){ctx.setTransform(DPR,0,0,DPR,0,0);ctx.fillStyle='#141316';ctx.
   ctx.save();if(shake>0)ctx.translate(rand(-shake,shake)*.5,rand(-shake,shake)*.5);
   let renderFailure=null;
   if(room){try{drawWorld()}catch(err){renderFailure=err;console.error('World render:',err)}}ctx.restore();
-  try{drawHUD()}catch(err){renderFailure=renderFailure||err;console.error('HUD render:',err)}
+  try{if(room?.kind==='shop'&&state==='run'&&!paused)shop.drawUi();drawHUD()}catch(err){renderFailure=renderFailure||err;console.error('HUD render:',err)}
   // Render errors are reported to the browser console, not drawn over the arena.
   // The previous debug overlay covered the boss and persisted every frame.
   if(room&&room.officeCutscene)drawOfficeCutsceneUI();
