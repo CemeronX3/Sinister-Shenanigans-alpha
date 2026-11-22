@@ -1,0 +1,7 @@
+[
+  {
+    "file": "game.js",
+    "old": "    g.fillStyle='#060d70';g.fillRect(-64,-55,128,110);\n    g.strokeStyle='#f1f2ff';g.lineWidth=6;g.lineCap='square';g.lineJoin='miter';\n    g.beginPath();g.moveTo(-57,40);g.lineTo(-35,12);g.lineTo(-19,24);\n    g.lineTo(2,-5);g.lineTo(18,8);g.lineTo(45,-30);g.stroke();",
+    "new": "    g.fillStyle='#060d70';g.fillRect(-64,-55,128,110);\n    // Subtle economic-chart grid behind the line.\n    g.strokeStyle='rgba(95,145,245,.32)';g.lineWidth=1;g.beginPath();\n    for(let x=-64;x<=64;x+=16){g.moveTo(x,-55);g.lineTo(x,55)}\n    for(let y=-55;y<=55;y+=16){g.moveTo(-64,y);g.lineTo(64,y)}\n    g.stroke();\n    // The graph starts at the bottom-left corner and rises toward the token.\n    g.strokeStyle='#f1f2ff';g.lineWidth=5;g.lineCap='square';g.lineJoin='miter';\n    g.beginPath();g.moveTo(-64,54);g.lineTo(-44,30);g.lineTo(-31,38);\n    g.lineTo(-10,9);g.lineTo(4,22);g.lineTo(19,-6);\n    g.lineTo(29,2);g.lineTo(45,-30);g.stroke();"
+  }
+]
