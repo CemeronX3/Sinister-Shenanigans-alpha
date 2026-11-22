@@ -5657,7 +5657,7 @@ function drawSettings(){ctx.fillStyle='rgba(16,15,18,.94)';ctx.fillRect(0,0,W,H)
 
 /* ---------- drawing: characters ---------- */
 const voidShots=[],voidEffects=[];
-const VOID_TAP=.22,VOID_MAX_CHARGE=1.5,VOID_SKILL_CD=4;
+const VOID_TAP=.22,VOID_MAX_CHARGE=1.5,VOID_SKILL_CD=10;
 function voidPose(level,view,face,stride,moving,cast){
   const side=view==='side',back=view==='back',sign=face<0?-1:1;
   const sweep=cast>0?Math.sin(cast/.35*Math.PI):0;
@@ -5672,6 +5672,12 @@ function voidOrigin(part){
   return {x:P.x+x*pose.sign*WS,y:P.y+14+(y+pose.bob)*WS};
 }
 const voidAlive=e=>e?.alive&&!e.hidden;
+const voidProp=e=>e&&room.props.includes(e)&&!e.dead;
+const voidCanHit=e=>voidAlive(e)&&enemies.includes(e)||voidProp(e);
+function voidDamage(e,dmg){
+  if(voidProp(e))damageProp(e,dmg);
+  else if(voidAlive(e))damageEnemy(e,dmg);
+}
 function voidTarget(x,y){
   let chosen=null,best=Infinity;
   for(const e of enemies){
@@ -5679,6 +5685,13 @@ function voidTarget(x,y){
     const r=e.r||16;
     const d=Math.min(Math.hypot(x-e.x,y-e.y),Math.hypot(x-e.x,y-(e.y-r*.9)));
     if(d<Math.max(16,r*1.12)&&d<best){chosen=e;best=d}
+  }
+  if(chosen)return chosen;
+  for(const p of room.props){
+    if(p.dead)continue;
+    const dx=Math.abs(x-p.x),dy=y-p.y,r=p.r||12;
+    const d=Math.hypot(dx,dy+r*.75);
+    if(dx<=r+5&&dy>=-Math.max(27,r*2.8)&&dy<=r&&d<best){chosen=p;best=d}
   }
   return chosen;
 }
@@ -5693,7 +5706,7 @@ function updateVoidAttack(dt,stats,x,y){
   const charge=P.voidCharge;
   if(charge){
     const target=charge.target;
-    if(!enemies.includes(target)||!voidAlive(target))P.voidCharge=null;
+    if(!voidCanHit(target))P.voidCharge=null;
     else{
       P.face=target.x<P.x?-1:1;P.view='side';
       if(mouse.down)charge.held=Math.min(VOID_MAX_CHARGE,charge.held+dt);
@@ -5710,7 +5723,7 @@ function updateVoidAttack(dt,stats,x,y){
           const power=clamp((charge.held-VOID_TAP)/(VOID_MAX_CHARGE-VOID_TAP),0,1);
           const from=voidOrigin('eye');
           voidEffects.push({type:'laser',from,x:target.x,y:target.y-5,t:.19,max:.19,power});
-          damageEnemy(target,(35+65*power)*stats.dmgMul);sfx('laser');
+          voidDamage(target,(35+65*power)*stats.dmgMul);sfx('laser');
         }
       }
     }
@@ -5719,7 +5732,7 @@ function updateVoidAttack(dt,stats,x,y){
     const aim=P.aim,from=voidOrigin('tip');
     P.aoeCd=VOID_SKILL_CD*run.mods.aoeCd;P.thrust=.35;
     for(const delta of [-.58,-.19,.19,.58]){
-      voidShots.push({type:'star',...from,angle:aim+delta,t:0,dmg:22*stats.dmgMul*run.mods.aoeDmg,stun:run.mods.skillStun});
+      voidShots.push({type:'star',...from,angle:aim+delta,t:0,dmg:44*stats.dmgMul*run.mods.aoeDmg,stun:run.mods.skillStun});
     }
     sfx('aoe');
   }
@@ -5732,7 +5745,7 @@ function updateVoidShots(dt){
     shot.t+=dt;
     if(shot.type==='orb'){
       const target=shot.target;
-      if(!enemies.includes(target)||!voidAlive(target))continue;
+      if(!voidCanHit(target))continue;
       const u=Math.min(1,shot.t/.64);
       shot.x=shot.from.x+(target.x-shot.from.x)*u;
       shot.y=shot.from.y+(target.y-shot.from.y)*u-Math.sin(u*Math.PI)*70;
@@ -5742,6 +5755,10 @@ function updateVoidShots(dt){
         if(!voidAlive(e))continue;
         if(e===target||Math.abs(e.x-shot.x)<(e.r||10)+6||Math.abs(e.y-shot.y)<(e.r||10)+6)
           damageEnemy(e,e===target?shot.dmg:shot.splash);
+      }
+      for(const p of room.props.slice()){
+        if(!p.dead&&(p===target||Math.abs(p.x-shot.x)<p.r+6||Math.abs(p.y-shot.y)<p.r+6))
+          damageProp(p,p===target?shot.dmg:shot.splash);
       }
       sfx('explode');
     }else if(shot.type==='star'){
@@ -5755,10 +5772,14 @@ function updateVoidShots(dt){
         const d=Math.hypot(e.x-shot.x,e.y-shot.y);
         if(d<best){target=e;best=d}
       }
+      if(!target)for(const p of room.props)if(!p.dead){
+        const d=Math.hypot(p.x-shot.x,p.y-shot.y);
+        if(d<best){target=p;best=d}
+      }
       if(target){
         if(best<(target.r||12)+420*dt){
-          if(shot.stun>0)target.stun=Math.max(target.stun||0,shot.stun);
-          damageEnemy(target,shot.dmg);continue;
+          if(shot.stun>0&&voidAlive(target))target.stun=Math.max(target.stun||0,shot.stun);
+          voidDamage(target,shot.dmg);continue;
         }
         const angle=Math.atan2(target.y-shot.y,target.x-shot.x)-shot.angle;
         shot.angle+=clamp(Math.atan2(Math.sin(angle),Math.cos(angle)),-11*dt,11*dt);
@@ -5771,7 +5792,7 @@ function updateVoidShots(dt){
 }
 let voidMask;
 function drawVoidTarget(e,draw){
-  if(P?.kind!=='void'||e!==(P.voidCharge?.target||P.voidHover)||!voidAlive(e)){draw();return;}
+  if(P?.kind!=='void'||e!==(P.voidCharge?.target||P.voidHover)||!voidCanHit(e)){draw();return;}
   if(!voidMask){voidMask=document.createElement('canvas');voidMask.width=voidMask.height=640}
   const mask=voidMask.getContext('2d'),original=ctx,ox=Math.floor(e.x)-320,oy=Math.floor(e.y)-320;
   mask.setTransform(1,0,0,1,0,0);mask.clearRect(0,0,640,640);mask.save();mask.translate(-ox,-oy);
@@ -5787,7 +5808,7 @@ function drawVoidEffects(){
   const circle=(x,y,r,color)=>{g.fillStyle=color;g.beginPath();g.arc(x,y,r,0,6.283);g.fill()};
   g.save();
   const charge=P.voidCharge;
-  if(charge&&charge.held>=VOID_TAP&&voidAlive(charge.target)){
+  if(charge&&charge.held>=VOID_TAP&&voidCanHit(charge.target)){
     const from=voidOrigin('eye');
     line(from.x,from.y,charge.target.x,charge.target.y-5,charge.held>=VOID_MAX_CHARGE?'#ffb3ba':'#ff394e',1.2);
   }
@@ -8180,7 +8201,7 @@ function drawWorldInner(){
   for(const e of enemies)if(e.type==='creatorman'&&e.alive)drawCMAttackFX(e);
   for(const q of potions)drawPotion(q);
   for(const c of pickups){const bob=Math.sin(time*6+c.x)*1.5;tokenIcon(c.x,c.y+bob,8)}
-  const ents=[];for(const p of room.props)if(!p.dead)ents.push({y:p.y+p.r*.5,d:()=>drawProp(p)});if(room.kind==='lobby')lobbyEnts(ents);if(run&&run.pet&&room.kind!=='lobby'){const pt=run.pet;ents.push({y:pt.y,d:()=>drawTennVision(pt.x,pt.y,PET_S,pt.face,pt.wheel,pt.aim,pt.zap,false)})}if(run&&run.observer&&room.kind!=='lobby'){const ob=run.observer;ents.push({y:ob.y+20,d:()=>drawObserver(ob)})}
+  const ents=[];for(const p of room.props)if(!p.dead)ents.push({y:p.y+p.r*.5,d:()=>drawVoidTarget(p,()=>drawProp(p))});if(room.kind==='lobby')lobbyEnts(ents);if(run&&run.pet&&room.kind!=='lobby'){const pt=run.pet;ents.push({y:pt.y,d:()=>drawTennVision(pt.x,pt.y,PET_S,pt.face,pt.wheel,pt.aim,pt.zap,false)})}if(run&&run.observer&&room.kind!=='lobby'){const ob=run.observer;ents.push({y:ob.y+20,d:()=>drawObserver(ob)})}
   for(const e of enemies)ents.push({y:e.type==='boss'?e.y+90:e.type==='mini'?e.y+110:e.type==='mike'?e.y+90:e.type==='levi'?e.y+90:e.type==='leviCrystal'?e.y+60:e.type==='creatorman'?e.y+110:e.type==='creatorTower'?e.y+75:e.type==='errorBoss'?e.y+100:e.type==='pozhiratel'?e.y+40:e.y+e.r,d:()=>drawVoidTarget(e,()=>e.type==='boss'?drawBoss(e,e.x,e.y,1,e.t):e.type==='mini'?drawMini(e,e.x,e.y):e.type==='mike'?drawMike(e,e.x,e.y):e.type==='levi'?drawLevi(e,e.x,e.y,1,e.t):e.type==='leviSeg'?drawLeviSeg(e):e.type==='leviCrystal'?drawLeviCrystal(e):e.type==='creatorman'?drawCreatorMan(e,e.x,e.y):e.type==='creatorTower'?drawCreatorTowerFull(e):e.type==='errorBoss'?drawErrorBoss(e,e.x,e.y):e.type==='pozhiratel'?drawPozhiratel(e,e.x,e.y):drawEnemy(e))});
   if(P?.kind==='void')drawVoidEffects();
   if(room.miniIntro!=null){const a=1-room.miniIntro/1.2;ents.push({y:MIDY+110,d:()=>{ctx.globalAlpha=a;drawMini({t:time,flash:0,phase:1,atk:null},W/2+120,MIDY);ctx.globalAlpha=1}})}
@@ -8249,7 +8270,6 @@ function drawHUD(){ctx.fillStyle='#141316';ctx.fillRect(0,0,W,room.cam?50:A.y-24
   if(P.kind==='void'){
     const cd=Math.max(0,P.voidOrbCd||0);
     label(cd>0?'СФЕРА · '+cd.toFixed(1)+' с':'СФЕРА · ГОТОВА',24,58,12,C.lav,'left',FM);
-    if(save.voidLv>=3)label(P.aoeCd>0?'Q · '+P.aoeCd.toFixed(1)+' с':'Q · ГОТОВ',380,65,11,C.acid,'left',FM);
   }else{
   const full=P.tension>=100&&!P.ult;const tc=P.ult?C.ember:full?(Math.floor(time*6)%2?C.ember:'#ffd0a0'):C.acid;
   label(P.ult?'УЛЬТ. ФОРМА АКТИВНА':full?'НАПРЯЖЕНИЕ — ЖМИ ПРОБЕЛ':'НАПРЯЖЕНИЕ',24,56,11,P.ult||full?C.ember:C.muted,'left',FM);
@@ -8274,6 +8294,19 @@ function drawHUD(){ctx.fillStyle='#141316';ctx.fillRect(0,0,W,room.cam?50:A.y-24
   if((P.kind==='tenn')||(P.kind==='warden'&&save.lv>=3)||(P.kind==='cain'&&save.cainLv>=3)){const x=W-200,y=26;ctx.fillStyle='#0c0b0d';ctx.fillRect(x,y,40,40);const cd=P.aoeCd/((P.kind==='cain'?15:6)*run.mods.aoeCd);ctx.fillStyle=cd>0?'#2a272c':(P.kind==='tenn'?C.tech:P.kind==='cain'?C.red:'#efeae2');ctx.fillRect(x+3,y+3,34,34);
     if(cd>0){ctx.fillStyle='#4a4650';ctx.fillRect(x+3,y+3,34,34*cd)}ctx.strokeStyle=cd>0?'#5c5862':'#0c0b0d';ctx.lineWidth=2;for(let i=1;i<=2;i++){ctx.beginPath();ctx.arc(x+20,y+20,i*6,0,6.283);ctx.stroke()}
     label('Q',x-8,y+26,13,C.muted,'right',FM)}
+  if(P.kind==='void'&&save.voidLv>=3){
+    const x=W-200,y=26,cd=clamp(P.aoeCd/(VOID_SKILL_CD*run.mods.aoeCd),0,1);
+    ctx.fillStyle='#0c0b0d';ctx.fillRect(x,y,40,40);
+    ctx.fillStyle=cd?'#2a272c':'#dfd2ff';ctx.fillRect(x+3,y+3,34,34);
+    if(cd){ctx.fillStyle='#4a4650';ctx.fillRect(x+3,y+3,34,34*cd)}
+    ctx.strokeStyle=cd?'#948aa8':'#261942';ctx.lineWidth=1.6;
+    for(const spin of [0,Math.PI]){
+      ctx.beginPath();
+      for(let i=0;i<3;i++){const a=-Math.PI/2+spin+i*Math.PI*2/3;ctx[i?'lineTo':'moveTo'](x+20+10*Math.cos(a),y+20+10*Math.sin(a))}
+      ctx.closePath();ctx.stroke();
+    }
+    label('Q',x-8,y+26,13,C.muted,'right',FM);
+  }
   const mcore=enemies.find(e=>e.type==='mikeCore');
   const boss=mcore||enemies.find(e=>BIG(e)&&e.type!=='creatorTower'&&!(e.type==='errorBoss'&&e.phase===2));
   if(boss&&boss.type==='mikeCore'&&boss.rig&&!boss.rig.shieldDown){const w=520,x=W/2-w/2,y=H-26;
