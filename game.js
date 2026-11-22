@@ -746,6 +746,8 @@ function enterShop(next){
   if(run.pet){run.pet.x=P.x-10;run.pet.y=P.y+40}
   if(run.observer){run.observer.x=P.x-42;run.observer.y=P.y-50}
   room.solids=shop.enter(run,P);
+  musStop(.12);
+  musicPlay('mus/Shop.mp3');
   banner('МАГАЗИН','');
 }
 function finalize(won){
@@ -5198,7 +5200,7 @@ function updRun(dt){
   if(room.kind==='shop'){
     updPlayer(dt);updPet(dt);updObserver(dt);updWorld(dt);
     shop.update(dt,pressed.has('KeyE')||pressed.has('Enter'),buyPerk);
-    if(P.x>A.x+A.w+4)room.shopNext();
+    if(P.x>A.x+A.w+4){musicStop();room.shopNext();}
     return;
   }
   if(room.endT!=null){room.endT-=dt;updWorld(dt);if(room.endT<=0){
@@ -5238,7 +5240,7 @@ function updRun(dt){
     const nextLevel=run.roomIdx>=roomsIn(run.level);
     const go=()=>{if(nextLevel)enterLevel(run.level+1);else enterRoom()};
     run.stages=(run.stages||0)+1;const enteringBoss=nextLevel&&run.level+1===6;
-    if(enteringBoss)musicPrep(run.zone===2?'mus/titan.mp3':run.zone===3?'mus/levi12.mp3':run.zone===4?'mus/error_boss.mp3':'mus/boss.mp3');/* грузим трек боя заранее, чтобы он звучал сразу при входе в комнату, без задержки на буферизацию */
+    if(enteringBoss)musicPreload(run.zone===2?'mus/titan.mp3':run.zone===3?'mus/levi12.mp3':run.zone===4?'mus/error_boss.mp3':'mus/boss.mp3');/* грузим трек боя заранее, чтобы он звучал сразу при входе в комнату, без задержки на буферизацию */
     if(enteringBoss||run.stages%4===0)enterShop(go);else go()}}
 
 /* ---------- lobby ---------- */
