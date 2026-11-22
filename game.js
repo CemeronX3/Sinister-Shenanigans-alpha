@@ -753,7 +753,7 @@ const inRock=(x,y)=>room.rocks.some(k=>x>k.x&&x<k.x+k.w&&y>k.y&&y<k.y+k.h);
 
 /* ---------- flow ---------- */
 function toLobby(){musicStop();musStop(.6);state='lobby';run=null;paused=false;clearArrays();room=newRoom('lobby');P=makePlayer();P.x=W/2;P.y=MIDY+60;ui.banner=null}
-function startRun(zone){run={level:1,roomIdx:0,zone:zone||1,mods:defMods(),coins:0,kills:0,stages:0,hard:save.hard,picked:[]};P=makePlayer();state='run';enterLevel(1)}
+function startRun(zone,previousResult=null){run={previousResult,level:1,roomIdx:0,zone:zone||1,mods:defMods(),coins:0,kills:0,stages:0,hard:save.hard,picked:[]};P=makePlayer();state='run';enterLevel(1)}
 const roomsIn=l=>l===6?1:3;
 function enterLevel(l){run.level=l;run.roomIdx=0;
   if(run.zone===2)enterRoom(),banner(`МИР АРХИТЕКТОРОВ · УРОВЕНЬ ${l}`,l===6?'Крыша штаб-квартиры':'');
@@ -815,8 +815,13 @@ function finalize(won){
   const rooms=(run.stages||0)+(won?1:0);
   const earned=Math.floor((run.kills*2+rooms*5+tokens*3+(won?30:0))*run.mods.coinMul*(run.hard?2:1));
   save.coins+=earned;save.runs++;if(won)save.wins++;persist();
-  ui.result={won,coins:earned,tokens,kills:run.kills,rooms,level:run.level,
-    picked:run.picked.slice(),hard:run.hard,rush:!!run.rush,zone:run.zone};
+  const earlier=run.previousResult;
+  const collectedTokens=run.coins+(run.tokensSpent||0)+(earlier?.collectedTokens??0);
+  ui.result={won,coins:earned+(earlier?.coins??0),
+    tokens:Math.floor(collectedTokens),collectedTokens,
+    kills:run.kills+(earlier?.kills??0),rooms:rooms+(earlier?.rooms??0),level:run.level,
+    picked:[...(earlier?.picked??[]),...run.picked],hard:run.hard,rush:!!run.rush,zone:run.zone};
+  run.result=ui.result;
 }
 
 /* ---------- fx ---------- */
@@ -5257,7 +5262,9 @@ function updRun(dt){
   if(ui.cmLine){ui.cmLine.t=(ui.cmLine.t||0)+dt;if(ui.cmLine.t>=(ui.cmLine.dur||3.4))ui.cmLine=null;}
   if(room.kind==='shop'){
     updPlayer(dt);updPet(dt);updObserver(dt);updWorld(dt);
+    const balance=run.coins;
     shop.update(dt,pressed.has('KeyE')||pressed.has('Enter'),buyPerk);
+    if(run.coins<balance)run.tokensSpent=(run.tokensSpent||0)+balance-run.coins;
     if(P.x>A.x+A.w+4){musicStop();room.shopNext();}
     return;
   }
@@ -5268,13 +5275,13 @@ function updRun(dt){
       else{finalize(room.endKind==='win');state=room.endKind==='win'?'win':'dead'}}return}
   if(room.crystalGet!=null){room.crystalGet-=dt;updWorld(dt);if(room.crystalGet<=0){room.crystalGet=null;room.gateX=W/2;room.gateY=MIDY;room.gateReady=true;
       banner('ВРАТА ОТКРЫЛИСЬ','Поднеси кристалл к рамке [E]')}return}
-  if(room.portalReady&&Math.hypot(P.x-W/2,P.y-MIDY)<40)startRun(room.portalZone||2);
+  if(room.portalReady&&Math.hypot(P.x-W/2,P.y-MIDY)<40){startRun(room.portalZone||2,run.result);return;}
   if(room.gateReady&&!room.gateUsed&&pressed.has('KeyE')&&Math.hypot(P.x-room.gateX,P.y-room.gateY)<70){
     room.gateUsed=true;room.gateText=2.2;banner('ВЫ ПОДНЕСЛИ КРИСТАЛЛ К РАМКЕ...','');sfx('pick')}
   if(room.gateText!=null){room.gateText-=dt;if(room.gateText<=0){room.gateText=null;room.portalActive=true;shake=10;flashScreen=.3;
       banner('ПОРТАЛ АКТИВИРОВАН','Войди в портал');sfx('boss')}}
   // портал после финальной фазы Левиафана теперь ведёт в предисловие "Отладки" вместо заглушки "4 локация"
-  if(room.portalActive&&Math.hypot(P.x-room.gateX,P.y-room.gateY)<40)enterDebugIntro();
+  if(room.portalActive&&Math.hypot(P.x-room.gateX,P.y-room.gateY)<40){enterDebugIntro(run.result);return;}
   if(room.bossIntro!=null){room.bossIntro-=dt;if(room.bossIntro<=0){room.bossIntro=null;if(run.zone===2)spawnTitan();else if(run.zone===3)spawnLevi();else if(run.zone===4)spawnErrorBoss();else spawnBoss()}}
   if(room.leviTrans){room.leviTrans.t+=dt;if(room.leviTrans.t>=room.leviTrans.dur){const to=room.leviTrans.to;room.leviTrans=null;
     if(to===2)spawnLeviCrystal();else if(to===3){spawnLeviBody(3);musicPlay('mus/levi3.mp3')}}}
@@ -8004,7 +8011,7 @@ function drawResult(){
   tokenIcon(W/2-126,304,12);
   label('Собрано токенов: '+r.tokens,W/2-105,310,17,C.tech,'left',FM);
   coinIcon(W/2-155,364,14);
-  label('+'+r.coins+' МОНЕТ',W/2-128,373,26,C.coin,'left');
+  label((run?.previousResult?'ВСЕГО ': '+')+r.coins+' МОНЕТ',W/2-128,373,26,C.coin,'left');
   if(r.hard)label('ХАРДМОД: НАГРАДА ×2',W/2,405,13,C.red,'center',FM);
   label('Нажми ЛКМ или E, чтобы вернуться на базу',W/2,500,14,C.muted,'center',FM);
 }
@@ -8029,10 +8036,10 @@ const DI_LINES=[
   {sys:true, txt:'запуск капчи...'}];
 const DI_TRIG=[230,330,430,530,630,730]; // x-отметки, на которых появляется очередная реплика
 let DI=null;
-function enterDebugIntro(){state='debugIntro';paused=false;musicStop();musStop(.6);
-  DI={x:150,gy:MIDY+70,line:-1,lineT:0,talking:false,eyeOn:false,eye:0,fall:0,fy:0,fvy:0,gap:0,rot:0,done:false};sfx('boss')}
+function enterDebugIntro(previousResult=null){state='debugIntro';paused=false;musicStop();musStop(.6);
+  DI={previousResult,x:150,gy:MIDY+70,line:-1,lineT:0,talking:false,eyeOn:false,eye:0,fall:0,fy:0,fvy:0,gap:0,rot:0,done:false};sfx('boss')}
 function updDebugIntro(dt){const d=DI;
-  if(pressed.has('Escape')){startRun(4);return}
+  if(pressed.has('Escape')){startRun(4,d.previousResult);return}
   if(d.talking){d.lineT+=dt;const dur=d.line===DI_LINES.length-1?1.8:1.55;
     if(d.lineT>dur){d.talking=false;if(d.line===DI_LINES.length-1)d.fall=.0001}}
   else if(d.fall>0){d.fall+=dt;
@@ -8044,7 +8051,7 @@ function updDebugIntro(dt){const d=DI;
     const next=d.line+1;
     if(next<DI_LINES.length&&d.x>=DI_TRIG[next]){d.line=next;d.lineT=0;d.talking=true;d.moving=false;if(next===1)d.eyeOn=true;sfx('pick')}}
   if(d.eyeOn)d.eye=Math.min(1,d.eye+dt*2.2);
-  if(d.done&&(mouse.clicked||pressed.has('KeyE')||pressed.has('Enter')))startRun(4)}
+  if(d.done&&(mouse.clicked||pressed.has('KeyE')||pressed.has('Enter')))startRun(4,d.previousResult)}
 function drawDebugIntro(){const g=ctx;g.fillStyle='#07060a';g.fillRect(0,0,W,H);
   const d=DI,gy=d.gy;
   if(d.fall>0){const gap=d.gap,cx=d.x;g.fillStyle='#48454e';
