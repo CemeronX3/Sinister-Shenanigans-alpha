@@ -6492,9 +6492,16 @@ function perkIcon(id,cx,cy){const g=ctx;g.save();g.translate(cx,cy);g.lineCap='b
   }else if(id==='doublepay'){
     g.save();g.rotate(.09);
     g.fillStyle='#060d70';g.fillRect(-64,-55,128,110);
-    g.strokeStyle='#f1f2ff';g.lineWidth=6;g.lineCap='square';g.lineJoin='miter';
-    g.beginPath();g.moveTo(-57,40);g.lineTo(-35,12);g.lineTo(-19,24);
-    g.lineTo(2,-5);g.lineTo(18,8);g.lineTo(45,-30);g.stroke();
+    // Subtle economic-chart grid behind the line.
+    g.strokeStyle='rgba(95,145,245,.32)';g.lineWidth=1;g.beginPath();
+    for(let x=-64;x<=64;x+=16){g.moveTo(x,-55);g.lineTo(x,55)}
+    for(let y=-55;y<=55;y+=16){g.moveTo(-64,y);g.lineTo(64,y)}
+    g.stroke();
+    // The graph starts at the bottom-left corner and rises toward the token.
+    g.strokeStyle='#f1f2ff';g.lineWidth=5;g.lineCap='square';g.lineJoin='miter';
+    g.beginPath();g.moveTo(-64,54);g.lineTo(-44,30);g.lineTo(-31,38);
+    g.lineTo(-10,9);g.lineTo(4,22);g.lineTo(19,-6);
+    g.lineTo(29,2);g.lineTo(45,-30);g.stroke();
     g.save();g.translate(43,-31);g.rotate(-.18);
     g.shadowColor='#5ee9ff';g.shadowBlur=9;
     g.fillStyle='#0551a4';g.strokeStyle='#39eaff';g.lineWidth=4;
