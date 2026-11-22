@@ -372,7 +372,7 @@ const PROP_SETS_Z3={1:['ribs','vent','ribs','scallop'],2:['vent','ribs','wreck',
 const PROP_SETS_Z4={1:['rack','wireframe','rack','crtbug'],2:['rack','errstack','wireframe','crtbug'],3:['wireframe','rack','errstack','crtbug'],4:['errstack','wireframe','wireframe','crtbug','crtbug'],5:['wireframe','errstack','wireframe','rack','crtbug','crtbug'],6:['errstack','wireframe','crtbug']};
 /* lobby furniture: long table under the window, two round tables below */
 const LT={x:330,y:A.y+122,w:300};
-const SEATS=[{x:360,q:true},{x:420,s:true},{x:480,w:true},{x:540,t:true},{x:600,c:true}].map(o=>Object.assign(o,{long:true,fy:A.y+178}));
+const SEATS=[{x:360,v:true},{x:420,s:true},{x:480,w:true},{x:540,t:true},{x:600,c:true}].map(o=>Object.assign(o,{long:true,fy:A.y+178}));
 const SMALL=[{x:260,y:300},{x:480,y:515},{x:255,y:505},{x:700,y:505}];
 SMALL.forEach(t=>SEATS.push({x:t.x,q:true,small:t,fy:t.y+36}));
 const VEND={x:76,y:400};
@@ -5464,6 +5464,7 @@ function updLobby(dt){updPlayer(dt);updWorld(dt);
       else if(s.t){if(save.tenn&&save.char!=='tenn')charTalk('tenn')}
       else if(s.c){if(save.cain&&save.char!=='cain')charTalk('cain')}
       else if(s.s){if(save.senton&&save.char!=='senton')charTalk('senton')}
+      else if(s.v){if(save.void&&save.char!=='void')charTalk('void')}
       else npcTalk(si)}}
   if(n==='portal'&&Math.hypot(P.x-ST.portal.x,P.y-ST.portal.y)<34)openDiffPick()}
 const NPC_LINES=['Говорят, в Мире архитекторов улицы сами себя перестраивают...','Не ходи туда один, даже Варден возвращался не весь.','Слыхал про Синистера? Говорят, он уже близко.','Я тут просто... жду. Жду, когда это закончится.','Архитекторы не любят гостей. Особенно живых.','Если найдёшь монеты — не трать всё на зелья, прокачка важнее.','В Пустоши тихо не бывает. Даже когда тихо.'];
@@ -5472,7 +5473,8 @@ const WARDEN_LINES=['Каждый забег — это испытание. Не
 const TENN_LINES=['Знаешь, почему я всегда ношу ядро с собой? Потому что без него я просто парень с плохими шутками.','Говорят, Архитектор Титан серьёзный тип. А я говорю — ему просто нужно нормально посмеяться.','Что будет, если боссу подарить цветы вместо удара? ...Ладно, не проверял, но звучит весело.'];
 const CAIN_LINES=['В Пустоши держись подальше от толпы — там легко зажать в угол.','Мир архитекторов любит высоту и лазеры. Следи за красными линиями на полу.','Глубоководье — царство Левиафана. На последней фазе он кружит по всей арене, так что не стой на месте.'];
 const SENTON_LINES=['Так, ты идёшь в забег или мы тут до старости лет болтать будем? Я уже встал, видишь?','Мой секрет прост: пока ты думаешь — я уже выстрелил. Три раза. И перезарядился. Долго думаешь, короче.','Ладно-ладно, сяду, помолчу... Десять секунд прошло — всё, не могу, идём уже куда-нибудь!'];
-function charTalk(kind){const arr=kind==='warden'?WARDEN_LINES:kind==='tenn'?TENN_LINES:kind==='cain'?CAIN_LINES:SENTON_LINES;
+const VOID_LINES=['В темноте тоже есть следы. Просто смотреть надо дольше.','Глаз видит больше, чем я ему велел. Об этом лучше не спрашивай.','Посох? Да, он мой. Остальное тебя не касается.'];
+function charTalk(kind){const arr=kind==='void'?VOID_LINES:kind==='warden'?WARDEN_LINES:kind==='tenn'?TENN_LINES:kind==='cain'?CAIN_LINES:SENTON_LINES;
   ui.charLineIdx=ui.charLineIdx||{};const idx=(ui.charLineIdx[kind]||0)%arr.length;
   ui.npcLine={t:0,txt:arr[idx]};ui.charLineIdx[kind]=idx+1;sfx('pick')}
 
@@ -7902,7 +7904,8 @@ function drawLobbyHint(){if(!ui.hint||state!=='lobby')return;
   if(ui.hint.startsWith('seat')){const s=SEATS[+ui.hint.slice(4)];const y=s.long?LT.y-70:s.small.y-90;
     const txt=s.w?(save.char!=='warden'?'[E] Поговорить · Варден':'Место Вардена · ты играешь за него'):
       s.t?(!save.tenn?'Место Теннмена · ещё не разблокирован':save.char==='tenn'?'Место Теннмена · ты играешь за него':'[E] Поговорить · Теннмен'):
-      s.c?(!save.cain?'Место Каина · ещё не разблокирован':save.char==='cain'?'Место Каина · ты играешь за него':'[E] Поговорить · Каин'):'[E] Поговорить · ???';
+      s.c?(!save.cain?'Место Каина · ещё не разблокирован':save.char==='cain'?'Место Каина · ты играешь за него':'[E] Поговорить · Каин'):
+      s.v?(!save.void?'Место Войда · ещё не разблокирован':save.char==='void'?'Место Войда · ты играешь за него':'[E] Поговорить · Войд'):'[E] Поговорить · ???';
     hintBox(txt,s.x,y,(s.w||s.t||s.c)?C.ember:C.muted);return}
   const s=ST[ui.hint];if(ui.hint==='bossGate'){hintBox('[E] Портал боссфайтов',s.x,s.y-74,C.red);return}
   if(ui.hint==='charSel'){hintBox('[E] Выбор персонажа',s.x,s.y-58,C.acid);return}
@@ -7921,7 +7924,7 @@ function silhouette(x,y,s){s=s||1;const g=ctx;g.save();g.translate(x,y);g.fillSt
 function arms(x,y){ctx.fillStyle='#09080b';ctx.fillRect(x-15,y,7,9);ctx.fillRect(x+8,y,7,9)}
 function drawLongTable(){const g=ctx,ty=LT.y;
   for(const s of SEATS)if(s.long){chairBack(s.x,ty-50);
-    if(s.q)silhouette(s.x,ty-4,2.4);
+    if(s.v){if(!save.void)silhouette(s.x,ty-4,2.4);else if(save.char!=='void')drawVoid(g,s.x,ty-4,2.4,save.voidLv,'front',1,0,false,0,false)}
     else if(s.w){if(save.char!=='warden')drawWarden(g,s.x,ty-4,2.4,save.lv,false,1,0,-1.57,0,false,0,'front')}
     else if(s.t){if(!save.tenn)silhouette(s.x,ty-4,2.4);else if(save.char!=='tenn')drawTennman(g,s.x,ty-4,2.4,save.tennLv,1,0,-1.57,0,false,0,'front')}
     else if(s.c){if(!save.cain)silhouette(s.x,ty-4,2.5);else if(save.char!=='cain')drawCain(g,s.x,ty-4,2.5,save.cainLv,1,0,-1.57,0,false,0,'front')}
@@ -7930,8 +7933,8 @@ function drawLongTable(){const g=ctx,ty=LT.y;
   g.save();g.translate(hx,hy-6);g.rotate(time*.9);g.strokeStyle='rgba(182,242,74,.85)';g.lineWidth=1.5;hexPath(g,0,0,10,8);g.stroke();g.rotate(-time*1.8);hexPath(g,0,0,5,4);g.stroke();g.restore();
   g.fillStyle='#18171c';g.fillRect(LT.x,ty+26,LT.w,12);g.fillStyle='#2b2933';g.fillRect(LT.x,ty,LT.w,26);g.fillStyle='#3b3844';g.fillRect(LT.x,ty,LT.w,3);
   g.fillStyle='rgba(182,242,74,.6)';g.fillRect(LT.x,ty+26,LT.w,2);
-  for(const s of SEATS)if(s.long){g.fillStyle=s.w?'rgba(255,122,26,.6)':s.t?'rgba(90,160,255,.5)':s.c?'rgba(229,52,42,.55)':s.s?'rgba(63,214,255,.5)':'rgba(182,242,74,.35)';g.fillRect(s.x-9,ty+9,18,10);if(s.q)arms(s.x,ty+1)}
-  for(const s of SEATS)if(s.long)label(s.w?'ВАРДЕН':s.t?'ТЕННМЕН':s.c?'КАИН':s.s?'СЕНТОН':'???',s.x,ty-55,11,s.w?C.ember:s.t?'#5aa0ff':s.c?'#e5342a':s.s?'#3fd6ff':C.muted)}
+  for(const s of SEATS)if(s.long){g.fillStyle=s.w?'rgba(255,122,26,.6)':s.t?'rgba(90,160,255,.5)':s.c?'rgba(229,52,42,.55)':s.s?'rgba(63,214,255,.5)':'rgba(182,242,74,.35)';g.fillRect(s.x-9,ty+9,18,10);if(s.v&&!save.void)arms(s.x,ty+1)}
+  for(const s of SEATS)if(s.long)label(s.w?'ВАРДЕН':s.t?'ТЕННМЕН':s.c?'КАИН':s.s?'СЕНТОН':s.v&&save.void?'ВОЙД':'???',s.x,ty-55,11,s.w?C.ember:s.t?'#5aa0ff':s.c?'#e5342a':s.s?'#3fd6ff':s.v&&save.void?C.acid:C.muted)}
 function drawSmallTable(t){const g=ctx,x=t.x,y=t.y;chairBack(x,y-66);silhouette(x,y-13,1.9);
   g.fillStyle='#18171c';g.fillRect(x-5,y+4,10,14);g.beginPath();g.ellipse(x,y+18,15,4,0,0,6.283);g.fill();
   g.fillStyle='#23212a';g.beginPath();g.ellipse(x,y+3,38,13,0,0,6.283);g.fill();
