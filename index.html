@@ -64,7 +64,8 @@ canvas{touch-action:none}
 /* Original user-supplied illustration for Double Payment. */
 {
  const doublePayArt=new Image();
- doublePayArt.src='sprites/doublepay-original.png';
+ doublePayArt.src='sprites/doublepay-original.png?v=9738e20';
+ BOSS_PERK_ART.doublepay=doublePayArt;
  const oldPerkIcon=perkIcon;
  perkIcon=function(id,cx,cy){
    if(id!=='doublepay')return oldPerkIcon(id,cx,cy);
