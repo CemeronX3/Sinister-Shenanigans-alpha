@@ -16,7 +16,8 @@
     if(run&&run.kills>previous){
       const multiplier=run.mods.tokenMul||1;
       const a=Math.random()*Math.PI*2;
-      pickups.push({x:e.x,y:e.y,vx:Math.cos(a)*85,vy:Math.sin(a)*85,val:multiplier,t:0,token:true});
+      if(state==='bosschoice'){run.coins+=multiplier;} // boss portal pauses combat immediately
+      else pickups.push({x:e.x,y:e.y,vx:Math.cos(a)*85,vy:Math.sin(a)*85,val:multiplier,t:0,token:true});
       text(e.x,e.y-24,'+1 ТОКЕН',C.tech,13);
     }
   };
