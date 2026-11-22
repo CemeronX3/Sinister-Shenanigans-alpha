@@ -4857,7 +4857,30 @@ function drawObserver(o){
  g.beginPath();g.arc(0,-3,21,0,6.283);g.fillStyle='#f7f0f3';g.fill();g.strokeStyle='#35151d';g.lineWidth=3;g.stroke();
  for(let i=0;i<9;i++){const a=i*6.283/9;g.beginPath();g.moveTo(Math.cos(a)*18,Math.sin(a)*18-3);g.lineTo(Math.cos(a)*12,Math.sin(a)*12-3);g.strokeStyle='#c93649';g.lineWidth=1.7;g.stroke()}
  if(!o.maw){const a=Math.atan2(P.y-46-o.y,P.x-o.x),xx=Math.cos(a)*6*o.face,yy=Math.sin(a)*6;g.beginPath();g.arc(xx,yy-3,11,0,6.283);g.fillStyle='#c22539';g.fill();g.strokeStyle='#601525';g.lineWidth=2;g.stroke();g.fillStyle='#1b0710';g.fillRect(xx-4,yy-12,8,17);g.fillStyle='#fff';g.fillRect(xx-2,yy-10,3,4)}
- else{g.beginPath();g.ellipse(9,-3,15,16,0,0,6.283);g.fillStyle='#290710';g.fill();g.strokeStyle='#8b1b33';g.lineWidth=2.5;g.stroke();g.beginPath();g.ellipse(11,-3,7,9,0,0,6.283);g.fillStyle='#a21631';g.fill();for(let i=0;i<5;i++){const x=-4+i*5.5;g.fillStyle='#fff4e8';g.beginPath();g.moveTo(x,-16);g.lineTo(x+5,-16);g.quadraticCurveTo(x+5,-8,x+1,-2);g.quadraticCurveTo(x+1,-9,x,-16);g.closePath();g.fill();g.beginPath();g.moveTo(x,10);g.lineTo(x+5,10);g.quadraticCurveTo(x+5,3,x+1,-5);g.quadraticCurveTo(x+1,3,x,10);g.closePath();g.fill()}}
+ else{g.beginPath();g.ellipse(9,-3,15,16,0,0,6.283);g.fillStyle='#290710';g.fill();g.strokeStyle='#8b1b33';g.lineWidth=2.5;g.stroke();// Клыки растут по ВСЕМУ овальному контуру пасти, а не из двух горизонтальных рядов.
+ // Каждый клык ориентирован к центру, с неровным основанием и искривлённым кончиком.
+ const teeth=[
+  [-2.91,4.3,2.6,.13],[-2.52,6.4,3.3,-.16],[-2.13,4.7,2.5,.18],
+  [-1.75,6.1,3.1,-.09],[-1.37,3.8,2.4,.15],[-.99,5.6,2.9,-.12],
+  [-.57,4.5,2.6,.13],[-.13,6.0,3.1,-.17],[.31,4.2,2.4,.10],
+  [.75,5.8,3.2,-.15],[1.19,4.0,2.4,.12],[1.61,6.3,3.0,-.13],
+  [2.01,4.6,2.6,.17],[2.42,5.7,3.0,-.10],[2.79,3.9,2.4,.12]
+ ];
+ g.fillStyle='#fff4e8';
+ for(const [angle,len,width,bend] of teeth){
+  const ca=Math.cos(angle),sa=Math.sin(angle);
+  const bx=9+ca*13.5,by=-3+sa*14.4;
+  // Нормаль к эллипсу задаёт направление зуба внутрь пасти.
+  let nx=-ca/15,ny=-sa/16;const nl=Math.hypot(nx,ny);nx/=nl;ny/=nl;
+  const tx=-ny,ty=nx,half=width*.5;
+  const tipX=bx+nx*len+tx*bend*len,tipY=by+ny*len+ty*bend*len;
+  g.beginPath();
+  g.moveTo(bx-tx*half,by-ty*half);
+  g.quadraticCurveTo(bx+nx*len*.36-tx*half*.55,by+ny*len*.36-ty*half*.55,tipX,tipY);
+  g.quadraticCurveTo(bx+nx*len*.28+tx*half*.65,by+ny*len*.28+ty*half*.65,bx+tx*half,by+ty*half);
+  g.closePath();g.fill();
+ }
+ }
  g.restore()
 }
 
