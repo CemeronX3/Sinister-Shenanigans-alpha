@@ -61,31 +61,20 @@ canvas{touch-action:none}
 <script src="game.js?v=doublepay-grid-5010d34"></script>
 
 <script>
-/* Double Payment art: explicit post-load override, independent of cached perk art. */
+/* Original user-supplied illustration for Double Payment. */
 {
- const previousPerkIcon=perkIcon;
+ const doublePayArt=new Image();
+ doublePayArt.src='sprites/doublepay-original.png';
+ const oldPerkIcon=perkIcon;
  perkIcon=function(id,cx,cy){
-  if(id!=='doublepay')return previousPerkIcon(id,cx,cy);
-  const g=ctx;g.save();g.translate(cx,cy);g.rotate(.04);
-  g.fillStyle='#06105b';g.fillRect(-64,-55,128,110);
-  g.lineWidth=1.2;g.strokeStyle='rgba(89,169,255,.55)';g.beginPath();
-  for(let x=-64;x<=64;x+=16){g.moveTo(x,-55);g.lineTo(x,55)}
-  for(let y=-55;y<=55;y+=16){g.moveTo(-64,y);g.lineTo(64,y)}
-  g.stroke();
-  g.strokeStyle='#f4f5ff';g.lineWidth=5;g.lineJoin='miter';g.lineCap='square';
-  g.beginPath();g.moveTo(-64,55);g.lineTo(-44,26);g.lineTo(-30,35);
-  g.lineTo(-12,4);g.lineTo(1,15);g.lineTo(18,-11);
-  g.lineTo(28,-2);g.lineTo(44,-32);g.stroke();
-  g.save();g.translate(44,-32);g.shadowColor='#22eaff';g.shadowBlur=9;
-  g.fillStyle='#0759b8';g.strokeStyle='#35efff';g.lineWidth=4;
-  g.beginPath();for(let i=0;i<8;i++){let a=Math.PI/8+i*Math.PI/4;
-   if(i)g.lineTo(Math.cos(a)*21,Math.sin(a)*21);else g.moveTo(Math.cos(a)*21,Math.sin(a)*21)}
-  g.closePath();g.fill();g.stroke();
-  g.fillStyle='#51f6ff';g.beginPath();g.moveTo(0,-13);g.lineTo(13,0);
-  g.lineTo(0,13);g.lineTo(-13,0);g.closePath();g.fill();
-  g.fillStyle='#0c529c';g.beginPath();g.moveTo(0,-6);g.lineTo(6,0);
-  g.lineTo(0,6);g.lineTo(-6,0);g.closePath();g.fill();
-  g.restore();g.restore();
+   if(id!=='doublepay')return oldPerkIcon(id,cx,cy);
+   if(!doublePayArt.complete||!doublePayArt.naturalWidth)return oldPerkIcon(id,cx,cy);
+   const g=ctx;
+   g.save();
+   const width=128,height=110,aspect=doublePayArt.naturalWidth/doublePayArt.naturalHeight;
+   const w=Math.min(width,height*aspect),h=w/aspect;
+   g.drawImage(doublePayArt,cx-w/2,cy-h/2,w,h);
+   g.restore();
  };
 }
 </script>
