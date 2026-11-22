@@ -6707,12 +6707,6 @@ function drawWastelandEnemy(e){
       box(x-3,y-sz+2,4,4,edge);
     }
     box(4,-4,5,3,light);box(4,3,5,3,light);
-  }else if(e.type==='mimic'){
-    box(-17,-24,34,30,dark);box(-15,-26,29,5,edge);box(-13,-20,26,20,metal);
-    const jaw=Math.min(12,(e.open||0)*12);
-    box(-12,-17,24,10+jaw,'#251722');
-    for(let i=0;i<5;i++){box(-11+i*5,-16,2,3,'#dec4a4');box(-11+i*5,-9+jaw,2,3,'#dec4a4')}
-    box(-12,1+jaw,24,4,edge);
   }else{
     const spray=e.type==='sprayer',orb=e.type==='orbEye';
     const a=Math.atan2(P.y-e.y,P.x-e.x);
@@ -6734,7 +6728,7 @@ function drawWastelandEnemy(e){
 }
 
 function drawEnemy(e){
-  if(run?.zone===1&&['skeleton','eye','sprayer','worm','mimic','orbEye'].includes(e.type)){drawWastelandEnemy(e);return}
+  if(run?.zone===1&&['skeleton','eye','sprayer','worm','orbEye'].includes(e.type)){drawWastelandEnemy(e);return}
   const g=ctx;const fill=e.flash>0?'#fff':'#0c0b0d';
   if(e.type==='skeleton'){const bob=Math.sin(e.t*4)*2;shadow(e.x,e.y+e.r,14);g.save();g.translate(e.x,e.y+bob);g.scale(e.face,1);g.fillStyle=fill;g.strokeStyle=fill;
     g.beginPath();g.moveTo(-14,14);g.lineTo(14,14);g.lineTo(4,0);g.lineTo(-4,0);g.closePath();g.fill();
@@ -6758,7 +6752,11 @@ function drawEnemy(e){
     starEye(e.x,e.y+bob,22+urg*5,{fl:e.flash>0,kind:'orb',eyeCol:C.ember,t:e.t,seed:e.seed})}
   else if(e.type==='sprayer'){shadow(e.x,e.y+e.r,13);
     eyeCube(e.x,e.y-4,30,{fl:e.flash>0,kind:'maw',look:e.ang,mouth:e.state==='spray'?.8+Math.sin(e.t*30)*.2:(e.state==='wind'?.3+(1-e.st/.4)*.4:0),t:e.t,seed:e.seed})}
-  else if(e.type==='mimic'){shadow(e.x,e.y+e.r,15);drawTV(e.x,e.y+8,e.flash>0,true,e.open||0,e.t,e.face||1,0)}
+  else if(e.type==='mimic'){
+    const disguised=run?.zone===1&&e.state==='dormant';
+    if(disguised){shadow(e.x,e.y+3,PDEF.tv.r);drawTV(e.x,e.y+2,e.flash>0,false,0,time,1,e.seed||0)}
+    else{shadow(e.x,e.y+e.r,15);drawTV(e.x,e.y+8,e.flash>0,true,e.open||0,e.t,e.face||1,0)}
+  }
   else if(e.type==='eyeglitch'){const bob=Math.sin(e.t*3)*3;shadow(e.x,e.y+GB_HH+6,20);
     g.save();g.translate(e.x,e.y+bob);
     g.fillStyle=fill;g.strokeStyle='#efeae2';g.lineWidth=2;
@@ -7545,7 +7543,7 @@ function lobbyEnts(ents){ents.push({y:LT.y+38,d:drawLongTable});for(const t of S
   ents.push({y:VEND.y+50,d:()=>drawVending(VEND.x,VEND.y)});for(const c of CHAIRS)ents.push({y:c.y,d:()=>drawChair(c)})}
 function drawProp(p){const g=ctx,c=PDEF[p.k].cols,fl=p.flash>0,F=col=>fl?'#fff':col;const x=p.x+(p.shk>0?rand(-2,2):0),y=p.y;
   shadow(x,y+3,p.r);
-  if(run?.zone===1&&(room.kind==='combat'||room.kind==='boss')){
+  if(p.k!=='tv'&&run?.zone===1&&(room.kind==='combat'||room.kind==='boss')){
     const pale=p.k==='bones'||p.k==='pillar';
     const box=(dx,dy,w,h,col)=>{g.fillStyle=F(col);g.fillRect(x+dx,y+dy,w,h)};
     const shell=pale?'#8c7569':'#654640',highlight=pale?'#b49b82':'#aa6e51';
@@ -7557,8 +7555,7 @@ function drawProp(p){const g=ctx,c=PDEF[p.k].cols,fl=p.flash>0,F=col=>fl?'#fff':
       box(-12,-rise,24,rise+4,shell);box(-12,-rise,24,4,highlight);
       box(-12,0,24,4,'#352a32');box(-9,-rise+7,2,rise-8,'#3e3036');
       box(7,-rise+7,2,rise-8,'#3e3036');
-      if(p.k==='tv'){box(-7,-rise+7,14,11,'#291f2c');box(-5,-rise+12,9,2,'#d27e55')}
-      else if(p.k==='barrel'){box(-12,-rise+8,24,3,'#383039');box(-12,-6,24,3,'#383039')}
+      if(p.k==='barrel'){box(-12,-rise+8,24,3,'#383039');box(-12,-6,24,3,'#383039')}
       else if(p.k==='bones'){box(-6,-9,4,3,'#33272e');box(2,-9,4,3,'#33272e')}
       else{box(-4,-rise+8,8,5,'#3f3037');box(-3,-rise+9,6,2,'#d99465')}
     }
