@@ -1019,11 +1019,60 @@ function hitProp(x,y,r){for(const p of room.props)if(!p.dead&&Math.hypot(p.x-x,p
 function shieldBreak(){P.shEn=0;P.shield=false;P.shBroken=2;P.shDelay=2;text(P.x,P.y-66,'ЩИТ ПРОБИТ',C.red,14);sfx('shbreak');burst(P.x+Math.cos(P.aim)*28,P.y-16+Math.sin(P.aim)*28,18,['#efeae2','#8f8a95'],200,4,.5)}
 function shieldBlocks(x,y,r){if(!P.shield)return false;const cx=P.x,cy=P.y-16,d=Math.hypot(x-cx,y-cy);if(d>34+r)return false;
   let da=Math.atan2(y-cy,x-cx)-P.aim;while(da>Math.PI)da-=6.283;while(da<-Math.PI)da+=6.283;return Math.abs(da)<1.15}
-function drawShield(){const g=ctx,cx=P.x,cy=P.y-16;
-  if(P.shield){const col=P.ult?'255,122,26':'239,234,226',a=P.aim;g.fillStyle=`rgba(${col},.16)`;g.beginPath();g.moveTo(cx,cy);g.arc(cx,cy,34,a-1.15,a+1.15);g.closePath();g.fill();
-    g.strokeStyle=`rgba(${col},${(.5+P.shEn/200).toFixed(2)})`;g.lineWidth=4;g.beginPath();g.arc(cx,cy,34,a-1.15,a+1.15);g.stroke();
-    g.lineWidth=3;for(let i=0;i<5;i++){const t=a-.9+i*.45;g.strokeStyle=i%2?`rgba(${col},.4)`:'rgba(143,138,149,.7)';g.beginPath();g.arc(cx,cy,28,t-.12,t+.12);g.stroke()}}
-  if(P.shEn<100||P.shBroken>0){const w=36;g.fillStyle='rgba(12,11,13,.75)';g.fillRect(cx-w/2,P.y+20,w,5);g.fillStyle=P.shBroken>0?C.red:'#cfc7e6';g.fillRect(cx-w/2+1,P.y+21,(w-2)*Math.max(0,P.shEn)/100,3)}}
+const PLAYER_SHIELD_COLORS={
+  warden:['#ffeac4','#ff9a42'],tenn:['#71baff','#b8f752'],
+  cain:['#ff6555','#ffc482'],senton:['#5ee6ff','#ffd568'],void:['#bf8aff','#f3d8ff']
+};
+function drawShield(){
+  const g=ctx,cx=P.x,cy=P.y-16;
+  const [color,accent]=PLAYER_SHIELD_COLORS[P.kind]||PLAYER_SHIELD_COLORS.warden;
+  if(P.shield){
+    g.save();g.translate(cx,cy);g.rotate(P.aim);
+    g.globalAlpha=.55+.45*P.shEn/100;
+    g.fillStyle=color+'29';g.strokeStyle=color;g.lineWidth=2;g.lineJoin='round';
+    g.beginPath();g.moveTo(0,0);g.arc(0,0,34,-1.15,1.15);g.closePath();g.fill();
+    g.beginPath();g.arc(0,0,34,-1.15,1.15);g.stroke();
+    const line=(...points)=>{
+      g.beginPath();g.moveTo(...points[0]);
+      for(const point of points.slice(1))g.lineTo(...point);
+      g.stroke();
+    };
+    g.strokeStyle=accent;
+    switch(P.kind){
+      case 'tenn': // Световые сегменты и зелёные контакты.
+        for(let i=-2;i<=2;i++){
+          const angle=i*.42;
+          g.beginPath();g.arc(0,0,28,angle-.13,angle+.13);g.stroke();
+          g.fillStyle=accent;g.fillRect(23*Math.cos(angle)-1.5,23*Math.sin(angle)-1.5,3,3);
+        }
+        break;
+      case 'cain': // Скошенные бронепластины и красное ядро.
+        line([16,-25],[24,-18],[29,-6]);line([29,6],[24,18],[16,25]);
+        g.fillStyle=color;g.fillRect(23,-4,7,8);
+        break;
+      case 'senton': // Золотые лучи и голубой центр.
+        for(const angle of [-.9,-.52,.52,.9]){
+          line([21*Math.cos(angle),21*Math.sin(angle)],[31*Math.cos(angle),31*Math.sin(angle)]);
+        }
+        g.beginPath();g.arc(25,0,4,0,Math.PI*2);g.stroke();
+        break;
+      case 'void': // Магические ромбы и разорванная внутренняя дуга.
+        for(const angle of [-.78,0,.78]){
+          g.save();g.rotate(angle);line([21,0],[26,-4],[31,0],[26,4],[21,0]);g.restore();
+        }
+        break;
+      default: // Светлые шевроны в форме наконечника.
+        line([16,-23],[27,-12],[32,0],[27,12],[16,23]);
+        line([14,-12],[24,0],[14,12]);
+    }
+    g.restore();
+  }
+  if(P.shEn<100||P.shBroken>0){
+    const w=36;g.fillStyle='rgba(12,11,13,.75)';g.fillRect(cx-w/2,P.y+20,w,5);
+    g.fillStyle=P.shBroken>0?C.red:color;
+    g.fillRect(cx-w/2+1,P.y+21,(w-2)*Math.max(0,P.shEn)/100,3);
+  }
+}
 function hurtPlayer(dmg){if(P.inv>0||P.dead||room.endT!=null)return;
   if(P.dashing&&(P.kind==='senton'||(run&&run.mods.dash)))return;
   if(run&&run.mods.dodge>0&&Math.random()<run.mods.dodge){P.inv=.2;P.flickerT=1.5;text(P.x,P.y-56,'УКЛОНЕНИЕ',C.acid,15);sfx('pick');return}
