@@ -6038,7 +6038,7 @@ function drawVoidEffects(){
   g.restore();
 }
 
-function drawVoid(g,x,y,scale,level,view,face,stride,moving,cast,charged){
+function drawVoid(g,x,y,scale,level,view,face,stride,moving,cast,charged,resting=false){
 const box=(x,y,w,h,color)=>{g.fillStyle=color;g.fillRect(x,y,w,h)};
 function path(points,color,width=0){
  g.beginPath();points.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));
@@ -6051,7 +6051,8 @@ function spiral(x,y,r,glow){
  for(let i=0;i<=36;i++){const a=.75+i/36*Math.PI*3.5,k=r*(1-i/41);pts.push([x+Math.cos(a)*k,y+Math.sin(a)*k])}
  path(pts,glow?'#fbffff':'#d8d9e4',3.8);
 }
- const {side,back,sign,bob,grip,tip,eye}=voidPose(level,view,face,stride,moving,cast);
+ const {side,back,sign,bob,grip:aimGrip,tip:aimTip,eye}=voidPose(level,view,face,stride,moving,cast);
+ const grip=resting?[4.5,-9.8]:aimGrip,tip=resting?[5.1,-5.4]:aimTip;
  const clock=time;
  const coat=level===1?'#16151d':'#17152d',leaf='#86d842';
  const w=side?2.2:3.6,walk=Math.sin(stride)*Number(moving);
@@ -6076,8 +6077,10 @@ function spiral(x,y,r,glow){
  const weapon=()=>{
   const shoulder=[side?.6:3.4,-16.8],joint=[shoulder[0]+1.35,-13.65];
   path([shoulder,joint,grip],coat,1.9);
+  if(!resting){
   path([[grip[0]-(tip[0]-grip[0])*1.45,grip[1]-(tip[1]-grip[1])*1.45],tip],'#535465',.76);
   g.save();g.translate(...tip);g.scale(.27,.27);spiral(0,0,12,cast>0);g.restore();
+  }
   box(grip[0]-.8,grip[1]-.8,1.6,1.6,'#0a0910');
   if(level>1)box(joint[0]-.35,joint[1]-.35,.7,.7,leaf);
  };
@@ -8429,17 +8432,17 @@ function drawLobbySeat(s){
   const g=ctx,{x,y,color}=s;
   const active=s.w&&save.char==='warden'||s.v&&save.char==='void'||s.s&&save.char==='senton'||s.t&&save.char==='tenn'||s.c&&save.char==='cain';
   g.save();g.translate(x,y);
-  lobbyShape(g,[[-34,3],[-34,-47],[-24,-56],[24,-56],[34,-47],[34,3]],'#2b2247',color+'a0');
-  lobbyShape(g,[[-25,-6],[-25,-44],[-18,-49],[18,-49],[25,-44],[25,-6]],'#1a1a34');
-  g.fillStyle=color;g.fillRect(-29,-35,3,24);g.fillRect(26,-35,3,24);
-  lobbyShape(g,[[-34,-3],[34,-3],[34,4],[-34,4]],active?'#574272':'#403459',color);
+  lobbyShape(g,[[-23,3],[-23,-47],[-16,-56],[16,-56],[23,-47],[23,3]],'#2b2247',color+'a0');
+  lobbyShape(g,[[-17,-6],[-17,-43],[-12,-49],[12,-49],[17,-43],[17,-6]],'#1a1a34');
+  g.fillStyle=color;g.fillRect(-20,-35,2,24);g.fillRect(18,-35,2,24);
+  lobbyShape(g,[[-23,-3],[23,-3],[23,4],[-23,4]],active?'#574272':'#403459',color);
   g.restore();
   if(!active){
-    if(s.w)drawWarden(g,x,y-5,2,save.lv,false,1,0,-1.57,0,false,0,'front');
-    else if(s.v&&save.void)drawVoid(g,x,y-5,2,save.voidLv,'front',1,0,false,0,false);
-    else if(s.s&&save.senton)drawSenton(g,x,y-5,2,save.sentonLv,1,0,-1.57,0,false,0,'front');
-    else if(s.t&&save.tenn)drawTennman(g,x,y-5,2,save.tennLv,1,0,-1.57,0,false,0,'front');
-    else if(s.c&&save.cain)drawCain(g,x,y-5,2,save.cainLv,1,0,-1.57,0,false,0,'front');
+    if(s.w)drawWarden(g,x,y-5,2,save.lv,false,1,0,Math.PI/2,0,false,0,'front');
+    else if(s.v&&save.void)drawVoid(g,x,y-5,2,save.voidLv,'front',1,0,false,0,false,true);
+    else if(s.s&&save.senton)drawSenton(g,x,y-5,2,save.sentonLv,1,0,Math.PI/2,0,false,0,'front');
+    else if(s.t&&save.tenn)drawTennman(g,x,y-5,2,save.tennLv,1,0,Math.PI/2,0,false,0,'front');
+    else if(s.c&&save.cain)drawCain(g,x,y-5,2,save.cainLv,1,0,Math.PI/2,0,false,0,'front');
     else silhouette(x,y-5,1.65);
   }
   label(s.name,x,y-62,10,color);
