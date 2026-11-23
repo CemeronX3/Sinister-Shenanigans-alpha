@@ -8604,13 +8604,12 @@ function drawHUD(){ctx.fillStyle='#141316';ctx.fillRect(0,0,W,room.cam?50:A.y-24
     label('[N] настройки',W-24,76,11,C.muted,'right',FM);return}
   if(!run)return;
   label('ЗДОРОВЬЕ',24,22,11,C.muted,'left',FM);bar(24,27,220,14,P.hp/P.maxHp,P.hp/P.maxHp<.3?C.red:'#e8e3da');label(`${Math.ceil(P.hp)}/${P.maxHp}`,252,39,13,C.ink,'left',FM);
-  if(P.kind==='void'){
-    const cd=Math.max(0,P.voidOrbCd||0);
-    label(cd>0?'СФЕРА · '+cd.toFixed(1)+' с':'СФЕРА · ГОТОВА',24,58,12,C.lav,'left',FM);
-  }else{
   const full=P.tension>=100&&!P.ult;const tc=P.ult?C.ember:full?(Math.floor(time*6)%2?C.ember:'#ffd0a0'):C.acid;
   label(P.ult?'УЛЬТ. ФОРМА АКТИВНА':full?'НАПРЯЖЕНИЕ — ЖМИ ПРОБЕЛ':'НАПРЯЖЕНИЕ',24,56,11,P.ult||full?C.ember:C.muted,'left',FM);
   bar(24,60,220,10,P.ult?(P.ultDur===Infinity?1:Math.max(0,P.ultT/(P.ultDur||10))):P.tension/100,tc);label(P.ult?(P.ultDur===Infinity?'∞':P.ultT.toFixed(1)+' с'):`${Math.floor(P.tension)}/100`,252,70,12,C.ink,'left',FM);
+  if(P.kind==='void'&&!P.ult){
+    const cd=Math.max(0,P.voidOrbCd||0);
+    label(cd>0?'СФЕРА · '+cd.toFixed(1)+' с':'СФЕРА · ГОТОВА',325,69,12,C.lav,'left',FM);
   }
   if(room.kind==='training'){
     while(trainDmg.length&&time-trainDmg[0].t>5)trainDmg.shift();
