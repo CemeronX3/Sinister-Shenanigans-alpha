@@ -5507,7 +5507,7 @@ function updRun(dt){
     return;
   }
   if(room.endT!=null){room.endT-=dt;updWorld(dt);if(room.endT<=0){
-      if(room.endKind==='zonePortal'){finalize(true);room.endT=null;room.portalReady=true;
+      if(room.endKind==='zonePortal'){finalize(true);room.endT=null;room.portalReady=true;room.portalOpenedAt=time;
         banner('ПОРТАЛ ОТКРЫТ',`Иди к центру комнаты, чтобы войти в ${room.portalZone===3?'Глубоководье':'Мир архитекторов'}`)}
       else if(room.endKind==='leviCrystal'){finalize(true);room.endT=null;room.crystalGet=2.8}
       else{finalize(room.endKind==='win');state=room.endKind==='win'?'win':'dead'}}return}
@@ -5516,7 +5516,7 @@ function updRun(dt){
   if(room.portalReady&&Math.hypot(P.x-W/2,P.y-MIDY)<40){startRun(room.portalZone||2,run.result);return;}
   if(room.gateReady&&!room.gateUsed&&pressed.has('KeyE')&&Math.hypot(P.x-room.gateX,P.y-room.gateY)<70){
     room.gateUsed=true;room.gateText=2.2;banner('ВЫ ПОДНЕСЛИ КРИСТАЛЛ К РАМКЕ...','');sfx('pick')}
-  if(room.gateText!=null){room.gateText-=dt;if(room.gateText<=0){room.gateText=null;room.portalActive=true;shake=10;flashScreen=.3;
+  if(room.gateText!=null){room.gateText-=dt;if(room.gateText<=0){room.gateText=null;room.portalActive=true;room.portalOpenedAt=time;shake=10;flashScreen=.3;
       banner('ПОРТАЛ АКТИВИРОВАН','Войди в портал');sfx('boss')}}
   // портал после финальной фазы Левиафана теперь ведёт в предисловие "Отладки" вместо заглушки "4 локация"
   if(room.portalActive&&Math.hypot(P.x-room.gateX,P.y-room.gateY)<40){enterDebugIntro(run.result);return;}
@@ -8354,19 +8354,7 @@ function drawLobby(){
   ];
   for(const [key,rx,ry,base,accent] of gates){
     const {x,y,label:title}=ST[key];
-    g.save();g.translate(x,y);
-    const glow=g.createRadialGradient(0,-6,2,0,-6,rx+14);
-    glow.addColorStop(0,accent+'50');glow.addColorStop(1,accent+'00');
-    g.fillStyle=glow;g.fillRect(-rx-14,-ry-16,2*rx+28,2*ry+32);
-    const frame=[[-rx,-ry*.68],[-rx*.55,-ry],[rx*.55,-ry],[rx,-ry*.68],[rx,ry*.7],[rx*.55,ry],[-rx*.55,ry],[-rx,ry*.7]];
-    lobbyShape(g,frame,base,accent);
-    g.save();g.scale(.8,.8);lobbyShape(g,frame,'#161629',accent+'80');g.restore();
-    for(let i=0;i<3;i++){
-      g.save();g.rotate(time*(key==='debugGate'?-1:1)*.7+i*Math.PI/3);
-      g.strokeStyle=accent+(i===0?'e0':'65');g.lineWidth=2;
-      g.beginPath();g.ellipse(0,0,rx*.30,ry*.62,0,.6,Math.PI*1.72);g.stroke();g.restore();
-    }
-    g.fillStyle=accent;g.fillRect(-3,-3,6,6);g.restore();
+    drawEnergyPortal(g,x,y,rx,ry,base,accent,1,time+x*.017,false);
     label(title,x,y+ry+15,11,accent);
   }
   const {x,y}=LOBBY_DOOR;
@@ -8399,14 +8387,55 @@ function drawNpcLine(){if(!ui.npcLine)return;const g=ctx;
   g.strokeStyle='rgba(182,242,74,.4)';g.lineWidth=1;g.strokeRect(W/2-boxW/2,top,boxW,boxH);
   lines.forEach((l,i)=>label(l,W/2,top+21+i*lineH,13,C.ink));
   g.restore()}
-function portalFrame(x,y,w,h,col,edge,glow){const g=ctx,hw=w/2,hh=h/2,pw=11;
-  g.fillStyle=col;g.fillRect(x-hw-pw,y-hh,pw,h);g.fillRect(x+hw,y-hh,pw,h);
-  g.beginPath();g.moveTo(x-hw-pw,y-hh);g.lineTo(x+hw+pw,y-hh);g.lineTo(x+hw-4,y-hh-16);g.lineTo(x-hw+4,y-hh-16);g.closePath();g.fill();
-  g.fillRect(x-hw-pw-5,y+hh-8,w+pw*2+10,12);
-  g.strokeStyle=edge;g.lineWidth=2;g.strokeRect(x-hw-pw,y-hh,pw,h);g.strokeRect(x+hw,y-hh,pw,h);
-  g.strokeStyle=glow;g.lineWidth=1.6;for(let i=0;i<3;i++)g.strokeRect(x-hw-pw+2,y-hh+8+i*(h-16)/3,pw-4,(h-16)/3-3),g.strokeRect(x+hw+2,y-hh+8+i*(h-16)/3,pw-4,(h-16)/3-3)}
-function portalEmbers(x,y,r,rgb,ph){const g=ctx;for(let i=0;i<5;i++){const a=time*1.1+i*1.26+ph,rr=((time*18+i*31)%r);
-  g.fillStyle=`rgba(${rgb},${(1-rr/r)*.65})`;g.fillRect(x+Math.cos(a)*rr*.4-1.5,y-rr+r*.2,3,3)}}
+function drawEnergyPortal(g,x,y,rx,ry,base,accent,open,phase,boss){
+  const perimeter=[[-rx,-ry*.63],[-rx*.56,-ry],[rx*.56,-ry],[rx,-ry*.63],[rx,ry*.65],[rx*.56,ry],[-rx*.56,ry],[-rx,ry*.65]];
+  const arc=(cx,cy,a,b,rot,start,end)=>{g.beginPath();g.ellipse(cx,cy,a,b,rot,start,end);g.stroke()};
+  g.save();g.translate(x,y);
+  const halo=g.createRadialGradient(0,0,2,0,0,rx*1.65);
+  halo.addColorStop(0,accent+(open>.25?'65':'20'));halo.addColorStop(1,accent+'00');
+  g.fillStyle=halo;g.fillRect(-rx*1.65,-ry*1.35,rx*3.3,ry*2.7);
+  g.fillStyle='#0b0a165c';g.beginPath();g.ellipse(0,ry*.89,rx*1.05,ry*.18,0,0,Math.PI*2);g.fill();
+  const edge=boss?'#bed2e580':accent+'99';
+  if(boss)for(const side of [-1,1]){
+    lobbyShape(g,[[side*rx*.64,-ry*.86],[side*rx*1.05,-ry*.62],[side*rx*1.13,ry*.67],[side*rx*.84,ry],[side*rx*.66,ry*.64]],base,edge);
+    for(let i=0;i<3;i++){
+      g.fillStyle=accent+(open>.25?'aa':'45');g.fillRect(side*rx*.94-2,-ry*.43+i*ry*.37,4,ry*.21);
+    }
+  }
+  g.shadowColor=accent;g.shadowBlur=rx*(.12+open*.28);
+  lobbyShape(g,perimeter,base,accent+(open>.25?'ee':'77'));
+  g.shadowBlur=0;
+  g.save();g.scale(.82,.82);lobbyShape(g,perimeter,'#100e22',accent+'88');g.clip();g.scale(1/.82,1/.82);
+  if(open>.01){
+    const core=g.createRadialGradient(0,0,0,0,0,ry*.82);
+    core.addColorStop(0,accent+'c8');core.addColorStop(.42,accent+'59');core.addColorStop(1,accent+'00');
+    g.save();g.scale(.24+.76*open,1);g.globalAlpha=.3+.7*open;
+    g.fillStyle=core;g.fillRect(-rx,-ry,rx*2,ry*2);
+    for(let i=0;i<6;i++){
+      const progress=(phase*.35+i/6)%1;
+      g.strokeStyle=i%2?accent+'80':accent+'bd';g.lineWidth=i%2?1:2;
+      arc(0,0,rx*(.12+.64*progress),ry*(.17+.61*progress),
+        Math.sin(phase+i)*.18,phase+i,phase+i+Math.PI*1.53);
+    }
+    for(let i=0;i<10;i++){
+      const progress=(phase*.4+i*.19)%1,a=i*2.399+phase*.7;
+      g.fillStyle=i%3?'#ffffffaa':accent;
+      g.fillRect(Math.cos(a)*rx*.69*progress,Math.sin(a)*ry*.72*progress,i%4===0?3:1.5,2);
+    }
+    g.shadowColor=accent;g.shadowBlur=rx*.26;
+    const pulse=(.69+.23*Math.sin(phase*4))*rx*.23;
+    lobbyShape(g,[[0,-pulse*2],[pulse,0],[0,pulse*2],[-pulse,0]],'#f0faff',accent);
+    g.restore();
+  }
+  g.restore();
+  const sparks=boss?14:9;
+  for(let i=0;i<sparks;i++){
+    const p=(phase*.40+i/sparks)%1,side=i%2?1:-1;
+    g.globalAlpha=(1-p)*(.22+.78*open);g.fillStyle=i%3?accent:'#f5fcff';
+    g.fillRect(side*(rx*.82+p*rx*.27)+Math.sin(i+phase*2)*rx*.15,ry*(.75-p*1.68),i%3===0?2.5:1.5,i%3===0?4:2);
+  }
+  g.restore();
+}
 function drawLobbyHint(){if(!ui.hint||state!=='lobby')return;
   if(ui.hint.startsWith('seat')){const s=SEATS[+ui.hint.slice(4)];const y=s.y-76;
     const txt=s.w?(save.char!=='warden'?'[E] Поговорить · Варден':'Место Вардена · ты играешь за него'):
@@ -8689,13 +8718,20 @@ function drawWorldInner(){
   else{ctx.drawImage(room.floor,0,0,room.floor.width/DPR,room.floor.height/DPR);if(room.kind!=='officeApproach')drawDoors();}
   if(room.kind==='lobby')drawLobby();
   if(room.errorEnding&&room.errorEnding.phase==='door')drawErrorEndingDoor();
-  if(room.portalReady){const pt=Math.sin(time*3)*4;portalFrame(W/2,MIDY+pt,100,148,'#1c140d','#4a3420',C.red);
-    portalEmbers(W/2,MIDY+pt,66,'201,75,75',2.2);label('[E] не нужен · просто войди',W/2,MIDY+120,13,C.muted,'center',FM)}
-  if(room.gateReady){const pt=Math.sin(time*3)*4,gx=room.gateX,gy=room.gateY+pt;
-    portalFrame(gx,gy,100,148,'#07181a','#1d4d4a',room.portalActive?C.tech:'rgba(63,214,194,.3)');
-    if(room.portalActive)portalEmbers(gx,gy,66,'63,214,194',1.4);
-    if(!room.gateUsed)label('[E] Поднести кристалл к рамке',gx,gy+120,13,C.muted,'center',FM);
-    else if(room.portalActive)label('Войди в портал',gx,gy+120,13,C.muted,'center',FM)}
+  if(room.portalReady){
+    const open=clamp((time-(room.portalOpenedAt??time))/.75,0,1);
+    const accent=room.portalZone===3?'#65ead9':'#ff9b70';
+    drawEnergyPortal(ctx,W/2,MIDY,52,73,'#32213e',accent,open,time,true);
+    label('Войди в портал',W/2,MIDY+100,13,accent,'center',FM);
+  }
+  if(room.gateReady){
+    const gx=room.gateX,gy=room.gateY;
+    const open=room.portalActive?clamp((time-(room.portalOpenedAt??time))/.65,0,1)
+      :room.gateText!=null?.58*clamp(1-room.gateText/2.2,0,1):0;
+    drawEnergyPortal(ctx,gx,gy,52,73,'#252044','#9b94ff',open,time,true);
+    if(!room.gateUsed)label('[E] Поднести кристалл к рамке',gx,gy+100,13,C.ink,'center',FM);
+    else if(room.portalActive)label('Войди в портал',gx,gy+100,13,C.ink,'center',FM);
+  }
   for(const s of spawns){ctx.save();ctx.translate(s.x,s.y);ctx.rotate(time*4);ctx.strokeStyle=C.red;ctx.globalAlpha=.5+Math.sin(time*16)*.3;ctx.lineWidth=2;ctx.strokeRect(-12,-12,24,24);ctx.restore()}
   for(const e of enemies)if(e.type==='mini'&&e.atk==='slam'&&e.count===0){const k=Math.min(1,e.at/e.warn);ctx.fillStyle=`rgba(255,74,58,${(.1+k*.25).toFixed(2)})`;
     ctx.beginPath();ctx.arc(e.tx,e.ty,58*k,0,6.283);ctx.fill();ctx.strokeStyle=C.red;ctx.lineWidth=2;ctx.setLineDash([6,5]);ctx.beginPath();ctx.arc(e.tx,e.ty,58,0,6.283);ctx.stroke();ctx.setLineDash([])}
