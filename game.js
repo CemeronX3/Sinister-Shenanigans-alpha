@@ -6087,7 +6087,7 @@ function spiral(x,y,r,glow){
     const px=cx+dir*(.18+opening*.9);
     armorPlate([[px,-16.1],[px+dir*.65,-16.65],[px+dir*.64,-14],[px,-14.35]]);
    }
-   const pulse=opening*(.88+.12*Math.sin(clock*5));
+   const pulse=opening*(.88+.12*Math.sin(time*5));
    const cy=-15.1,r=4.9;
    g.save();
    const aura=g.createRadialGradient(cx,cy,.2,cx,cy,r);
