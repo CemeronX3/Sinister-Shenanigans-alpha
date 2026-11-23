@@ -422,7 +422,7 @@ const LOBBY_PLANTERS=[{x:75,y:154},{x:884,y:154},{x:267,y:259},{x:693,y:259},{x:
 const LOBBY_BENCHES=[{x:305,y:455},{x:655,y:455}];
 const LOBBY_SOLIDS=[
   {x:36,y:74,w:888,h:69},
-  ...LOBBY_TABLES.map(({x,y})=>({x:x-106,y:y-50,w:212,h:56})),
+  ...LOBBY_TABLES.map(({x,y})=>({x:x-106,y:y-50,w:212,h:62})),
   ...LOBBY_PLANTERS.map(({x,y})=>({x:x-16,y:y-10,w:32,h:13})),
   ...LOBBY_BENCHES.map(({x,y})=>({x:x-27,y:y-9,w:54,h:13})),
   {x:143,y:242,w:74,h:22},{x:743,y:242,w:74,h:22},
@@ -8462,17 +8462,21 @@ function drawLobbyBench({x,y}){
 }
 function drawLobbyTable({x,y}){
   const g=ctx;g.save();g.translate(x,y);
-  lobbyShape(g,[[-106,-7],[-98,-15],[98,-15],[106,-7],[103,6],[-103,6]],'#4e3464','#c197bc');
-  g.fillStyle='#b780ae';g.fillRect(-95,-11,190,2);
-  g.fillStyle='#2e243f';g.fillRect(-97,1,194,5);
+  for(const dx of [-88,88]){
+    lobbyShape(g,[[dx-5,-8],[dx+5,-8],[dx+4,12],[dx-3,12]],'#322340','#8d698d');
+    g.fillStyle='#22192e';g.fillRect(dx-6,10,13,2);
+  }
+  lobbyShape(g,[[-106,-13],[-97,-22],[97,-22],[106,-13],[102,-4],[-102,-4]],'#5e4074','#c197bc');
+  g.fillStyle='#b780ae';g.fillRect(-94,-19,188,2);
+  g.fillStyle='#382847';g.fillRect(-99,-8,198,4);
   for(const dx of [-66,0,66]){
-    g.fillStyle='#7c5c90';g.fillRect(dx-12,-8,24,6);
+    g.fillStyle='#7c5c90';g.fillRect(dx-12,-16,24,4);
   }
   g.restore();
 }
 function lobbyEnts(ents){
   for(const s of SEATS)ents.push({y:s.y+4,d:()=>drawLobbySeat(s)});
-  for(const p of LOBBY_TABLES)ents.push({y:p.y+6,d:()=>drawLobbyTable(p)});
+  for(const p of LOBBY_TABLES)ents.push({y:p.y+12,d:()=>drawLobbyTable(p)});
   for(const p of LOBBY_PLANTERS)ents.push({y:p.y+3,d:()=>drawLobbyPlanter(p)});
   for(const p of LOBBY_BENCHES)ents.push({y:p.y+4,d:()=>drawLobbyBench(p)});
   for(const key of ['charSel','term'])ents.push({y:ST[key].y+9,d:()=>drawLobbyConsole(key)});
