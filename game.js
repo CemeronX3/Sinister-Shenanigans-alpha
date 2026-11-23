@@ -342,7 +342,7 @@ const PERKS=[
  {id:'devastating',name:'Разгромные секунды',desc:'Ультимативная форма длится на 3 секунды дольше, даже в боссфайте.',bossOnly:true,apply:m=>m.ultBonus+=3},
 ];
 const shop=createShop(ctx,W,H,PERKS,shuffle);
-const EDEF={skeleton:{hp:70,r:15,spd:95,dmg:12,coin:2},eye:{hp:48,r:14,spd:85,dmg:9,coin:2},sprayer:{hp:62,r:15,spd:88,dmg:3,coin:3},worm:{hp:95,r:14,spd:150,dmg:11,coin:4},mimic:{hp:110,r:15,spd:300,dmg:16,coin:5},
+const EDEF={skeleton:{hp:70,r:15,spd:95,dmg:12,coin:2},eye:{hp:48,r:14,spd:85,dmg:9,coin:2},sprayer:{hp:62,r:15,spd:88,dmg:3,coin:3},worm:{hp:95,r:14,spd:150,dmg:11,coin:4},mimic:{hp:110,r:15,spd:300,dmg:16,coin:5},archMimic:{hp:110,r:15,spd:300,dmg:16,coin:5},
   eyeBot:{hp:72,r:14,spd:90,dmg:11,coin:4},eyeTop:{hp:62,r:14,spd:90,dmg:4,coin:3},orbEye:{hp:36,r:13,spd:155,dmg:34,coin:4},
   gunner:{hp:58,r:15,spd:95,dmg:10,coin:3},turret:{hp:60,r:16,spd:0,dmg:14,coin:4},saw:{hp:68,r:14,spd:130,dmg:12,coin:4},drillworm:{hp:40,r:17,spd:0,dmg:0,coin:3},
   giant:{hp:190,r:24,spd:55,dmg:22,coin:6},archmini:{hp:75,r:20,spd:80,dmg:11,coin:4},
@@ -823,7 +823,7 @@ function enterRoom(){const keepT=P.tension;clearArrays();const boss=run.level===
   else if(run.zone===4&&run.level===2&&run.roomIdx===2){room.wavesLeft=0;room.rocks=[];room.props=room.props.filter(q=>Math.hypot(q.x-(W/2+120),q.y-MIDY)>190);
     room.floor=makeFloor(room);room.creatorIntro=1.2;banner('ЛОЖНЫЙ СОЗДАТЕЛЬ','Отладка · уровень 2 · комната 3');sfx('boss');musStart('creatorman')}
   else{room.wavesLeft=run.level>=4?2:1;spawnWave();musStart(run.zone===1?'wasteland':run.zone===3?'depths':run.zone===4?'debug':'architects')}
-  for(const m of room.mimicSpots)spawnEnemy(run.zone===3?'scallop':run.zone===4?'dbgmimic':'mimic',m.x,m.y,true)}
+  for(const m of room.mimicSpots)spawnEnemy(run.zone===2?'archMimic':run.zone===3?'scallop':run.zone===4?'dbgmimic':'mimic',m.x,m.y,true)}
 function pickType(){const l=run.level;
   if(run.zone===4){const pool=[['eyeglitch',3],['c1a8',3],['credmini',3],['archFused',2]];
     let t=pool.reduce((s,p)=>s+p[1],0)*Math.random();for(const p of pool){t-=p[1];if(t<=0)return p[0]}return'eyeglitch'}
@@ -1083,8 +1083,7 @@ function hurtPlayer(dmg){if(P.inv>0||P.dead||room.endT!=null)return;
 function spawnEnemy(type,x,y,quiet){const d=EDEF[type];const sc=(1+.14*(run.level-1))*(run.hard?1.3:1);
   const e={type,x,y,r:d.r,hp:d.hp*sc,maxHp:d.hp*sc,spd:d.spd,dmg:d.dmg*(run.hard?1.3:1)*(1+.06*(run.level-1)),t:rand(0,2),cd:rand(.8,1.8),
     state:'move',st:0,slowT:0,dotT:0,dotAcc:0,stunT:0,flash:0,kx:0,ky:0,face:1,alive:true,hidden:false,ang:0,seed:Math.random()};
-  if(type==='mimic'){e.state='dormant';e.open=0;if(run.hard)e.spd*=1.25}
-  if(type==='scallop'){e.state='dormant';e.open=0;if(run.hard)e.spd*=1.25}
+  if(type==='mimic'||type==='archMimic'||type==='scallop'){e.state='dormant';e.open=0;if(run.hard)e.spd*=1.25}
   if(type==='worm'){e.state='under';e.st=rand(1,1.8);e.hidden=true;e.segs=[];const nseg=run.hard?16:10;if(run.hard)e.r=20;for(let i=0;i<nseg;i++)e.segs.push({x,y})}
   if(type==='eidalon'){e.state='under';e.st=rand(1,1.8);e.hidden=true;e.segs=[];const nseg=run.hard?22:16;if(run.hard)e.r=22;for(let i=0;i<nseg;i++)e.segs.push({x,y,hitT:0})}
   if(type==='shark'){e.atk=null;e.cd=rand(1.8,2.6)}
@@ -1837,7 +1836,7 @@ function updEnemy(e,dt){
   }else if(e.type==='titanCore'){updTitanRig(e,dt)
   }else if(e.type==='krakenTentacle'){updKrakenTentacle(e,dt,d)
   }else if(e.type==='krakenCore'){updKrakenRig(e,dt)
-  }else if(e.type==='boss')updBoss(e,dt,dx,dy,d);else if(e.type==='levi')updLevi(e,dt,dx,dy,d);else if(e.type==='mini')updMini(e,dt,dx,dy,d);else if(e.type==='mike')updMike(e,dt,dx,dy,d);else if(e.type==='mimic'||e.type==='scallop')updMimic(e,dt,dx,dy,d);
+  }else if(e.type==='boss')updBoss(e,dt,dx,dy,d);else if(e.type==='levi')updLevi(e,dt,dx,dy,d);else if(e.type==='mini')updMini(e,dt,dx,dy,d);else if(e.type==='mike')updMike(e,dt,dx,dy,d);else if(e.type==='mimic'||e.type==='archMimic'||e.type==='scallop')updMimic(e,dt,dx,dy,d);
   else if(e.type==='leviSeg'){if(e.segIdx===0)updLeviRig(e.rig,dt)}
   else if(e.type==='leviCrystal')updLeviCrystal(e,dt);
   else if(e.type==='leviShard'){e.x+=dx/d*sp*dt;e.y+=dy/d*sp*dt;if(d<e.r+P.r)hurtPlayer(e.dmg)}
@@ -5027,7 +5026,7 @@ function explodeRocket(r,blocked){shake=Math.max(shake,10);burst(r.x,r.y,26,[C.e
   if(blocked){P.shEn-=(run&&run.mods.guard?0.5:1)*(Math.min(14,r.dmg*.5+2));sfx('block');if(P.shEn<=0)shieldBreak()}
   else if(Math.hypot(P.x-r.x,(P.y-6)-r.y)<50)hurtPlayer(r.dmg)}
 function updMimic(e,dt,dx,dy,d){
-  if(e.state==='dormant'){e.open=0;if(d<90||e.hp<e.maxHp){e.state='wake';e.st=.5;text(e.x,e.y-44,e.type==='scallop'?'ВОДОЛАЗНЫЙ МИМИК!':'МИМИК!',C.ember,16);sfx('boss');burst(e.x,e.y-10,12,['#c9c3cf','#0c0b0d'],160,4,.4)}return}
+  if(e.state==='dormant'){e.open=0;if(d<90||e.hp<e.maxHp){e.state='wake';e.st=.5;text(e.x,e.y-44,e.type==='scallop'?'ВОДОЛАЗНЫЙ МИМИК!':e.type==='archMimic'?'МИМИК-ПРОЕКТОР!':'МИМИК!',C.ember,16);sfx('boss');burst(e.x,e.y-10,12,['#c9c3cf','#0c0b0d'],160,4,.4)}return}
   if(e.state==='wake'){e.st-=dt;e.open=Math.min(1,e.open+dt*2.4);if(e.st<=0){e.state='aim';e.st=.45}return}
   if(e.state==='aim'){e.st-=dt;e.open=.5+Math.sin(e.t*30)*.15;if(e.st<=0){const m=e.spd*(e.slowT>0?.65:1);e.state='leap';e.st=.36;e.vx=dx/d*m;e.vy=dy/d*m;e.bit=false;sfx('swing')}}
   else if(e.state==='leap'){e.st-=dt;e.open=1;e.x+=e.vx*dt;e.y+=e.vy*dt;if(!e.bit&&d<e.r+P.r+6){e.bit=true;hurtPlayer(e.dmg)}
@@ -7220,6 +7219,7 @@ function drawEnemy(e){
     starEye(e.x,e.y+bob,22+urg*5,{fl:e.flash>0,kind:'orb',eyeCol:C.ember,t:e.t,seed:e.seed})}
   else if(e.type==='sprayer'){shadow(e.x,e.y+e.r,13);
     eyeCube(e.x,e.y-4,30,{fl:e.flash>0,kind:'maw',look:e.ang,mouth:e.state==='spray'?.8+Math.sin(e.t*30)*.2:(e.state==='wind'?.3+(1-e.st/.4)*.4:0),t:e.t,seed:e.seed})}
+  else if(e.type==='archMimic'){drawArchitectMimic(g,e)}
   else if(e.type==='mimic'){
     const disguised=run?.zone===1&&e.state==='dormant';
     if(disguised){shadow(e.x,e.y+3,PDEF.tv.r);drawTV(e.x,e.y+2,e.flash>0,false,0,time,1,e.seed||0)}
@@ -8021,6 +8021,41 @@ function drawVending(x,y){const g=ctx;
 function drawChair(c){chairBack(c.x,c.y-50);ctx.fillStyle='rgba(182,242,74,.3)';ctx.fillRect(c.x-9,c.y-9,18,10)}
 function lobbyEnts(ents){ents.push({y:LT.y+38,d:drawLongTable});for(const t of SMALL)ents.push({y:t.y+16,d:()=>drawSmallTable(t)});
   ents.push({y:VEND.y+50,d:()=>drawVending(VEND.x,VEND.y)});for(const c of CHAIRS)ents.push({y:c.y,d:()=>drawChair(c)})}
+function drawArchitectMimic(g,e){
+  const flash=e.flash>0;
+  if(e.state==='dormant'){
+    shadow(e.x,e.y+3,PDEF.hologram.r);
+    drawArchitectProp(g,{k:'hologram',seed:e.seed},e.x,e.y,flash);
+    return;
+  }
+  const open=e.open||0;
+  const lift=e.state==='leap'?8*Math.sin(Math.PI*Math.max(0,Math.min(1,1-e.st/.36))):0;
+  shadow(e.x,e.y+5,16);
+  g.save();g.translate(e.x,e.y-lift);
+  const plate=(color,points)=>{
+    g.fillStyle=flash?'#fff':color;
+    g.beginPath();g.moveTo(...points[0]);
+    for(const point of points.slice(1))g.lineTo(...point);
+    g.closePath();g.fill();
+  };
+  plate('#1b2234',[[-14,2],[-18,-6],[-11,-11],[11,-11],[18,-6],[14,2]]);
+  plate('#8799ad',[[-17,-5],[-10,-10],[10,-10],[17,-5]]);
+  plate('#182537',[[-15,-9],[-12,-27],[12,-27],[15,-9]]);
+  g.save();g.translate(0,-open*9);
+  plate('#52637c',[[-18,-28],[-11,-35],[11,-35],[18,-28],[12,-22],[-12,-22]]);
+  plate('#94e6f2',[[-14,-29],[-9,-32],[9,-32],[14,-29],[9,-26],[-9,-26]]);
+  const eye=Math.cos(Math.atan2(P.y-e.y,P.x-e.x))*5;
+  g.fillStyle=flash?'#fff':'#254b63';g.fillRect(eye-2,-32,4,6);
+  g.restore();
+  const jaw=-15+open*5;
+  plate('#52637c',[[-14,jaw-2],[14,jaw-2],[10,jaw+5],[-10,jaw+5]]);
+  for(const x of [-9,-3,3,9]){
+    plate('#94e6f2',[[x-2,-22-open*9],[x+2,-22-open*9],[x,-17-open*9]]);
+    plate('#94e6f2',[[x-2,jaw],[x+2,jaw],[x,jaw-4]]);
+  }
+  g.restore();
+}
+
 function drawArchitectProp(g,p,x,y,fl){
   const metal='#424f65',edge='#8799ad',dark='#1b2234',power='#ef7971',cool='#93dbe3';
   const box=(dx,dy,w,h,c)=>{g.fillStyle=fl?'#fff':c;g.fillRect(x+dx,y+dy,w,h)};
