@@ -8907,7 +8907,7 @@ function drawEnemy(e){
     const name={flame:'mikeFlame',laser:'mikeLaser',rocket:'mikeRocketArm',hammer:'mikeHammer'}[e.weapon];
     const rest={flame:2.74,laser:.40,rocket:-2.53,hammer:-.61}[e.weapon];
     const aim=active?Math.atan2(P.y-e.y,P.x-e.x):rest;
-    if(!rig.legacy){
+    if(e.rig&&!e.rig.legacy){
       g.strokeStyle='#151c28';g.lineWidth=15;g.beginPath();g.moveTo(-e.ox*.43,-e.oy*.6-5);g.lineTo(-e.ox*.24,-e.oy*.33);g.lineTo(0,0);g.stroke();
       g.strokeStyle='#5b7185';g.lineWidth=7;g.stroke();
     }
