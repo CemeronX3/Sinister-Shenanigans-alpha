@@ -7030,7 +7030,18 @@ function drawTennTitanLeg(g,img,x,y,k,clip,joint){
   g.save();g.translate(x,y);g.scale(k,k);
   g.fillStyle='#252840';g.fillRect(jx,jy,jw,jh);
   g.beginPath();g.rect(left,0,right-left,top);g.rect(0,top,img.naturalWidth,img.naturalHeight-top);
-  g.clip();g.drawImage(img,0,0);g.restore();
+  g.clip();g.drawImage(img,0,0);
+  g.fillStyle='#10132c';g.fillRect(jx,jy,jw,jh);
+  // Bridge the notch between the toe and the sloped upper edge of each boot.
+  const boot={
+    293:[[84,313],[97,300],[110,298],[101,318]],
+    294:[[202,291],[214,293],[225,307],[211,302]],
+    245:[[76,256],[86,247],[101,244],[93,257]],
+    243:[[164,239],[175,242],[184,254],[170,251]],
+    255:[[205,274],[219,278],[227,288],[213,286]]
+  }[img.naturalWidth];
+  if(boot){g.fillStyle='#d3d4db';g.beginPath();boot.forEach(([px,py],i)=>g[i?'lineTo':'moveTo'](px,py));g.closePath();g.fill()}
+  g.restore();
 }
 function drawTennTitan(g,x,y,face,aim,moving,walk,inv,tw,chg,view){
   view=view||'front';const side=view==='side',back=view==='back';
@@ -7077,11 +7088,16 @@ function drawTennTitan(g,x,y,face,aim,moving,walk,inv,tw,chg,view){
       const lift=moving?Math.max(0,Math.sin(walk+ph))*10:0;
       drawTennTitanLeg(g,img,-hw+sx*k,-220+917*k-lift,k,clip,joint);
     }
-    g.save();g.translate(-hw,-220);g.scale(k,k);
-    g.fillStyle='#252840';
-    g.fillRect(200,845,50,17);g.fillRect(355,843,48,15);
-    g.restore();
     drawP(SPR.tennTitanBBody,0,0,587,942);
+    g.save();g.translate(-hw,-220);g.scale(k,k);
+    g.fillStyle='#10132c';
+    for(const points of [
+      [[202,847],[251,853],[248,864],[200,857]],
+      [[354,851],[400,843],[403,854],[356,863]]
+    ]){
+      g.beginPath();points.forEach(([px,py],i)=>g[i?'lineTo':'moveTo'](px,py));g.closePath();g.fill();
+    }
+    g.restore();
     if(SHOWFX)coreGlow(0,-136,16);
     g.restore();return}
   g.fillStyle='#141a33';g.fillRect(-46,-10,32,80);g.fillRect(14,-10,32,80);
