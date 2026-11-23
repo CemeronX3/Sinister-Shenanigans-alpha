@@ -7024,6 +7024,14 @@ function drawSentonUlt(g,x,y,s,face,aim,moving,walk,inv,tw,chg,view){
   g.restore();
   // wave-charge glow lives only on the core (coreGlow above) now — the gun no longer lights up too
   g.restore()}
+// Keep the original plates and metal joints, masking fragments from neighboring parts.
+function drawTennTitanLeg(g,img,x,y,k,clip,joint){
+  const [left,right,top]=clip,[jx,jy,jw,jh]=joint;
+  g.save();g.translate(x,y);g.scale(k,k);
+  g.fillStyle='#252840';g.fillRect(jx,jy,jw,jh);
+  g.beginPath();g.rect(left,0,right-left,top);g.rect(0,top,img.naturalWidth,img.naturalHeight-top);
+  g.clip();g.drawImage(img,0,0);g.restore();
+}
 function drawTennTitan(g,x,y,face,aim,moving,walk,inv,tw,chg,view){
   view=view||'front';const side=view==='side',back=view==='back';
   g.save();g.translate(x,y);
@@ -7040,16 +7048,21 @@ function drawTennTitan(g,x,y,face,aim,moving,walk,inv,tw,chg,view){
   if(view==='front'&&SPR.tennTitanFBody&&SPR.tennTitanFBody.complete&&SPR.tennTitanFBody.naturalWidth&&SPR.tennTitanFLegL.complete&&SPR.tennTitanFLegR.complete){
     const k=220/1011,hw=488/2*k;
     const drawP=(img,sx,sy,sw,sh,yoff)=>g.drawImage(img,-hw+sx*k,-220+sy*k+(yoff||0),sw*k,sh*k);
-    for(const[img,ph,sx,sw]of[[SPR.tennTitanFLegL,0,0,245],[SPR.tennTitanFLegR,Math.PI,245,243]]){
-      const lift=moving?Math.max(0,Math.sin(walk+ph))*10:0;drawP(img,sx,720,sw,291,-lift)}
+    for(const [img,ph,sx,clip,joint] of [
+      [SPR.tennTitanFLegL,0,0,[156,216,55],[161,62,43,15]],
+      [SPR.tennTitanFLegR,Math.PI,245,[48,110,54],[57,57,45,15]]
+    ]){
+      const lift=moving?Math.max(0,Math.sin(walk+ph))*10:0;
+      drawTennTitanLeg(g,img,-hw+sx*k,-220+720*k-lift,k,clip,joint);
+    }
     drawP(SPR.tennTitanFBody,0,0,488,745);
     if(SHOWFX){coreGlow(0,-136,16);handFx(43,-70,19)}
     g.restore();return}
   if(side&&SPR.tennTitanSBody&&SPR.tennTitanSBody.complete&&SPR.tennTitanSBody.naturalWidth&&SPR.tennTitanSLeg.complete){
-    const k=220/1235,sw2=moving?Math.sin(walk):0,legW=255*k,legH=325*k,pivotY=-220+910*k,hw=255/2*k;
+    const k=220/1235,sw2=moving?Math.sin(walk):0,legW=255*k,pivotY=-220+910*k,hw=255/2*k;
     const legAt=(sign,dark)=>{g.save();g.translate(0,pivotY);g.rotate(sign*sw2*.4);
       if(dark)g.filter='brightness(.62)';
-      g.drawImage(SPR.tennTitanSLeg,-legW/2,0,legW,legH);g.filter='none';g.restore()};
+      drawTennTitanLeg(g,SPR.tennTitanSLeg,-legW/2,0,k,[96,151,55],[103,93,43,18]);g.filter='none';g.restore()};
     legAt(-1,true);legAt(1,false);
     g.drawImage(SPR.tennTitanSBody,-hw,-220,255*k,920*k);
     if(SHOWFX){coreGlow(17,-126,14);handFx(7,-61,17)}
@@ -7057,8 +7070,17 @@ function drawTennTitan(g,x,y,face,aim,moving,walk,inv,tw,chg,view){
   if(back&&SPR.tennTitanBBody&&SPR.tennTitanBBody.complete&&SPR.tennTitanBBody.naturalWidth&&SPR.tennTitanBLegL.complete&&SPR.tennTitanBLegR.complete){
     const k=220/1269,hw=587/2*k;
     const drawP=(img,sx,sy,sw,sh,yoff)=>g.drawImage(img,-hw+sx*k,-220+sy*k+(yoff||0),sw*k,sh*k);
-    for(const[img,ph,sx,sw]of[[SPR.tennTitanBLegL,0,0,293],[SPR.tennTitanBLegR,Math.PI,293,294]]){
-      const lift=moving?Math.max(0,Math.sin(walk+ph))*10:0;drawP(img,sx,917,sw,352,-lift)}
+    for(const [img,ph,sx,clip,joint] of [
+      [SPR.tennTitanBLegL,0,0,[184,256,55],[188,74,54,17]],
+      [SPR.tennTitanBLegR,Math.PI,293,[61,132,54],[71,67,53,16]]
+    ]){
+      const lift=moving?Math.max(0,Math.sin(walk+ph))*10:0;
+      drawTennTitanLeg(g,img,-hw+sx*k,-220+917*k-lift,k,clip,joint);
+    }
+    g.save();g.translate(-hw,-220);g.scale(k,k);
+    g.fillStyle='#252840';
+    g.fillRect(200,845,50,17);g.fillRect(355,843,48,15);
+    g.restore();
     drawP(SPR.tennTitanBBody,0,0,587,942);
     if(SHOWFX)coreGlow(0,-136,16);
     g.restore();return}
