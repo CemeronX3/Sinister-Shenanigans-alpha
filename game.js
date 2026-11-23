@@ -7618,6 +7618,28 @@ function architectSprite(source){
   return canvas;
 }
 
+function drawWastelandEyePair(e,x,y,top,look,mouth){
+  const g=ctx,flash=e.flash>0,edge=flash?'#eadac7':'#bd8868';
+  const dark='#24212b',metal='#76584f',lit=top?'#b3e783':'#ff6253';
+  const box=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(x,y,w,h)};
+  g.save();g.translate(x,y);
+  lobbyShape(g,[[-19,-4],[-12,-10],[-8,-13],[8,-13],[13,-9],[19,-4],[16,8],[9,12],[-9,12],[-16,8]],dark,edge);
+  for(const side of [-1,1]){
+    lobbyShape(g,[[side*12,-7],[side*20,-10],[side*18,4],[side*13,7]],metal,edge);
+    box(side*15-1,-4,2,3,'#d59e77');
+  }
+  box(-8,-12,16,3,edge);
+  hexPath(g,0,-2,9,4.2);g.fillStyle='#171520';g.fill();g.strokeStyle=metal;g.lineWidth=1.3;g.stroke();
+  box(Math.cos(look)*3-2.2,-4.2+Math.sin(look)*1.2,4.4,4,flash?'#fff':lit);
+  if(top){
+    const h=3.5+mouth*5;
+    box(-9,4,18,h,'#171520');
+    for(let j=0;j<4;j++)box(-7+j*4,4,2.3,2.6,edge);
+    box(-7,3+h,14,1.7,metal);
+  }else box(-7,7,14,2.4,metal);
+  g.restore();
+}
+
 function drawEnemy(e){
   if(run?.zone===1&&['skeleton','eye','sprayer','orbEye'].includes(e.type)){drawWastelandEnemy(e);return}
   const g=ctx;const fill=e.flash>0?'#fff':'#0c0b0d';
@@ -7632,12 +7654,16 @@ function drawEnemy(e){
   else if(e.type==='eye'){const bob=Math.sin(e.t*3)*3;shadow(e.x,e.y+e.r+4,12);
     eyeCube(e.x,e.y+bob-6,28,{fl:e.flash>0,kind:'eye',look:Math.atan2(P.y-e.y,P.x-e.x),ready:e.cd<.35,t:e.t,seed:e.seed})}
   else if(e.type==='eyeBot'){const bob=Math.sin(e.t*3)*3;shadow(e.x,e.y+e.r+4,13);
-    starEye(e.x,e.y+bob-6,30,{fl:e.flash>0,kind:'eye',look:Math.atan2(P.y-e.y,P.x-e.x),ready:e.cd<.35,t:e.t,seed:e.seed})}
+    const look=Math.atan2(P.y-e.y,P.x-e.x);
+    if(run?.zone===1&&run.hard)drawWastelandEyePair(e,e.x,e.y+bob-6,false,look,0);
+    else starEye(e.x,e.y+bob-6,30,{fl:e.flash>0,kind:'eye',look,ready:e.cd<.35,t:e.t,seed:e.seed})}
   else if(e.type==='eyeTop'){const bob=Math.sin(e.t*3)*3;
     if(e.linked&&e.pairBot&&e.pairBot.alive){g.strokeStyle='#0c0b0d';g.lineWidth=7;g.beginPath();g.moveTo(e.x,e.y+16);g.lineTo(e.pairBot.x,e.pairBot.y-16);g.stroke();
       g.strokeStyle='#4a4650';g.lineWidth=3;g.beginPath();g.moveTo(e.x,e.y+16);g.lineTo(e.pairBot.x,e.pairBot.y-16);g.stroke()}
     else shadow(e.x,e.y+e.r+4,12);
-    starEye(e.x,e.y+bob-4,28,{fl:e.flash>0,kind:'maw',look:e.ang,mouth:e.linked?.3+Math.sin(e.t*10)*.1:(e.state==='spray'?.8+Math.sin(e.t*30)*.2:(e.state==='wind'?.3+(1-e.st/.4)*.4:0)),t:e.t,seed:e.seed})}
+    const mouth=e.linked?.3+Math.sin(e.t*10)*.1:(e.state==='spray'?.8+Math.sin(e.t*30)*.2:(e.state==='wind'?.3+(1-e.st/.4)*.4:0));
+    if(run?.zone===1&&run.hard)drawWastelandEyePair(e,e.x,e.y+bob-4,true,e.ang??0,mouth);
+    else starEye(e.x,e.y+bob-4,28,{fl:e.flash>0,kind:'maw',look:e.ang,mouth,t:e.t,seed:e.seed})}
   else if(e.type==='orbEye'){const bob=Math.sin(e.t*4)*2,urg=e.fuse!=null?1-e.fuse/.3:0;shadow(e.x,e.y+e.r,11);
     if(e.fuse!=null){g.fillStyle=`rgba(255,122,26,${.18+urg*.35})`;g.beginPath();g.arc(e.x,e.y+bob,20+urg*18,0,6.283);g.fill()}
     starEye(e.x,e.y+bob,22+urg*5,{fl:e.flash>0,kind:'orb',eyeCol:C.ember,t:e.t,seed:e.seed})}
