@@ -408,12 +408,20 @@ const PROP_SETS_Z2={1:['drone','cell','drone','hologram'],2:['drone','cell','pyl
 const PROP_SETS_Z3={1:['ribs','vent','ribs','scallop'],2:['vent','ribs','wreck','scallop','eggsac'],3:['wreck','vent','ribs','scallop','eggsac'],4:['wreck','eggsac','vent','ribs','scallop','scallop'],5:['vent','wreck','ribs','scallop','eggsac','scallop'],6:['wreck','vent','scallop']};
 const PROP_SETS_Z4={1:['rack','wireframe','rack','crtbug'],2:['rack','errstack','wireframe','crtbug'],3:['wireframe','rack','errstack','crtbug'],4:['errstack','wireframe','wireframe','crtbug','crtbug'],5:['wireframe','errstack','wireframe','rack','crtbug','crtbug'],6:['errstack','wireframe','crtbug']};
 /* lobby furniture: long table under the window, two round tables below */
-const LT={x:330,y:A.y+122,w:300};
-const SEATS=[{x:360,v:true},{x:420,s:true},{x:480,w:true},{x:540,t:true},{x:600,c:true}].map(o=>Object.assign(o,{long:true,fy:A.y+178}));
-const SMALL=[{x:260,y:300},{x:480,y:515},{x:255,y:505},{x:700,y:505}];
-SMALL.forEach(t=>SEATS.push({x:t.x,q:true,small:t,fy:t.y+36}));
-const VEND={x:76,y:400};
-const CHAIRS=[{x:370,y:540},{x:590,y:540}];
+const SEATS=[
+  {v:true,name:'ВОЙД',color:'#7ba1ff'},{s:true,name:'СЕНТОН',color:'#68e4f3'},
+  {w:true,name:'ВАРДЕН',color:'#ffc076'},{t:true,name:'ТЕННМЕН',color:'#a1deff'},
+  {c:true,name:'КАИН',color:'#ff818c'},...['#fdaf79','#f0d685','#ee9bd1','#8fe4b5'].map(color=>({name:'???',color}))
+].map((s,i)=>({...s,x:128+i*88,y:204,fy:237}));
+const LOBBY_PLANTERS=[{x:81,y:222},{x:880,y:222},{x:253,y:505},{x:706,y:505}];
+const LOBBY_BENCHES=[{x:330,y:519},{x:630,y:519}];
+const LOBBY_SOLIDS=[
+  {x:36,y:74,w:888,h:66},
+  ...SEATS.map(({x,y})=>({x:x-34,y:y-56,w:68,h:60})),
+  ...LOBBY_PLANTERS.map(({x,y})=>({x:x-16,y:y-10,w:32,h:13})),
+  ...LOBBY_BENCHES.map(({x,y})=>({x:x-27,y:y-9,w:54,h:13})),
+  {x:303,y:300,w:74,h:22},{x:583,y:300,w:74,h:22}
+];
 /* ---------- state ---------- */
 let state='lobby',paused=false,time=0,shake=0,flashScreen=0,lvPreview=null;
 let P=null,room=null,run=null;
@@ -471,8 +479,7 @@ function newRoom(kind){A=roomBounds(kind);const r={kind,rocks:[],props:[],solids
     do{wx=rand(A.x+110,A.x+A.w-110-ww);wy=rand(A.y+230,A.y+A.h-70-wh);tries2++}
     while(Math.hypot(wx+ww/2-W/2,wy+wh/2-(A.y+150))<170&&tries2<40);
     r.rocks.push({x:wx,y:wy,w:ww,h:wh})}
-  if(kind==='lobby'){r.solids=[{x:A.x,y:A.y,w:A.w,h:78},{x:LT.x-8,y:A.y+78,w:LT.w+16,h:84}];for(const t of SMALL)r.solids.push({x:t.x-38,y:t.y-58,w:76,h:76});
-    r.solids.push({x:VEND.x-24,y:VEND.y-54,w:48,h:100});for(const c of CHAIRS)r.solids.push({x:c.x-18,y:c.y-50,w:36,h:46})}
+  if(kind==='lobby')r.solids=LOBBY_SOLIDS.map(solid=>({...solid}));
   else if(kind!=='training'&&kind!=='shop'){const zb=run&&run.zone,sets=zb===2?PROP_SETS_Z2:zb===3?PROP_SETS_Z3:zb===4?PROP_SETS_Z4:PROP_SETS,set=sets[run?run.level:1]||sets[1];
     const denser=zb===2||zb===3;
     const wastelandCombat=zb===1&&kind==='combat';
@@ -690,12 +697,12 @@ function drawRenewedZoneFloor(g,r,zone){
 
 }
 function makeFloor(r){const c=document.createElement('canvas');c.width=W*DPR;c.height=H*DPR;const g=c.getContext('2d');g.scale(DPR,DPR);
+  if(r.kind==='lobby'){drawLobbyFloor(g);return c}
   if(run?.zone===1&&(r.kind==='combat'||r.kind==='boss')){drawWastelandFloor(g,r);return c}
   if(run?.zone===2&&(r.kind==='combat'||r.kind==='boss')){drawArchitectFloor(g,r,r.kind==='boss');return c}
   if((run?.zone===3||run?.zone===4)&&(r.kind==='combat'||r.kind==='boss')){drawRenewedZoneFloor(g,r,run.zone);return c}
   const z2=run&&run.zone===2,roofZ2=z2&&r.kind==='boss',z3=run&&run.zone===3,z4=run&&run.zone===4;
-  const pal=r.kind==='lobby'?{floor:'#29272f',spot:'#322f39',dark:'#211f26',wall:'#151418',edge:'#46424f'}
-   :z2&&r.kind==='boss'?{floor:'#2a2a2d',spot:'#34343a',dark:'#1c1c1f',wall:'#0d0d0f',edge:'#c94b4b'}
+  const pal=z2&&r.kind==='boss'?{floor:'#2a2a2d',spot:'#34343a',dark:'#1c1c1f',wall:'#0d0d0f',edge:'#c94b4b'}
    :z3&&r.kind==='boss'?{floor:'#0b1517',spot:'#102024',dark:'#060d0f',wall:'#030608',edge:'#3fd6c2'}
    :z4&&r.kind==='boss'?{floor:'#070a18',spot:'#0e1230',dark:'#03040a',wall:'#01020a',edge:'#ff2a22'}
    :r.kind==='boss'?{floor:'#2a221e',spot:'#352a24',dark:'#211a16',wall:'#120e0c',edge:'#5a4232'}
@@ -703,9 +710,7 @@ function makeFloor(r){const c=document.createElement('canvas');c.width=W*DPR;c.h
    :z3?{floor:'#0e1719',spot:'#152325',dark:'#081012',wall:'#04080a',edge:'#2f6e6e'}
    :z4?{floor:'#0b0e1f',spot:'#121737',dark:'#05060d',wall:'#02030a',edge:'#2a52ff'}
    :{floor:'#3a322b',spot:'#463c33',dark:'#2d2621',wall:'#1a1613',edge:'#5c4d3f'};
-  if(r.kind==='lobby'){const bgg=g.createRadialGradient(W/2,A.y+A.h*.4,40,W/2,A.y+A.h*.4,Math.max(W,H)*.75);
-    bgg.addColorStop(0,'#201e26');bgg.addColorStop(1,'#121115');g.fillStyle=bgg;g.fillRect(0,0,W,H)}
-  else if(roofZ2){/* один непрерывный силуэт города от самого верха и до линии крыши — без шва на границе арены */
+  if(roofZ2){/* один непрерывный силуэт города от самого верха и до линии крыши — без шва на границе арены */
     const bgg=g.createLinearGradient(0,0,0,H);bgg.addColorStop(0,'#171a20');bgg.addColorStop(1,'#0b0c0f');
     g.fillStyle=bgg;g.fillRect(0,0,W,H);
     g.save();g.beginPath();g.rect(0,0,W,TITAN_ROOF_Y);g.clip();let bx=0;while(bx<W){const bw=rand(30,66),bh=rand(60,TITAN_ROOF_Y*.92);
@@ -785,22 +790,7 @@ function makeFloor(r){const c=document.createElement('canvas');c.width=W*DPR;c.h
     g.fillStyle='#3a3f48';g.fillRect(A.x,TITAN_ROOF_Y-4,A.w,4);
     g.fillStyle='rgba(255,122,26,.5)';g.fillRect(A.x,TITAN_ROOF_Y-5,A.w,2);
     for(let gx=A.x+14;gx<A.x+A.w;gx+=58)g.fillRect(gx,TITAN_ROOF_Y-5,3,5)}
-  if(r.kind==='lobby'){g.strokeStyle='rgba(255,255,255,.05)';g.lineWidth=1;
-    for(let x=A.x;x<=A.x+A.w;x+=48){g.beginPath();g.moveTo(x,A.y);g.lineTo(x,A.y+A.h);g.stroke()}
-    for(let y=A.y;y<=A.y+A.h;y+=48){g.beginPath();g.moveTo(A.x,y);g.lineTo(A.x+A.w,y);g.stroke()}
-    g.save();g.translate(W/2,A.y+320);g.strokeStyle='rgba(182,242,74,.09)';g.lineWidth=3;hexPath(g,0,0,96,54);g.stroke();hexPath(g,0,0,72,40);g.stroke();g.restore();
-    g.fillStyle='rgba(182,242,74,.07)';g.fillRect(A.x,A.y+A.h-40,A.w,2);
-    const wy=A.y,wh=78;g.fillStyle='#1b1a20';g.fillRect(A.x,wy,A.w,wh);
-    for(let x=A.x;x<A.x+A.w-10;x+=74){g.fillStyle='#222028';g.fillRect(x+3,wy+5,68,wh-14);g.fillStyle='#2a2731';g.fillRect(x+3,wy+5,68,2)}
-    const wx=W/2-200,ww=400;g.fillStyle='#07070b';g.fillRect(wx,wy+8,ww,54);
-    for(let i=0;i<80;i++){g.fillStyle=`rgba(239,234,226,${rand(.2,.9).toFixed(2)})`;const z=Math.random()<.15?2:1;g.fillRect(wx+rand(0,ww),wy+8+rand(0,40),z,z)}
-    g.fillStyle='#3a2a22';g.beginPath();g.arc(wx+ww-70,wy+27,12,0,6.283);g.fill();g.strokeStyle='rgba(255,122,26,.75)';g.lineWidth=2;g.beginPath();g.arc(wx+ww-70,wy+27,12,-1.2,1);g.stroke();
-    g.fillStyle='#2a201a';g.beginPath();g.moveTo(wx,wy+62);for(let x=0;x<=ww;x+=10)g.lineTo(wx+x,wy+52-Math.sin(x*.03)*5-Math.sin(x*.11)*2);g.lineTo(wx+ww,wy+62);g.closePath();g.fill();
-    g.strokeStyle='#46424f';g.lineWidth=4;g.strokeRect(wx,wy+8,ww,54);g.lineWidth=3;for(let i=1;i<4;i++){g.beginPath();g.moveTo(wx+ww*i/4,wy+8);g.lineTo(wx+ww*i/4,wy+62);g.stroke()}
-    for(const sx of[A.x+40,A.x+A.w-150]){g.fillStyle='#0d1209';g.fillRect(sx,wy+14,110,38);g.strokeStyle='#46424f';g.lineWidth=2;g.strokeRect(sx,wy+14,110,38);
-      g.fillStyle='rgba(182,242,74,.55)';for(let i=0;i<4;i++)g.fillRect(sx+8,wy+21+i*8,rand(30,90),3)}
-    g.fillStyle='rgba(182,242,74,.6)';g.fillRect(A.x,wy+wh-3,A.w,2)}
-  else if(z2){g.save();g.beginPath();g.rect(A.x,floorY0,A.w,floorH);g.clip();
+  if(z2){g.save();g.beginPath();g.rect(A.x,floorY0,A.w,floorH);g.clip();
     const gy0=Math.ceil((floorY0-A.y)/58)*58+A.y;
     g.strokeStyle='rgba(224,100,100,.05)';g.lineWidth=1;
     for(let x=A.x;x<=A.x+A.w;x+=58){g.beginPath();g.moveTo(x,floorY0);g.lineTo(x,A.y+A.h);g.stroke()}
@@ -5551,9 +5541,11 @@ function updRun(dt){
     if(enteringBoss||run.stages%4===0)enterShop(go);else go()}}
 
 /* ---------- lobby ---------- */
-const ST={term:{x:A.x+130,y:A.y+150,label:'УЛУЧШЕНИЯ'},portal:{x:A.x+A.w-120,y:MIDY-45,label:'НАЧАТЬ ЗАБЕГ'},charSel:{x:480,y:A.y+233,label:'ВЫБОР ПЕРСОНАЖА'},
-  bossGate:{x:166,y:340,label:'ПОРТАЛ БОССФАЙТОВ'},training:{x:804,y:470,label:'ТРЕНИРОВКА'},
-  debugGate:{x:130,y:500,label:'ОТЛАДКА'}};
+const ST={
+  term:{x:620,y:326,label:'УЛУЧШЕНИЯ'},charSel:{x:340,y:326,label:'ВЫБОР ПЕРСОНАЖА'},
+  portal:{x:816,y:346,label:'НАЧАТЬ ЗАБЕГ'},bossGate:{x:144,y:346,label:'ПОРТАЛ БОССФАЙТОВ'},
+  training:{x:808,y:493,label:'ТРЕНИРОВКА'},debugGate:{x:152,y:493,label:'ОТЛАДКА'}
+};
 /* цели портала боссфайтов: от слабой к сильной, с точными координатами как при обычном прохождении */
 const BOSS_TARGETS=[
   {id:'mini',label:'ГЛАВАРЬ СКЕЛЕТОВ ПУСТОШИ',sub:'Пустошь',level:2,roomIdx:2,zone:1,spr:'cardMini'},
@@ -5565,9 +5557,6 @@ const BOSS_TARGETS=[
   {id:'creatorman',label:'ЛОЖНЫЙ СОЗДАТЕЛЬ',sub:'Отладка',level:2,roomIdx:2,zone:4,spr:'cardCreatorman'},
   {id:'error',label:'ЕРРОР',sub:'Отладка · финал',level:6,roomIdx:0,zone:4,spr:'cardError'}];
 function near(){
-  // seats checked first: the charSel station sits close enough to Warden's chair (480,233 vs 480,178) that its
-  // wide 72px radius used to swallow the seat's own tighter hit-box, so pressing E there opened character select
-  // instead of letting Warden talk — a specific seat match should always win over a general station
   for(let i=0;i<SEATS.length;i++){const s=SEATS[i];if(Math.abs(P.x-s.x)<34&&Math.abs(P.y-s.fy)<30)return 'seat'+i}
   for(const k in ST){const s=ST[k];if(Math.hypot(P.x-s.x,P.y-s.y)<(k==='portal'?80:72))return k}
   return null}
@@ -8270,69 +8259,106 @@ function drawDoors(){const g=ctx;g.fillStyle='#0c0b0d';g.fillRect(A.x-22,MIDY-40
     g.fillStyle='#141316';g.beginPath();g.moveTo(x+5,MIDY-12);g.lineTo(x+16,MIDY);g.lineTo(x+5,MIDY+12);g.closePath();g.fill()}
   else{g.fillStyle='#0c0b0d';g.fillRect(x,MIDY-40,22,80);g.fillStyle='#3a352f';for(let i=0;i<4;i++)g.fillRect(x+3,MIDY-34+i*19,16,6)}}
 function hintBox(txt,x,y,col){ctx.font=`13px ${FD}`;const w=ctx.measureText(txt).width+20;ctx.fillStyle='rgba(12,11,13,.88)';ctx.fillRect(x-w/2,y-18,w,26);label(txt,x,y,13,col)}
-function drawLobby(){const g=ctx;
-  const t=ST.term;g.fillStyle='#0f0e11';g.fillRect(t.x-34,t.y-62,68,62);g.fillStyle='#1c2a12';g.fillRect(t.x-28,t.y-56,56,34);
-  g.fillStyle=C.acid;g.font=`11px ${FM}`;g.textAlign='center';g.fillText('LV '+save.lv,t.x,t.y-41);if(Math.floor(time*2)%2)g.fillRect(t.x-14,t.y-33,28,3);
-  g.fillStyle='#2a2730';g.fillRect(t.x-40,t.y-6,80,10);label(t.label,t.x,t.y+24,13,C.ink);
-  const cs=ST.charSel,baseRx=52,baseRy=15;g.save();
-  {const gr=g.createRadialGradient(cs.x,cs.y+6,4,cs.x,cs.y+6,baseRx+18);gr.addColorStop(0,'rgba(182,242,74,.16)');gr.addColorStop(1,'rgba(182,242,74,0)');
-    g.fillStyle=gr;g.beginPath();g.ellipse(cs.x,cs.y+6,baseRx+18,(baseRx+18)*.4,0,0,6.283);g.fill()}
-  g.fillStyle='#17151b';g.beginPath();g.ellipse(cs.x,cs.y+6,baseRx,baseRy,0,0,6.283);g.fill();
-  g.strokeStyle=C.acid;g.lineWidth=2;g.beginPath();g.ellipse(cs.x,cs.y+6,baseRx,baseRy,0,0,6.283);g.stroke();
-  g.strokeStyle='rgba(182,242,74,.35)';g.lineWidth=1;g.beginPath();g.ellipse(cs.x,cs.y+6,baseRx*.6,baseRy*.6,0,0,6.283);g.stroke();
-  // the station's body is a small hologram of the same node diagram the character-select menu uses
-  // (CS_NODES/CS_REALPOS) — a spoked ring of colored nodes around a central hub — rather than a row of
-  // flags, so the look of the station itself echoes the menu it opens, with the picked character lit up
-  {const dcx=cs.x,dcy=cs.y-38,dr=24,dsz=9,bob=Math.sin(time*1.6)*2,nodes=CS_NODES();
-    g.save();g.translate(0,bob);
-    g.strokeStyle='rgba(182,242,74,.4)';g.lineWidth=1;g.beginPath();g.ellipse(dcx,dcy+dr+6,dr+6,(dr+6)*.3,0,0,6.283);g.stroke();
-    g.strokeStyle='rgba(255,255,255,.1)';g.lineWidth=1;
-    for(const n of nodes)if(!(n.dx===0&&n.dy===0)){g.beginPath();g.moveTo(dcx,dcy);g.lineTo(dcx+n.dx*dr,dcy+n.dy*dr);g.stroke()}
-    nodes.forEach(n=>{const nx=dcx+n.dx*dr,ny=dcy+n.dy*dr,active=n.real&&save.char===n.id,
-        unlocked=n.real&&(n.id==='warden'||(n.id==='tenn'&&save.tenn)||(n.id==='cain'&&save.cain)||(n.id==='senton'&&save.senton));
-      if(active){g.save();g.shadowColor=n.col;g.shadowBlur=10;g.fillStyle=n.col;g.fillRect(nx-dsz/2,ny-dsz/2,dsz,dsz);g.restore()}
-      else{g.fillStyle=n.real?(unlocked?n.col:'#3d3a45'):'#111014';g.fillRect(nx-dsz/2,ny-dsz/2,dsz,dsz)}
-      g.strokeStyle=active?n.col:n.real?'rgba(255,255,255,.3)':'rgba(255,255,255,.12)';g.lineWidth=active?1.6:1;
-      g.strokeRect(nx-dsz/2+.5,ny-dsz/2+.5,dsz-1,dsz-1)});
-    g.restore()}
-  g.restore();
-  label('ВЫБОР ПЕРСОНАЖА',cs.x,cs.y-56,12,C.acid);
-  label('Сейчас: '+(save.char==='tenn'?'Теннмен':save.char==='cain'?'Каин':save.char==='void'?'Войд':'Варден'),cs.x,cs.y+26,10,C.muted,undefined,FM);
-  const p=ST.portal;g.save();
-  {const gr=g.createRadialGradient(p.x,p.y,6,p.x,p.y,86);gr.addColorStop(0,'rgba(90,209,255,.25)');gr.addColorStop(1,'rgba(90,209,255,0)');g.fillStyle=gr;g.beginPath();g.arc(p.x,p.y,86,0,6.283);g.fill()}
-  portalFrame(p.x,p.y,104,152,'#0b1a1f','#204752',C.tech);
-  g.save();g.translate(p.x,p.y);for(let i=0;i<5;i++){g.rotate(time*.8+i);g.strokeStyle=i%2?C.tech:'#204752';g.lineWidth=3;g.beginPath();g.ellipse(0,0,40-i*6,58-i*8,0,0,6.283);g.stroke()}
-  g.fillStyle=`rgba(150,225,255,${.45+Math.sin(time*3)*.15})`;g.beginPath();g.arc(0,0,7,0,6.283);g.fill();g.restore();
-  portalEmbers(p.x,p.y,70,'90,209,255',0);
-  label(p.label,p.x,p.y+96,13,C.tech);label('3 локации',p.x,p.y+112,11,C.muted,undefined,FM);
-  const bg=ST.bossGate;g.save();
-  {const gr=g.createRadialGradient(bg.x,bg.y,4,bg.x,bg.y,62);gr.addColorStop(0,'rgba(255,74,58,.22)');gr.addColorStop(1,'rgba(255,74,58,0)');g.fillStyle=gr;g.beginPath();g.arc(bg.x,bg.y,62,0,6.283);g.fill()}
-  portalFrame(bg.x,bg.y,80,112,'#19100f','#3a2228',C.red);
-  g.save();g.translate(bg.x,bg.y);for(let i=0;i<4;i++){g.rotate(-time*.9+i);g.strokeStyle=i%2?'#efeae2':'#3a2228';g.lineWidth=3;g.beginPath();g.ellipse(0,0,30-i*5,42-i*7,0,0,6.283);g.stroke()}
-  g.strokeStyle='rgba(255,74,58,.9)';g.lineWidth=2;hexPath(g,0,0,13,9);g.stroke();
-  for(const off of[0,Math.PI]){g.beginPath();for(let i=0;i<3;i++){const a=off-Math.PI/2+i*2*Math.PI/3+time*.4;g[i?'lineTo':'moveTo'](Math.cos(a)*11,Math.sin(a)*11)}g.closePath();g.stroke()}
-  g.restore();
-  portalEmbers(bg.x,bg.y,52,'255,74,58',1.6);
-  label(bg.label,bg.x,bg.y+74,12,C.red);label('4 цели на выбор',bg.x,bg.y+90,11,C.muted,undefined,FM);g.restore();
-  const tr=ST.training;g.save();
-  {const gr=g.createRadialGradient(tr.x,tr.y,4,tr.x,tr.y,62);gr.addColorStop(0,'rgba(182,242,74,.22)');gr.addColorStop(1,'rgba(182,242,74,0)');g.fillStyle=gr;g.beginPath();g.arc(tr.x,tr.y,62,0,6.283);g.fill()}
-  portalFrame(tr.x,tr.y,80,112,'#141a0f','#36462a',C.acid);
-  g.save();g.translate(tr.x,tr.y);for(let i=0;i<4;i++){g.rotate(time*.7+i*1.1);g.strokeStyle=i%2?C.acid:'#36462a';g.lineWidth=3;g.beginPath();g.ellipse(0,0,28-i*5,40-i*7,0,0,6.283);g.stroke()}
-  g.fillStyle=`rgba(182,242,74,${.5+Math.sin(time*3)*.15})`;g.beginPath();g.arc(0,0,6,0,6.283);g.fill();g.restore();
-  portalEmbers(tr.x,tr.y,50,'182,242,74',.8);
-  label(tr.label,tr.x,tr.y+74,12,C.acid);label('манекены · DPS-счётчик',tr.x,tr.y+90,11,C.muted,undefined,FM);g.restore();
-  // портал в "Отладку" — тёмный и явно "чужой" на фоне остальных станций: вместо спокойного вихря внутри
-  // рамки просто статичный шум из "ERR" и чуть заметный блик-глаз, без подписи цели (только "???")
-  const dg=ST.debugGate;g.save();
-  {const gr=g.createRadialGradient(dg.x,dg.y,4,dg.x,dg.y,50);gr.addColorStop(0,'rgba(255,42,34,.16)');gr.addColorStop(1,'rgba(255,42,34,0)');g.fillStyle=gr;g.beginPath();g.arc(dg.x,dg.y,50,0,6.283);g.fill()}
-  portalFrame(dg.x,dg.y,56,88,'#0a0908','#2a1210',C.red);
-  g.save();g.beginPath();g.rect(dg.x-28,dg.y-44,56,88);g.clip();
-  g.font=`8px ${FM}`;g.fillStyle='rgba(255,42,34,.55)';g.textAlign='center';
-  for(let i=0;i<9;i++){const gx=dg.x-22+((i*37+time*40)%52),gy=dg.y-38+((i*23)%78);if(Math.sin(time*9+i*2)>0)g.fillText('ERR',gx,gy)}
-  g.restore();
-  g.save();g.translate(dg.x,dg.y-10);g.scale(.4,.4);drawErrorEye(g,0,0,1);g.restore();
-  g.restore();
-  label(dg.label,dg.x,dg.y+58,12,Math.sin(time*7)>.8?'#fff':C.red);label('???',dg.x,dg.y+74,11,C.muted,undefined,FM)}
+function lobbyShape(g,points,fill,edge){
+  g.beginPath();points.forEach(([x,y],i)=>g[i?'lineTo':'moveTo'](x,y));g.closePath();
+  g.fillStyle=fill;g.fill();if(edge){g.strokeStyle=edge;g.lineWidth=1.5;g.stroke()}
+}
+function drawLobbyFloor(g){
+  const floor=g.createLinearGradient(0,A.y,0,H);
+  floor.addColorStop(0,'#171936');floor.addColorStop(.48,'#233050');floor.addColorStop(1,'#1f1838');
+  g.fillStyle='#100d24';g.fillRect(0,0,W,H);
+  g.fillStyle=floor;g.fillRect(A.x,A.y,A.w,A.h);
+  g.save();g.beginPath();g.rect(A.x,A.y,A.w,A.h);g.clip();
+  for(let row=0;row<9;row++)for(let col=-1;col<15;col++){
+    const x=A.x+col*66+(row%2)*33,y=141+row*51;
+    g.fillStyle=(row*3+col+4)%4===0?'#57427d35':'#13122b45';g.fillRect(x+1,y+1,64,49);
+    g.fillStyle='#8578ba28';g.fillRect(x+4,y+2,56,1);
+  }
+  g.fillStyle='#382450';g.fillRect(392,248,176,322);
+  g.fillStyle='#574071';g.fillRect(400,249,160,320);
+  g.fillStyle='#80599b';g.fillRect(400,249,2,320);g.fillRect(558,249,2,320);
+  g.fillStyle='#2f264b';g.fillRect(410,251,140,319);
+  for(const y of [274,416,550]){
+    lobbyShape(g,[[480,y-16],[527,y],[480,y+16],[433,y]],'#48355e','#78628e');
+    lobbyShape(g,[[480,y-8],[502,y],[480,y+8],[458,y]],'#6e5288');
+  }
+  g.fillStyle='#211836';g.fillRect(A.x,A.y,A.w,66);
+  const sky=g.createLinearGradient(0,78,0,132);
+  sky.addColorStop(0,'#131d45');sky.addColorStop(1,'#553668');
+  g.fillStyle=sky;g.fillRect(95,79,770,53);
+  for(let i=0;i<60;i++){
+    g.fillStyle=i%6===0?'#e8c5f5':'#aca7dd';g.fillRect(98+i*107%760,82+i*19%46,i%6===0?2:1,1);
+  }
+  g.fillStyle='#e9b59a';g.beginPath();g.arc(735,101,15,0,Math.PI*2);g.fill();
+  lobbyShape(g,[[96,132],[96,121],[220,127],[310,115],[420,130],[505,117],[613,126],[697,117],[865,131],[865,134]],'#302849');
+  for(let x=95;x<=865;x+=154){g.fillStyle='#6d5484';g.fillRect(x,77,3,57)}
+  g.fillStyle='#b17a97';g.fillRect(95,132,770,2);
+  g.fillStyle='#3c2b55';g.fillRect(90,140,780,69);
+  g.fillStyle='#9076a7';g.fillRect(90,207,780,2);
+  for(const x of [51,899])for(let y=151;y<561;y+=32){
+    g.fillStyle='#efb77f';g.fillRect(x,y,9,2);g.fillStyle='#684465';g.fillRect(x,y+3,9,3);
+  }
+  g.restore();g.strokeStyle='#7e5d9a';g.lineWidth=2;g.strokeRect(A.x,A.y,A.w,A.h);
+}
+function drawLobbyConsole(key){
+  const g=ctx,{x,y,label:title}=ST[key],select=key==='charSel';
+  const col=select?'#74e4ef':'#ffc981',frame=select?'#25506b':'#70404d';
+  g.save();g.translate(x,y);
+  lobbyShape(g,[[-43,-11],[43,-11],[50,5],[39,13],[-39,13],[-50,5]],'#21172f',col);
+  lobbyShape(g,[[-37,-13],[-30,-26],[30,-26],[37,-13],[30,-6],[-30,-6]],frame,col);
+  if(select){
+    for(const side of [-1,1]){
+      lobbyShape(g,[[side*25,-19],[side*33,-23],[side*33,-56],[side*22,-70],[side*22,-55],[side*25,-49]],frame,col);
+    }
+    g.save();g.translate(0,-45+Math.sin(time*2)*2);
+    const nodes=CS_NODES();
+    g.strokeStyle='#74e4ef75';g.lineWidth=1;
+    for(const n of nodes){
+      g.beginPath();g.moveTo(0,0);g.lineTo(n.dx*23,n.dy*19);g.stroke();
+    }
+    for(const n of nodes){
+      const active=n.id===save.char;g.fillStyle=active?n.col:n.real?'#78b8d4':'#304762';
+      g.fillRect(n.dx*23-3,n.dy*19-3,6,6);
+      if(active){g.strokeStyle='#e4ffff';g.strokeRect(n.dx*23-5,n.dy*19-5,10,10)}
+    }
+    g.restore();
+  }else{
+    for(const side of [-1,1]){
+      lobbyShape(g,[[side*27,-17],[side*36,-28],[side*34,-56],[side*24,-62],[side*21,-41]],frame,col);
+      g.fillStyle=col;g.fillRect(side*27-2,-50,4,16);
+    }
+    lobbyShape(g,[[0,-71],[15,-53],[10,-32],[0,-25],[-10,-32],[-15,-53]],'#6f516f',col);
+    lobbyShape(g,[[0,-65],[8,-54],[0,-35],[-8,-54]],'#ffc981');
+    g.fillStyle='#fff0ca';g.fillRect(-2,-59,3,17);
+    const level={warden:save.lv,void:save.voidLv,senton:save.sentonLv,tenn:save.tennLv,cain:save.cainLv}[save.char]||1;
+    for(let i=0;i<3;i++){g.fillStyle=i<level?col:'#594057';g.fillRect(-12+i*8,-14,6,3)}
+  }
+  g.restore();label(title,x,y+29,12,col);
+}
+function drawLobby(){
+  const g=ctx;
+  const gates=[
+    ['portal',49,57,'#183a51','#75e6eb'],['bossGate',43,48,'#502738','#ff8899'],
+    ['training',42,44,'#214a49','#a8e993'],['debugGate',37,43,'#382449','#d98fff']
+  ];
+  for(const [key,rx,ry,base,accent] of gates){
+    const {x,y,label:title}=ST[key];
+    g.save();g.translate(x,y);
+    const glow=g.createRadialGradient(0,-6,2,0,-6,rx+14);
+    glow.addColorStop(0,accent+'50');glow.addColorStop(1,accent+'00');
+    g.fillStyle=glow;g.fillRect(-rx-14,-ry-16,2*rx+28,2*ry+32);
+    const frame=[[-rx,-ry*.68],[-rx*.55,-ry],[rx*.55,-ry],[rx,-ry*.68],[rx,ry*.7],[rx*.55,ry],[-rx*.55,ry],[-rx,ry*.7]];
+    lobbyShape(g,frame,base,accent);
+    g.save();g.scale(.8,.8);lobbyShape(g,frame,'#161629',accent+'80');g.restore();
+    for(let i=0;i<3;i++){
+      g.save();g.rotate(time*(key==='debugGate'?-1:1)*.7+i*Math.PI/3);
+      g.strokeStyle=accent+(i===0?'e0':'65');g.lineWidth=2;
+      g.beginPath();g.ellipse(0,0,rx*.30,ry*.62,0,.6,Math.PI*1.72);g.stroke();g.restore();
+    }
+    g.fillStyle=accent;g.fillRect(-3,-3,6,6);g.restore();
+    label(title,x,y+ry+15,11,accent);
+  }
+}
 // dialogue bubble for NPC/character chats — drawn separately from drawLobby (and AFTER the table/furniture
 // entities, which are z-sorted and painted later) so decorations can no longer cover the box; wraps long
 // lines onto several rows instead of letting them run past a fixed-width box
@@ -8358,10 +8384,11 @@ function portalFrame(x,y,w,h,col,edge,glow){const g=ctx,hw=w/2,hh=h/2,pw=11;
 function portalEmbers(x,y,r,rgb,ph){const g=ctx;for(let i=0;i<5;i++){const a=time*1.1+i*1.26+ph,rr=((time*18+i*31)%r);
   g.fillStyle=`rgba(${rgb},${(1-rr/r)*.65})`;g.fillRect(x+Math.cos(a)*rr*.4-1.5,y-rr+r*.2,3,3)}}
 function drawLobbyHint(){if(!ui.hint||state!=='lobby')return;
-  if(ui.hint.startsWith('seat')){const s=SEATS[+ui.hint.slice(4)];const y=s.long?LT.y-70:s.small.y-90;
+  if(ui.hint.startsWith('seat')){const s=SEATS[+ui.hint.slice(4)];const y=s.y-76;
     const txt=s.w?(save.char!=='warden'?'[E] Поговорить · Варден':'Место Вардена · ты играешь за него'):
       s.t?(!save.tenn?'Место Теннмена · ещё не разблокирован':save.char==='tenn'?'Место Теннмена · ты играешь за него':'[E] Поговорить · Теннмен'):
       s.c?(!save.cain?'Место Каина · ещё не разблокирован':save.char==='cain'?'Место Каина · ты играешь за него':'[E] Поговорить · Каин'):
+      s.s?(!save.senton?'Место Сентона · ещё не разблокирован':save.char==='senton'?'Место Сентона · ты играешь за него':'[E] Поговорить · Сентон'):
       s.v?(!save.void?'Место Войда · ещё не разблокирован':save.char==='void'?'Место Войда · ты играешь за него':'[E] Поговорить · Войд'):'[E] Поговорить · ???';
     hintBox(txt,s.x,y,(s.w||s.t||s.c)?C.ember:C.muted);return}
   const s=ST[ui.hint];if(ui.hint==='bossGate'){hintBox('[E] Портал боссфайтов',s.x,s.y-74,C.red);return}
@@ -8369,7 +8396,6 @@ function drawLobbyHint(){if(!ui.hint||state!=='lobby')return;
   if(ui.hint==='training'){hintBox('[E] Тренировочная комната',s.x,s.y-74,C.acid);return}
   if(ui.hint==='debugGate'){hintBox('[E] ???',s.x,s.y-74,C.red);return}
   hintBox(ui.hint==='term'?'[E] Открыть улучшения':'[E] Выбрать сложность и начать забег',s.x,s.y-86,C.tech)}
-function chairBack(x,top){const g=ctx;g.fillStyle='#3a3743';g.fillRect(x-18,top,36,46);g.fillStyle='#4d4957';g.fillRect(x-18,top,36,5);g.fillStyle='#2a2830';g.fillRect(x-18,top+40,36,6);g.fillStyle='rgba(182,242,74,.6)';g.fillRect(x-14,top+10,4,22);g.fillRect(x+10,top+10,4,22)}
 function silhouette(x,y,s){s=s||1;const g=ctx;g.save();g.translate(x,y);g.fillStyle='#09080b';
   g.fillRect(-2.6*s,-9*s,2.2*s,9*s);g.fillRect(.4*s,-9*s,2.2*s,9*s);
   g.fillRect(-3*s,-1.3*s,3*s,1.3*s);g.fillRect(0,-1.3*s,3*s,1.3*s);
@@ -8378,35 +8404,47 @@ function silhouette(x,y,s){s=s||1;const g=ctx;g.save();g.translate(x,y);g.fillSt
   g.fillRect(-3.3*s,-25*s,6.6*s,7*s);
   g.fillStyle='#3d3a45';g.font=`${Math.max(9,Math.round(6.5*s))}px ${FD}`;g.textAlign='center';g.textBaseline='middle';g.fillText('?',0,-21.5*s);
   g.restore()}
-function arms(x,y){ctx.fillStyle='#09080b';ctx.fillRect(x-15,y,7,9);ctx.fillRect(x+8,y,7,9)}
-function drawLongTable(){const g=ctx,ty=LT.y;
-  for(const s of SEATS)if(s.long){chairBack(s.x,ty-50);
-    if(s.v){if(!save.void)silhouette(s.x,ty-4,2.4);else if(save.char!=='void')drawVoid(g,s.x,ty-4,2.4,save.voidLv,'front',1,0,false,0,false)}
-    else if(s.w){if(save.char!=='warden')drawWarden(g,s.x,ty-4,2.4,save.lv,false,1,0,-1.57,0,false,0,'front')}
-    else if(s.t){if(!save.tenn)silhouette(s.x,ty-4,2.4);else if(save.char!=='tenn')drawTennman(g,s.x,ty-4,2.4,save.tennLv,1,0,-1.57,0,false,0,'front')}
-    else if(s.c){if(!save.cain)silhouette(s.x,ty-4,2.5);else if(save.char!=='cain')drawCain(g,s.x,ty-4,2.5,save.cainLv,1,0,-1.57,0,false,0,'front')}
-    else if(s.s){if(!save.senton)silhouette(s.x,ty-4,2.4);else if(save.char!=='senton')drawSenton(g,s.x,ty-4,2.4,save.sentonLv,1,0,-1.57,0,false,0,'front')}}
-  const hx=(SEATS[1].x+SEATS[2].x)/2,hy=ty-20;g.fillStyle='rgba(182,242,74,.12)';g.beginPath();g.moveTo(hx-4,ty+10);g.lineTo(hx+4,ty+10);g.lineTo(hx+15,hy);g.lineTo(hx-15,hy);g.closePath();g.fill();
-  g.save();g.translate(hx,hy-6);g.rotate(time*.9);g.strokeStyle='rgba(182,242,74,.85)';g.lineWidth=1.5;hexPath(g,0,0,10,8);g.stroke();g.rotate(-time*1.8);hexPath(g,0,0,5,4);g.stroke();g.restore();
-  g.fillStyle='#18171c';g.fillRect(LT.x,ty+26,LT.w,12);g.fillStyle='#2b2933';g.fillRect(LT.x,ty,LT.w,26);g.fillStyle='#3b3844';g.fillRect(LT.x,ty,LT.w,3);
-  g.fillStyle='rgba(182,242,74,.6)';g.fillRect(LT.x,ty+26,LT.w,2);
-  for(const s of SEATS)if(s.long){g.fillStyle=s.w?'rgba(255,122,26,.6)':s.t?'rgba(90,160,255,.5)':s.c?'rgba(229,52,42,.55)':s.s?'rgba(63,214,255,.5)':s.v&&save.void?'rgba(63,111,255,.55)':'rgba(182,242,74,.35)';g.fillRect(s.x-9,ty+9,18,10);if(s.v&&!save.void)arms(s.x,ty+1)}
-  for(const s of SEATS)if(s.long)label(s.w?'ВАРДЕН':s.t?'ТЕННМЕН':s.c?'КАИН':s.s?'СЕНТОН':s.v&&save.void?'ВОЙД':'???',s.x,ty-55,11,s.w?C.ember:s.t?'#5aa0ff':s.c?'#e5342a':s.s?'#3fd6ff':s.v&&save.void?CS_REALPOS.void.col:C.muted)}
-function drawSmallTable(t){const g=ctx,x=t.x,y=t.y;chairBack(x,y-66);silhouette(x,y-13,1.9);
-  g.fillStyle='#18171c';g.fillRect(x-5,y+4,10,14);g.beginPath();g.ellipse(x,y+18,15,4,0,0,6.283);g.fill();
-  g.fillStyle='#23212a';g.beginPath();g.ellipse(x,y+3,38,13,0,0,6.283);g.fill();
-  g.fillStyle='#34313c';g.beginPath();g.ellipse(x,y-1,38,13,0,0,6.283);g.fill();g.strokeStyle='rgba(182,242,74,.6)';g.lineWidth=2;g.stroke();
-  arms(x,y-12);g.fillStyle='rgba(182,242,74,.45)';g.fillRect(x+14,y-5,9,5);label('???',x,y-72,11,C.muted)}
-function drawVending(x,y){const g=ctx;
-  g.fillStyle='rgba(0,0,0,.3)';g.beginPath();g.ellipse(x,y+46,26,6,0,0,6.283);g.fill();
-  g.fillStyle='#1c1b22';g.fillRect(x-24,y-54,48,100);g.fillStyle='#2a2832';g.fillRect(x-24,y-54,48,8);
-  g.fillStyle='#101014';g.fillRect(x-19,y-42,38,56);g.strokeStyle='#3a3744';g.lineWidth=2;g.strokeRect(x-19,y-42,38,56);
-  const cols=[C.acid,C.ember,C.red];for(let r=0;r<3;r++)for(let c=0;c<2;c++){g.fillStyle=cols[(r+c)%3];g.fillRect(x-15+c*19,y-38+r*18,13,13)}
-  g.fillStyle='#0c0b0d';g.fillRect(x-19,y+16,38,10);g.fillStyle=Math.floor(time*2)%2?'rgba(182,242,74,.75)':'rgba(182,242,74,.3)';g.fillRect(x-15,y+19,6,4);
-  g.fillStyle='#46424f';g.fillRect(x-24,y+46,48,6)}
-function drawChair(c){chairBack(c.x,c.y-50);ctx.fillStyle='rgba(182,242,74,.3)';ctx.fillRect(c.x-9,c.y-9,18,10)}
-function lobbyEnts(ents){ents.push({y:LT.y+38,d:drawLongTable});for(const t of SMALL)ents.push({y:t.y+16,d:()=>drawSmallTable(t)});
-  ents.push({y:VEND.y+50,d:()=>drawVending(VEND.x,VEND.y)});for(const c of CHAIRS)ents.push({y:c.y,d:()=>drawChair(c)})}
+function drawLobbySeat(s){
+  const g=ctx,{x,y,color}=s;
+  const active=s.w&&save.char==='warden'||s.v&&save.char==='void'||s.s&&save.char==='senton'||s.t&&save.char==='tenn'||s.c&&save.char==='cain';
+  g.save();g.translate(x,y);
+  lobbyShape(g,[[-34,3],[-34,-47],[-24,-56],[24,-56],[34,-47],[34,3]],'#2b2247',color+'a0');
+  lobbyShape(g,[[-25,-6],[-25,-44],[-18,-49],[18,-49],[25,-44],[25,-6]],'#1a1a34');
+  g.fillStyle=color;g.fillRect(-29,-35,3,24);g.fillRect(26,-35,3,24);
+  lobbyShape(g,[[-34,-3],[34,-3],[34,4],[-34,4]],active?'#574272':'#403459',color);
+  g.restore();
+  if(!active){
+    if(s.w)drawWarden(g,x,y-5,2,save.lv,false,1,0,-1.57,0,false,0,'front');
+    else if(s.v&&save.void)drawVoid(g,x,y-5,2,save.voidLv,'front',1,0,false,0,false);
+    else if(s.s&&save.senton)drawSenton(g,x,y-5,2,save.sentonLv,1,0,-1.57,0,false,0,'front');
+    else if(s.t&&save.tenn)drawTennman(g,x,y-5,2,save.tennLv,1,0,-1.57,0,false,0,'front');
+    else if(s.c&&save.cain)drawCain(g,x,y-5,2,save.cainLv,1,0,-1.57,0,false,0,'front');
+    else silhouette(x,y-5,1.65);
+  }
+  label(s.name,x,y-62,10,color);
+}
+function drawLobbyPlanter({x,y}){
+  const g=ctx;g.save();g.translate(x,y);
+  lobbyShape(g,[[-16,-10],[16,-10],[12,3],[-12,3]],'#663852','#d787a0');
+  for(let i=-2;i<=2;i++){
+    const dx=i*6,tip=-31+Math.abs(i)*5;
+    lobbyShape(g,[[0,-8],[dx-5,tip+4],[dx,tip],[dx+5,tip+5]],i%2?'#6cc99e':'#41a9a7');
+    g.fillStyle='#f7b89a';g.fillRect(dx-2,tip,4,3);
+  }
+  g.restore();
+}
+function drawLobbyBench({x,y}){
+  const g=ctx;g.save();g.translate(x,y);
+  lobbyShape(g,[[-27,4],[-27,-14],[-20,-22],[20,-22],[27,-14],[27,4]],'#622f59','#bf79a5');
+  lobbyShape(g,[[-24,-8],[24,-8],[21,0],[-21,0]],'#9a507d');
+  g.fillStyle='#ed9ead';g.fillRect(-22,-18,44,2);g.restore();
+}
+function lobbyEnts(ents){
+  for(const s of SEATS)ents.push({y:s.y+4,d:()=>drawLobbySeat(s)});
+  for(const p of LOBBY_PLANTERS)ents.push({y:p.y+3,d:()=>drawLobbyPlanter(p)});
+  for(const p of LOBBY_BENCHES)ents.push({y:p.y+4,d:()=>drawLobbyBench(p)});
+  for(const key of ['charSel','term'])ents.push({y:ST[key].y+9,d:()=>drawLobbyConsole(key)});
+}
 function drawArchitectMimic(g,e){
   const flash=e.flash>0;
   if(e.state==='dormant'){
