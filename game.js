@@ -408,19 +408,25 @@ const PROP_SETS_Z2={1:['drone','cell','drone','hologram'],2:['drone','cell','pyl
 const PROP_SETS_Z3={1:['ribs','vent','ribs','scallop'],2:['vent','ribs','wreck','scallop','eggsac'],3:['wreck','vent','ribs','scallop','eggsac'],4:['wreck','eggsac','vent','ribs','scallop','scallop'],5:['vent','wreck','ribs','scallop','eggsac','scallop'],6:['wreck','vent','scallop']};
 const PROP_SETS_Z4={1:['rack','wireframe','rack','crtbug'],2:['rack','errstack','wireframe','crtbug'],3:['wireframe','rack','errstack','crtbug'],4:['errstack','wireframe','wireframe','crtbug','crtbug'],5:['wireframe','errstack','wireframe','rack','crtbug','crtbug'],6:['errstack','wireframe','crtbug']};
 /* lobby furniture: long table under the window, two round tables below */
+const LOBBY_TABLES=[{x:172,y:455},{x:480,y:528},{x:788,y:455}];
 const SEATS=[
   {v:true,name:'ВОЙД',color:'#7ba1ff'},{s:true,name:'СЕНТОН',color:'#68e4f3'},
   {w:true,name:'ВАРДЕН',color:'#ffc076'},{t:true,name:'ТЕННМЕН',color:'#a1deff'},
   {c:true,name:'КАИН',color:'#ff818c'},...['#fdaf79','#f0d685','#ee9bd1','#8fe4b5'].map(color=>({name:'???',color}))
-].map((s,i)=>({...s,x:128+i*88,y:204,fy:237}));
-const LOBBY_PLANTERS=[{x:81,y:222},{x:880,y:222},{x:253,y:505},{x:706,y:505}];
-const LOBBY_BENCHES=[{x:330,y:519},{x:630,y:519}];
+].map((s,i)=>{
+  const table=LOBBY_TABLES[Math.floor(i/3)];
+  return {...s,x:table.x+(i%3-1)*66,y:table.y,fy:table.y+27};
+});
+const LOBBY_DOOR={x:900,y:354};
+const LOBBY_PLANTERS=[{x:75,y:154},{x:884,y:154},{x:267,y:259},{x:693,y:259},{x:62,y:532},{x:898,y:532},{x:314,y:538},{x:646,y:538}];
+const LOBBY_BENCHES=[{x:305,y:455},{x:655,y:455}];
 const LOBBY_SOLIDS=[
-  {x:36,y:74,w:888,h:66},
-  ...SEATS.map(({x,y})=>({x:x-34,y:y-56,w:68,h:60})),
+  {x:36,y:74,w:888,h:69},
+  ...LOBBY_TABLES.map(({x,y})=>({x:x-106,y:y-50,w:212,h:56})),
   ...LOBBY_PLANTERS.map(({x,y})=>({x:x-16,y:y-10,w:32,h:13})),
   ...LOBBY_BENCHES.map(({x,y})=>({x:x-27,y:y-9,w:54,h:13})),
-  {x:303,y:300,w:74,h:22},{x:583,y:300,w:74,h:22}
+  {x:143,y:242,w:74,h:22},{x:743,y:242,w:74,h:22},
+  {x:874,y:316,w:50,h:77}
 ];
 /* ---------- state ---------- */
 let state='lobby',paused=false,time=0,shake=0,flashScreen=0,lvPreview=null;
@@ -5542,9 +5548,9 @@ function updRun(dt){
 
 /* ---------- lobby ---------- */
 const ST={
-  term:{x:620,y:326,label:'УЛУЧШЕНИЯ'},charSel:{x:340,y:326,label:'ВЫБОР ПЕРСОНАЖА'},
-  portal:{x:816,y:346,label:'НАЧАТЬ ЗАБЕГ'},bossGate:{x:144,y:346,label:'ПОРТАЛ БОССФАЙТОВ'},
-  training:{x:808,y:493,label:'ТРЕНИРОВКА'},debugGate:{x:152,y:493,label:'ОТЛАДКА'}
+  term:{x:180,y:268,label:'УЛУЧШЕНИЯ'},charSel:{x:780,y:268,label:'ВЫБОР ПЕРСОНАЖА'},
+  portal:{x:480,y:219,label:'НАЧАТЬ ЗАБЕГ'},bossGate:{x:354,y:219,label:'ПОРТАЛ БОССФАЙТОВ'},
+  training:{x:606,y:219,label:'ТРЕНИРОВКА'},debugGate:{x:76,y:339,label:'ОТЛАДКА'}
 };
 /* цели портала боссфайтов: от слабой к сильной, с точными координатами как при обычном прохождении */
 const BOSS_TARGETS=[
@@ -5558,8 +5564,10 @@ const BOSS_TARGETS=[
   {id:'error',label:'ЕРРОР',sub:'Отладка · финал',level:6,roomIdx:0,zone:4,spr:'cardError'}];
 function near(){
   for(let i=0;i<SEATS.length;i++){const s=SEATS[i];if(Math.abs(P.x-s.x)<34&&Math.abs(P.y-s.fy)<30)return 'seat'+i}
-  for(const k in ST){const s=ST[k];if(Math.hypot(P.x-s.x,P.y-s.y)<(k==='portal'?80:72))return k}
-  return null}
+  let nearest=null,best=72;
+  for(const k in ST){const s=ST[k],distance=Math.hypot(P.x-s.x,P.y-s.y);
+    if(distance<best){nearest=k;best=distance}}
+  return nearest}
 function openCharSelect(){state='charselect';ui.csPick=save.char;ui.deny=0;sfx('pick')}
 const CS_DEFS=()=>[{id:'warden',name:'ВАРДЕН'},{id:'tenn',name:'ТЕННМЕН',locked:!save.tenn,cost:TCOST[1]},{id:'cain',name:'КАИН',locked:!save.cain,cost:CCOST[1]},{id:'senton',name:'СЕНТОН',locked:!save.senton,cost:SCOST[1]},{id:'void',name:'ВОЙД',locked:!save.void,cost:VOID_COST[1]}];
 const CS_FUTURE=[{id:'fut_orange',col:'#ff8a1a',dx:.71,dy:-.71},{id:'fut_gold',col:'#d4af37',dx:0,dy:1},
@@ -8274,11 +8282,11 @@ function drawLobbyFloor(g){
     g.fillStyle=(row*3+col+4)%4===0?'#57427d35':'#13122b45';g.fillRect(x+1,y+1,64,49);
     g.fillStyle='#8578ba28';g.fillRect(x+4,y+2,56,1);
   }
-  g.fillStyle='#382450';g.fillRect(392,248,176,322);
-  g.fillStyle='#574071';g.fillRect(400,249,160,320);
-  g.fillStyle='#80599b';g.fillRect(400,249,2,320);g.fillRect(558,249,2,320);
-  g.fillStyle='#2f264b';g.fillRect(410,251,140,319);
-  for(const y of [274,416,550]){
+  g.fillStyle='#382450';g.fillRect(392,280,176,162);
+  g.fillStyle='#574071';g.fillRect(400,281,160,160);
+  g.fillStyle='#80599b';g.fillRect(400,281,2,160);g.fillRect(558,281,2,160);
+  g.fillStyle='#2f264b';g.fillRect(410,283,140,158);
+  for(const y of [307,416]){
     lobbyShape(g,[[480,y-16],[527,y],[480,y+16],[433,y]],'#48355e','#78628e');
     lobbyShape(g,[[480,y-8],[502,y],[480,y+8],[458,y]],'#6e5288');
   }
@@ -8293,8 +8301,8 @@ function drawLobbyFloor(g){
   lobbyShape(g,[[96,132],[96,121],[220,127],[310,115],[420,130],[505,117],[613,126],[697,117],[865,131],[865,134]],'#302849');
   for(let x=95;x<=865;x+=154){g.fillStyle='#6d5484';g.fillRect(x,77,3,57)}
   g.fillStyle='#b17a97';g.fillRect(95,132,770,2);
-  g.fillStyle='#3c2b55';g.fillRect(90,140,780,69);
-  g.fillStyle='#9076a7';g.fillRect(90,207,780,2);
+  g.fillStyle='#3c2b55';g.fillRect(90,136,780,8);
+  g.fillStyle='#9076a7';g.fillRect(90,143,780,2);
   for(const x of [51,899])for(let y=151;y<561;y+=32){
     g.fillStyle='#efb77f';g.fillRect(x,y,9,2);g.fillStyle='#684465';g.fillRect(x,y+3,9,3);
   }
@@ -8338,8 +8346,8 @@ function drawLobbyConsole(key){
 function drawLobby(){
   const g=ctx;
   const gates=[
-    ['portal',49,57,'#183a51','#75e6eb'],['bossGate',43,48,'#502738','#ff8899'],
-    ['training',42,44,'#214a49','#a8e993'],['debugGate',37,43,'#382449','#d98fff']
+    ['bossGate',43,49,'#502738','#ff707f'],['portal',47,53,'#183a51','#75dfff'],
+    ['training',43,49,'#554333','#ffdb72'],['debugGate',17,20,'#382449','#d98fff']
   ];
   for(const [key,rx,ry,base,accent] of gates){
     const {x,y,label:title}=ST[key];
@@ -8358,6 +8366,19 @@ function drawLobby(){
     g.fillStyle=accent;g.fillRect(-3,-3,6,6);g.restore();
     label(title,x,y+ry+15,11,accent);
   }
+  const {x,y}=LOBBY_DOOR;
+  g.save();g.translate(x,y);
+  lobbyShape(g,[[-22,-38],[24,-38],[24,39],[-22,39]],'#39294e','#9375a8');
+  g.fillStyle='#1b1834';g.fillRect(-16,-31,40,60);
+  g.fillStyle='#514069';g.fillRect(7,-29,2,56);
+  g.fillStyle='#df9a6e';g.fillRect(-9,-29,4,3);
+  lobbyShape(g,[[-24,-9],[24,-9],[24,10],[-24,10]],'#72503c','#ffca84');
+  for(const dx of [-22,-8,6,20]){
+    g.fillStyle='#221b32';g.fillRect(dx,-7,4,15);
+  }
+  g.fillStyle='#21182d';g.fillRect(-20,11,42,16);
+  label('СКОРО',1,23,9,'#ffd695');g.restore();
+
 }
 // dialogue bubble for NPC/character chats — drawn separately from drawLobby (and AFTER the table/furniture
 // entities, which are z-sorted and painted later) so decorations can no longer cover the box; wraps long
@@ -8439,8 +8460,19 @@ function drawLobbyBench({x,y}){
   lobbyShape(g,[[-24,-8],[24,-8],[21,0],[-21,0]],'#9a507d');
   g.fillStyle='#ed9ead';g.fillRect(-22,-18,44,2);g.restore();
 }
+function drawLobbyTable({x,y}){
+  const g=ctx;g.save();g.translate(x,y);
+  lobbyShape(g,[[-106,-7],[-98,-15],[98,-15],[106,-7],[103,6],[-103,6]],'#4e3464','#c197bc');
+  g.fillStyle='#b780ae';g.fillRect(-95,-11,190,2);
+  g.fillStyle='#2e243f';g.fillRect(-97,1,194,5);
+  for(const dx of [-66,0,66]){
+    g.fillStyle='#7c5c90';g.fillRect(dx-12,-8,24,6);
+  }
+  g.restore();
+}
 function lobbyEnts(ents){
   for(const s of SEATS)ents.push({y:s.y+4,d:()=>drawLobbySeat(s)});
+  for(const p of LOBBY_TABLES)ents.push({y:p.y+6,d:()=>drawLobbyTable(p)});
   for(const p of LOBBY_PLANTERS)ents.push({y:p.y+3,d:()=>drawLobbyPlanter(p)});
   for(const p of LOBBY_BENCHES)ents.push({y:p.y+4,d:()=>drawLobbyBench(p)});
   for(const key of ['charSel','term'])ents.push({y:ST[key].y+9,d:()=>drawLobbyConsole(key)});
