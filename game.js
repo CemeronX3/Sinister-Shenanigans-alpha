@@ -5385,7 +5385,7 @@ function openCharSelect(){state='charselect';ui.csPick=save.char;ui.deny=0;sfx('
 const CS_DEFS=()=>[{id:'warden',name:'ВАРДЕН'},{id:'tenn',name:'ТЕННМЕН',locked:!save.tenn,cost:TCOST[1]},{id:'cain',name:'КАИН',locked:!save.cain,cost:CCOST[1]},{id:'senton',name:'СЕНТОН',locked:!save.senton,cost:SCOST[1]},{id:'void',name:'ВОЙД',locked:!save.void,cost:VOID_COST[1]}];
 const CS_FUTURE=[{id:'fut_orange',col:'#ff8a1a',dx:.71,dy:-.71},{id:'fut_gold',col:'#d4af37',dx:0,dy:1},
   {id:'fut_pink',col:'#ff4fb0',dx:-1,dy:0},{id:'fut_blue',col:'#3f6fff',dx:-.71,dy:-.71}];
-const CS_REALPOS={warden:{dx:0,dy:0,col:'#f2efe9'},cain:{dx:0,dy:-1,col:'#e5342a'},tenn:{dx:1,dy:0,col:'#f4d03f'},senton:{dx:-.71,dy:.71,col:'#3fd6ff'},void:{dx:.71,dy:.71,col:'#86d842'}};
+const CS_REALPOS={warden:{dx:0,dy:0,col:'#f2efe9'},cain:{dx:0,dy:-1,col:'#e5342a'},tenn:{dx:1,dy:0,col:'#f4d03f'},senton:{dx:-.71,dy:.71,col:'#3fd6ff'},void:{dx:.71,dy:.71,col:'#b080ff'}};
 function CS_NODES(){return CS_DEFS().map(d=>Object.assign({real:true},d,CS_REALPOS[d.id]))
   .concat(CS_FUTURE.map(f=>Object.assign({real:false,name:'???',locked:true},f)))}
 const CS_CX=W/2,CS_CY=148,CS_R=70,CS_SZ=26;
@@ -7954,8 +7954,8 @@ function drawLongTable(){const g=ctx,ty=LT.y;
   g.save();g.translate(hx,hy-6);g.rotate(time*.9);g.strokeStyle='rgba(182,242,74,.85)';g.lineWidth=1.5;hexPath(g,0,0,10,8);g.stroke();g.rotate(-time*1.8);hexPath(g,0,0,5,4);g.stroke();g.restore();
   g.fillStyle='#18171c';g.fillRect(LT.x,ty+26,LT.w,12);g.fillStyle='#2b2933';g.fillRect(LT.x,ty,LT.w,26);g.fillStyle='#3b3844';g.fillRect(LT.x,ty,LT.w,3);
   g.fillStyle='rgba(182,242,74,.6)';g.fillRect(LT.x,ty+26,LT.w,2);
-  for(const s of SEATS)if(s.long){g.fillStyle=s.w?'rgba(255,122,26,.6)':s.t?'rgba(90,160,255,.5)':s.c?'rgba(229,52,42,.55)':s.s?'rgba(63,214,255,.5)':'rgba(182,242,74,.35)';g.fillRect(s.x-9,ty+9,18,10);if(s.v&&!save.void)arms(s.x,ty+1)}
-  for(const s of SEATS)if(s.long)label(s.w?'ВАРДЕН':s.t?'ТЕННМЕН':s.c?'КАИН':s.s?'СЕНТОН':s.v&&save.void?'ВОЙД':'???',s.x,ty-55,11,s.w?C.ember:s.t?'#5aa0ff':s.c?'#e5342a':s.s?'#3fd6ff':s.v&&save.void?C.acid:C.muted)}
+  for(const s of SEATS)if(s.long){g.fillStyle=s.w?'rgba(255,122,26,.6)':s.t?'rgba(90,160,255,.5)':s.c?'rgba(229,52,42,.55)':s.s?'rgba(63,214,255,.5)':s.v&&save.void?'rgba(176,128,255,.55)':'rgba(182,242,74,.35)';g.fillRect(s.x-9,ty+9,18,10);if(s.v&&!save.void)arms(s.x,ty+1)}
+  for(const s of SEATS)if(s.long)label(s.w?'ВАРДЕН':s.t?'ТЕННМЕН':s.c?'КАИН':s.s?'СЕНТОН':s.v&&save.void?'ВОЙД':'???',s.x,ty-55,11,s.w?C.ember:s.t?'#5aa0ff':s.c?'#e5342a':s.s?'#3fd6ff':s.v&&save.void?CS_REALPOS.void.col:C.muted)}
 function drawSmallTable(t){const g=ctx,x=t.x,y=t.y;chairBack(x,y-66);silhouette(x,y-13,1.9);
   g.fillStyle='#18171c';g.fillRect(x-5,y+4,10,14);g.beginPath();g.ellipse(x,y+18,15,4,0,0,6.283);g.fill();
   g.fillStyle='#23212a';g.beginPath();g.ellipse(x,y+3,38,13,0,0,6.283);g.fill();
