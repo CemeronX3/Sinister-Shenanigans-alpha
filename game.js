@@ -438,7 +438,8 @@ function newRoom(kind){A=roomBounds(kind);const r={kind,rocks:[],props:[],solids
     r.solids.push({x:VEND.x-24,y:VEND.y-54,w:48,h:100});for(const c of CHAIRS)r.solids.push({x:c.x-18,y:c.y-50,w:36,h:46})}
   else if(kind!=='training'&&kind!=='shop'){const zb=run&&run.zone,sets=zb===2?PROP_SETS_Z2:zb===3?PROP_SETS_Z3:zb===4?PROP_SETS_Z4:PROP_SETS,set=sets[run?run.level:1]||sets[1];
     const denser=zb===2||zb===3;
-    const n=denser?(kind==='boss'?8:randi(9,13)):(kind==='boss'?5:randi(5,8));let tries=0;
+    const wastelandCombat=zb===1&&kind==='combat';
+    const n=wastelandCombat?randi(10,13):denser?(kind==='boss'?8:randi(9,13)):(kind==='boss'?5:randi(5,8));let tries=0;
     while(r.props.length<n&&tries++<160){const x=rand(A.x+60,A.x+A.w-60),y=rand(A.y+36,A.y+A.h-30);
       if(Math.abs(y-MIDY)<70&&(x<A.x+150||x>A.x+A.w-150))continue;
       if(kind==='combat'&&!combatPropAllowed(r,x,y))continue;
