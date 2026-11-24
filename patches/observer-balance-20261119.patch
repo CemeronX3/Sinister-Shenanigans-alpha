@@ -1,8 +1,0 @@
-diff --git a/game.js b/game.js
---- a/game.js
-+++ b/game.js
-@@ -4843,2 +4843,2 @@
--   if(l>.1){const v=Math.min(l,660*dt);o.x+=vx/l*v;o.y+=vy/l*v}
--   if(!o.hitDone&&Math.hypot(o.x-e.x,o.y-ey)<=r+22){o.hitDone=true;o.flash=.2;damageEnemy(e,Math.round(15*run.mods.dmg));burst(e.x,ey,7,['#ff4260','#fff0ee','#a61935'],150,3,.3);
-+   if(l>.1){const v=Math.min(l,495*dt);o.x+=vx/l*v;o.y+=vy/l*v}
-+   if(!o.hitDone&&Math.hypot(o.x-e.x,o.y-ey)<=r+22){o.hitDone=true;o.flash=.2;damageEnemy(e,Math.round(12*run.mods.dmg));burst(e.x,ey,7,['#ff4260','#fff0ee','#a61935'],150,3,.3);
