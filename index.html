@@ -6458,7 +6458,9 @@ function bgArrow(r,dir,active){const g=ctx,cx=r.x+r.w/2,cy=r.y+r.h/2,h=active&&h
   g.stroke();g.restore()}
 const BOSS_PORTRAIT_PALETTES={
   mini:['#493d32','#172326','#c79a70'],boss:['#323c36','#111a20','#e6bf8c'],
-  mike:['#374659','#171c2b','#ec6558'],titan:['#462933','#161923','#e95e63']
+  mike:['#374659','#171c2b','#ec6558'],titan:['#462933','#161923','#e95e63'],
+  kraken:['#342657','#11172a','#b7dc8b'],levi:['#203e48','#111826','#d9f23c'],
+  creatorman:['#273653','#121524','#819bff'],error:['#512a31','#14141e','#ff7267']
 };
 function drawBossPortrait(id,r){
   const palette=BOSS_PORTRAIT_PALETTES[id];
@@ -6486,6 +6488,19 @@ function drawBossPortrait(id,r){
       drawEnemy({type:'mikeArm',weapon,ox,oy,x:ox,y:oy,rig});
     }
     drawEnemy({type:'mikeCore',x:0,y:0,rig});
+  }else if(id==='kraken'){
+    g.scale(.45,.45);
+    drawEnemy({type:'krakenCore',x:0,y:-15,t:.25,rig:{phase:4}});
+  }else if(id==='levi'){
+    g.scale(.78,.78);
+    const rig={stage:1,atk:'breach',sub:'charge',chargeDir:1};
+    const points=[[28,-61],[-4,-54],[-35,-36],[-59,-7],[-61,26],[-44,56],[-15,74],[21,76]];
+    rig.chain=points.map(([x,y],segIdx)=>({x,y,segIdx,r:segIdx===0?43:26-segIdx,t:.5,rig}));
+    for(let i=rig.chain.length-1;i>=0;i--)drawLeviSeg(rig.chain[i]);
+  }else if(id==='creatorman'){
+    g.scale(1.13,1.13);drawCreatorMan({t:1,phase:1},0,-10);
+  }else if(id==='error'){
+    g.scale(.43,.43);drawErrorBoss({t:1,phase:1},0,-31);
   }else{
     g.scale(.40,.40);g.translate(0,-TITAN_ROOF_Y+79*1.15+4);
     const rig={x:0};
