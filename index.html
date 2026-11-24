@@ -5746,7 +5746,8 @@ function drawErrorBoss(b,x,y){if(b.phase===4&&b.phase4Etude){if(!(room&&room.err
   drawErrorEye(g,0,-70,.9);
   if(fin)drawErrorSmile(g,0,-30);
   g.restore()}
-function spawnMike(){const rig={x:W/2,y:MIDY-20,armsAlive:4,busy:0,cd:2.4,shieldDown:false};
+const MIKE_ARM_COOLDOWN=1.75;
+function spawnMike(){const rig={x:W/2,y:MIDY-20,armsAlive:4,busy:0,cd:MIKE_ARM_COOLDOWN,shieldDown:false};
   const weapons=['flame','laser','rocket','hammer'],offs=[[-92,22],[92,22],[-92,-66],[92,-66]];
   const hpArm=run.hard?480:360;
   weapons.forEach((w,i)=>{enemies.push({type:'mikeArm',armIdx:i,weapon:w,ox:offs[i][0],oy:offs[i][1],
@@ -5801,7 +5802,7 @@ function updMikeRig(rig,dt){const arms=enemies.filter(e=>e.type==='mikeArm'&&e.r
   let pool=arms.slice();const first=pick(pool);pool=pool.filter(a=>a!==first);
   const second=pool.length?pick(pool):null;
   startArmAtk(first);rig.busy=1;if(second){startArmAtk(second);rig.busy=2}
-  const dead=4-rig.armsAlive,tier=Math.min(2,dead);rig.cd=[2.4,1.7,1.15][tier]}
+  const dead=4-rig.armsAlive,tier=Math.min(2,dead);rig.cd=rig.legacy?[2.4,1.7,1.15][tier]:MIKE_ARM_COOLDOWN}
 function drawMikeBarrelEffect(g,e,center){
   const t=e.at/MIKE_WEAPON_CYCLE;
   if(e.weapon==='flame'){
