@@ -5760,6 +5760,9 @@ function spawnMike(){const rig={x:W/2,y:MIDY-20,armsAlive:4,busy:0,cd:2.4,shield
 const MIKE_ARM_SCALE=.62;
 const MIKE_ARM_SOCKET=42*MIKE_ARM_SCALE;
 const MIKE_WEAPON_CYCLE=2.2;
+const MIKE_LASER_LOCK=.31*MIKE_WEAPON_CYCLE;
+const MIKE_LASER_FIRE=.56*MIKE_WEAPON_CYCLE;
+const MIKE_LASER_DURATION=.15*MIKE_WEAPON_CYCLE;
 function mikeArmFrame(t,keys){
   for(let i=1;i<keys.length;i++){
     const [end,value]=keys[i],[start,previous]=keys[i-1];
@@ -5777,7 +5780,7 @@ function mikeArmPose(e){
       const target=e.armLock??Math.atan2(P.y-6-y,P.x-x);
       const delta=Math.atan2(Math.sin(target-rest),Math.cos(target-rest));
       a+=delta*mikeArmFrame(t,[[0,0],[.31,1],[.73,1],[.9,0]]);
-      if(e.weapon==='laser')recoil=MIKE_ARM_SCALE*mikeArmFrame(t,[[0,0],[.35,0],[.38,-7],[.53,0]]);
+      if(e.weapon==='laser')recoil=MIKE_ARM_SCALE*mikeArmFrame(t,[[0,0],[.54,0],[.57,-7],[.71,0]]);
     }else{
       const target=Math.atan2(P.y-y,P.x-x);
       const delta=Math.atan2(Math.sin(target-rest),Math.cos(target-rest));
@@ -5804,7 +5807,7 @@ function drawMikeBarrelEffect(g,e,center){
   if(e.weapon==='flame'){
     const alpha=mikeArmFrame(t,[[0,0],[.34,0],[.37,1],[.44,.7],[.55,1],[.68,.85],[.73,0]]);
     if(!alpha)return;
-    g.save();g.translate(center,0);g.scale(MIKE_ARM_SCALE,MIKE_ARM_SCALE);g.globalAlpha=alpha;
+    g.save();g.translate(center,0);g.scale(MIKE_ARM_SCALE,MIKE_ARM_SCALE);g.translate(111,0);g.scale(1.65,1);g.translate(-111,0);g.globalAlpha=alpha;
     g.fillStyle='#f48b3b';
     g.beginPath();g.moveTo(111,-4);g.quadraticCurveTo(133,-20,157,-17);
     g.lineTo(149,-8);g.lineTo(182,-12);g.lineTo(167,1);g.lineTo(179,9);g.lineTo(148,9);
@@ -5812,7 +5815,7 @@ function drawMikeBarrelEffect(g,e,center){
     g.fillStyle='#ffe197';g.beginPath();g.moveTo(111,-2);g.quadraticCurveTo(136,-8,156,0);
     g.quadraticCurveTo(135,9,111,2);g.closePath();g.fill();g.restore();
   }else if(e.weapon==='laser'){
-    const alpha=mikeArmFrame(t,[[0,0],[.18,0],[.25,.32],[.31,.68],[.37,1],[.41,.25],[.53,0]]);
+    const alpha=mikeArmFrame(t,[[0,0],[.18,0],[.25,.32],[.31,.68],[.56,1],[.60,.25],[.71,0]]);
     if(!alpha)return;
     g.save();g.globalAlpha=alpha;g.fillStyle='#b9ffff';
     g.fillRect(center+104*MIKE_ARM_SCALE,-7*MIKE_ARM_SCALE,7*MIKE_ARM_SCALE,14*MIKE_ARM_SCALE);
@@ -5828,15 +5831,15 @@ function updMikeArm(e,dt,dx,dy,d){const dm=run.hard?1.3:1,rig=e.rig;
     if(e.at>=start&&e.at<end){
       const pose=mikeArmPose(e);
       e.emit-=dt;
-      while(e.emit<=0){e.emit+=.05;eShoot(pose.mx,pose.my,pose.a+rand(-.25,.25),200,10*dm,C.ember,5,.6)}
+      while(e.emit<=0){e.emit+=.05;eShoot(pose.mx,pose.my,pose.a+rand(-.18,.18),275,10*dm,C.ember,5,1.2)}
     }
     if(e.at>=MIKE_WEAPON_CYCLE)endArmAtk(e)}
   else if(e.weapon==='laser'){
-    if(e.armLock==null&&e.at>=.37*MIKE_WEAPON_CYCLE)e.armLock=mikeArmPose(e).a;
+    if(e.armLock==null&&e.at>=MIKE_LASER_LOCK)e.armLock=mikeArmPose(e).a;
     if(e.count===0){
       e.count=1;sfx('beamWarn');
       const pose=mikeArmPose(e);
-      beams.push({x:pose.mx,y:pose.my,a:pose.a,t:e.at-dt,warn:.37*MIKE_WEAPON_CYCLE,on:.18*MIKE_WEAPON_CYCLE,
+      beams.push({x:pose.mx,y:pose.my,a:pose.a,t:e.at-dt,warn:MIKE_LASER_FIRE,on:MIKE_LASER_DURATION,
         dmg:18*dm,hit:false,arm:e,col:'rgba(77,218,255,.65)',warnCol:'#99e7ed',width:14});
     }
     if(e.at>=MIKE_WEAPON_CYCLE)endArmAtk(e)}
