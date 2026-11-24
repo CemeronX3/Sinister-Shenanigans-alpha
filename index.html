@@ -5729,7 +5729,16 @@ function bridgeDraw(){
 }
 function bridgeClick(x,y){if(finale&&finale.stage===4&&finale.grey>=1){finale.deflected=true;advanceFinalStage(5);return true;}if(Number.isFinite(x)&&Number.isFinite(y))return bridgeTowerHit(x,y,40);return false;}
 function bridgeTowerHit(x,y,damage){for(const tw of summonTowers){if(tw.dead)continue;if(Math.abs(x-tw.x)<46&&y>=tw.y-125&&y<=tw.y+88){tw.hp-=damage;tw.flash=.14;if(tw.hp<=0){tw.dead=true;if(summonRunning&&!summonReverting&&summonTowers.every(t=>t.dead)&&(!summonCombo||summonOtherActive())){summonSwingAt=summonTime+.32;summonNextCastAt=summonTime+.42;}}return true;}}return false;}
-return {update:bridgeUpdate,draw:bridgeDraw,click:bridgeClick,towerHit:bridgeTowerHit,towerCount:()=>summonTowers.filter(tw=>!tw.dead).length,
+function drawPortrait(){
+  ctx.save();ctx.translate(-5,-46);ctx.scale(.24,.24);
+  try{
+    const eyeOffset={x:0,y:0};
+    const joint=side=>({x:(side<0?GLITCH_ARM_BASE_X_L:GLITCH_ARM_BASE_X_R)+GLITCH_ARM_HEX_LOCAL[0]*side,
+      y:GLITCH_ARM_BASE_Y+GLITCH_ARM_HEX_LOCAL[1]});
+    drawErrorColoredBody(ctx,eyeOffset,eyeOffset,joint(-1),eyeOffset,joint(1),eyeOffset);
+  }finally{ctx.restore()}
+}
+return {update:bridgeUpdate,draw:bridgeDraw,drawPortrait,click:bridgeClick,towerHit:bridgeTowerHit,towerCount:()=>summonTowers.filter(tw=>!tw.dead).length,
  // Cinematic idle: keep the authentic boss model, breathing, glitches and sway alive,
  // but do not run damage, weapons or attack state machines during the dialogue.
  dialogueTick:(dt,px,py)=>{
@@ -6462,10 +6471,7 @@ const BOSS_PORTRAIT_PALETTES={
   kraken:['#342657','#11172a','#b7dc8b'],levi:['#203e48','#111826','#d9f23c'],
   creatorman:['#273653','#121524','#819bff'],error:['#512a31','#14141e','#ff7267']
 };
-const ERROR_PORTRAIT_GLITCH={tw:16,th:5,marks:[
-  {x:-393,y:15,col:'#ff3934',on:true},{x:-362,y:3,col:'#2a52ff',on:true},
-  {x:-329,y:-8,col:'#efe9db',on:true},{x:-303,y:-6,col:'#e8d23a',on:true}
-]};
+let errorCardModel;
 function drawBossPortrait(id,r){
   const palette=BOSS_PORTRAIT_PALETTES[id];
   if(!palette)return false;
@@ -6497,15 +6503,15 @@ function drawBossPortrait(id,r){
     drawEnemy({type:'krakenCore',x:0,y:-15,t:.25,rig:{phase:4}});
   }else if(id==='levi'){
     g.scale(.78,.78);
-    const rig={stage:1,atk:'breach',sub:'charge',chargeDir:1};
+    const rig={stage:3,atk:'breach',sub:'charge',chargeDir:1};
     const points=[[28,-61],[-4,-54],[-35,-36],[-59,-7],[-61,26],[-44,56],[-15,74],[21,76]];
-    rig.chain=points.map(([x,y],segIdx)=>({x,y,segIdx,r:segIdx===0?43:26-segIdx,t:.5,rig}));
+    rig.chain=points.map(([x,y],segIdx)=>({x,y,segIdx,r:segIdx===0?31:26-segIdx,t:.5,rig}));
     for(let i=rig.chain.length-1;i>=0;i--)drawLeviSeg(rig.chain[i]);
   }else if(id==='creatorman'){
     g.scale(1.13,1.13);drawCreatorMan({t:1,phase:1},0,-10);
   }else if(id==='error'){
-    g.translate(47,-39);g.scale(.33,.33);
-    drawErrorColoredBody(g,{x:2,y:1},0,ERROR_PORTRAIT_GLITCH);
+    errorCardModel??=createErrorPhase4Etude(cv,g);
+    errorCardModel.drawPortrait();
   }else{
     g.scale(.40,.40);g.translate(0,-TITAN_ROOF_Y+79*1.15+4);
     const rig={x:0};
