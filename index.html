@@ -8665,18 +8665,30 @@ function architectEnemyArt(g,e){
   g.restore();
   return true;
 }
-function titanVisualBody(g,rig,open,dy=0){
-  return architectArt(g,open?'titanOpen':'titanClosed',rig.x,TITAN_ROOF_Y-79*1.15+dy,1.16,1.15);
+function titanIdlePose(rig){
+  if(rig.atk||rig.legacyShield)return null;
+  const blend=clamp(rig.cd/.28,0,1);
+  const wave=Math.sin(time*2.6);
+  return {stretch:1+wave*.021*blend,sway:wave*.045*blend,light:1+(.5+wave*.5)*.16*blend};
 }
-function titanVisualArm(g,rig,side,broken,e){
-  const dir=side==='L'?-1:1, y=TITAN_ROOF_Y-79*1.15;
+function titanVisualBody(g,rig,open,dy=0,idle=null){
+  const scaleY=1.15*(idle?.stretch??1);
+  g.save();
+  if(idle)g.filter=`brightness(${idle.light})`;
+  const ready=architectArt(g,open?'titanOpen':'titanClosed',rig.x,TITAN_ROOF_Y-79*scaleY+dy,1.16,scaleY);
+  g.restore();
+  return ready;
+}
+function titanVisualArm(g,rig,side,broken,e,idle=null){
+  const dir=side==='L'?-1:1, scaleY=1.15*(idle?.stretch??1);
   const striking=e&&rig.atk==='slam';
   const k=striking?clamp(rig.atkT/rig.slamWarn,0,1):0;
   const angle=striking?(k<.75?-k/.75*.30:(k-.75)/.25*.40-.30):0;
   const rebound=striking&&rig.atkT>rig.slamWarn?Math.max(0,1-(rig.atkT-rig.slamWarn)/.35):1;
-  g.save();g.translate(rig.x,y);g.scale(dir*1.16,1.15);
-  if(striking){g.translate(76,-27);g.rotate(angle*rebound);g.translate(-76,27);}
+  g.save();g.translate(rig.x,TITAN_ROOF_Y-79*scaleY);g.scale(dir*1.16,scaleY);
+  if(striking||idle){g.translate(76,-27);g.rotate(striking?angle*rebound:idle.sway);g.translate(-76,27);}
   if(e?.flash>0)g.filter='brightness(2.35)';
+  else if(idle)g.filter=`brightness(${idle.light})`;
   const ready=architectArt(g,broken?'titanStump':striking&&k>.15?'titanFist':'titanArm',0,0);
   g.restore();return ready;
 }
@@ -8972,11 +8984,12 @@ function drawEnemy(e){
     g.fillStyle='#232428';g.beginPath();g.moveTo(-16,-28);g.lineTo(0,-16);g.lineTo(16,-28);g.lineTo(10,-34);g.lineTo(0,-24);g.lineTo(-10,-34);g.closePath();g.fill();
     archFace(g,0,-22,.8,C.red);g.restore()}
   else if(e.type==='titanCore'){const rig=e.rig,open=rig.armLDead&&rig.armRDead,sprT=open?SPR.titanTorsoOpen:SPR.titanTorsoClosed;
-    if(!titanVisualBody(g,rig,open)&&sprT&&sprT.complete&&sprT.naturalWidth){
+    const idle=titanIdlePose(rig);
+    if(!titanVisualBody(g,rig,open,0,idle)&&sprT&&sprT.complete&&sprT.naturalWidth){
       g.save();g.translate(rig.x,rig.y);
       g.drawImage(sprT,-TITAN_TORSO_W/2,0,TITAN_TORSO_W,TITAN_TORSO_H);g.restore()}
     for(const side of['L','R']){if(!(side==='L'?rig.armLDead:rig.armRDead))continue;
-      if(titanVisualArm(g,rig,side,true))continue;
+      if(titanVisualArm(g,rig,side,true,null,idle))continue;
       const st=side==='L'?SPR.titanArmLStump:SPR.titanArmRStump;if(!st||!st.complete||!st.naturalWidth)continue;
       const tp=TITAN_STUMP_PIVOT[side],sh=titanShoulder(side);
       g.save();g.translate(sh.x,sh.y);g.drawImage(st,-tp.topX*tp.dw,-tp.topY*tp.dh,tp.dw,tp.dh);g.restore()}
@@ -9022,7 +9035,7 @@ function drawEnemy(e){
   else if(e.type==='titanArmL'||e.type==='titanArmR'){const isL=e.type==='titanArmL',
     side=isL?'L':'R',spr=isL?SPR.titanArmL:SPR.titanArmR,pv=TITAN_ARM_PIVOT[side],sh=titanShoulder(side);
     const k=e.atk==='slam'&&e.warn?Math.min(1,e.at/e.warn):0;
-    if(!titanVisualArm(g,e.rig,side,false,e)&&spr&&spr.complete&&spr.naturalWidth){
+    if(!titanVisualArm(g,e.rig,side,false,e,titanIdlePose(e.rig))&&spr&&spr.complete&&spr.naturalWidth){
       g.save();g.translate(sh.x,sh.y+k*22);
       if(e.flash>0)g.filter='brightness(2.4)';
       g.drawImage(spr,-pv.topX*pv.dw,-pv.topY*pv.dh,pv.dw,pv.dh);g.filter='none';g.restore()}}
