@@ -1,2 +1,2 @@
-# Sinister-Shenanigans-alpha 0.4.30
-Sinister Shenanigans — Alpha 0.4.30 update
+# Sinister-Shenanigans-Beta 0.5
+Sinister Shenanigans — Beta 0.5 Update
