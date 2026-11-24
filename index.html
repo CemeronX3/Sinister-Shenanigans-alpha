@@ -6462,6 +6462,10 @@ const BOSS_PORTRAIT_PALETTES={
   kraken:['#342657','#11172a','#b7dc8b'],levi:['#203e48','#111826','#d9f23c'],
   creatorman:['#273653','#121524','#819bff'],error:['#512a31','#14141e','#ff7267']
 };
+const ERROR_PORTRAIT_GLITCH={tw:16,th:5,marks:[
+  {x:-393,y:15,col:'#ff3934',on:true},{x:-362,y:3,col:'#2a52ff',on:true},
+  {x:-329,y:-8,col:'#efe9db',on:true},{x:-303,y:-6,col:'#e8d23a',on:true}
+]};
 function drawBossPortrait(id,r){
   const palette=BOSS_PORTRAIT_PALETTES[id];
   if(!palette)return false;
@@ -6500,7 +6504,8 @@ function drawBossPortrait(id,r){
   }else if(id==='creatorman'){
     g.scale(1.13,1.13);drawCreatorMan({t:1,phase:1},0,-10);
   }else if(id==='error'){
-    g.scale(.43,.43);drawErrorBoss({t:1,phase:1},0,-31);
+    g.translate(47,-39);g.scale(.33,.33);
+    drawErrorColoredBody(g,{x:2,y:1},0,ERROR_PORTRAIT_GLITCH);
   }else{
     g.scale(.40,.40);g.translate(0,-TITAN_ROOF_Y+79*1.15+4);
     const rig={x:0};
