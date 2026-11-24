@@ -8481,6 +8481,10 @@ function drawArchitectMini(g,e){
   }
   return true;
 }
+function turretLocalAngle(e){
+  const aim=e.ang||0;
+  return e.face===-1?Math.PI-aim:aim;
+}
 function architectEnemyArt(g,e){
   if(e.type==='archmini'&&drawArchitectMini(g,e))return true;
   const facing=e.face||1,t=e.t||0;
@@ -8500,11 +8504,11 @@ function architectEnemyArt(g,e){
   shadow(e.x,e.y+e.r,Math.min(26,e.r+1));
   g.save();g.translate(e.x,y);g.filter=flash;
   if(e.type==='saw')g.rotate(t*8);
-  else if(e.type!=='turret'&&e.type!=='archMimic'&&e.type!=='drillworm')g.scale(facing,1);
+  else if(e.type!=='archMimic'&&e.type!=='drillworm')g.scale(facing,1);
   architectArt(g,key,0,0,scale);
   if(e.type==='turret'){
     g.translate(65*scale,-35*scale);
-    g.rotate(e.ang||0);
+    g.rotate(turretLocalAngle(e));
     architectArt(g,'turretGun',-65*scale,35*scale,scale);
   }
   g.restore();
@@ -8715,21 +8719,22 @@ function drawEnemy(e){
     g.filter='none';g.restore()}
   else if(e.type==='turret'&&SPR.enTurretBase&&SPR.enTurretBase.complete&&SPR.enTurretBase.naturalWidth&&SPR.enTurretBarrel.complete){
     shadow(e.x,e.y+e.r+6,22);g.save();g.translate(e.x,e.y);if(e.flash>0)g.filter='brightness(2.4)';
+    g.scale(e.face||1,1);
     const k=.27,bw=204*k,bh=320*k,bx0=-bw/2,by0=e.r-bh;
     g.drawImage(architectSprite(SPR.enTurretBase),bx0,by0,bw,bh);
     const pvx=bx0+20*k,pvy=by0+195*k,barW=292*k,barH=80*k;
-    g.save();g.translate(pvx,pvy);g.rotate(e.ang||0);
+    g.save();g.translate(pvx,pvy);g.rotate(turretLocalAngle(e));
     g.drawImage(architectSprite(SPR.enTurretBarrel),-6*k,-40*k,barW,barH);
     if(e.cd<.15){g.fillStyle=C.ember;g.fillRect(barW-14*k,-5,8,10)}
     g.restore();g.filter='none';g.restore()}
-  else if(e.type==='turret'){shadow(e.x,e.y+e.r+6,22);g.save();g.translate(e.x,e.y);
+  else if(e.type==='turret'){shadow(e.x,e.y+e.r+6,22);g.save();g.translate(e.x,e.y);g.scale(e.face||1,1);
     g.fillStyle='#1a1a1d';g.beginPath();g.moveTo(-24,20);g.lineTo(24,20);g.lineTo(20,-2);g.lineTo(-20,-2);g.closePath();g.fill();
     g.strokeStyle='#6a6e78';g.lineWidth=1.4;g.beginPath();g.moveTo(-24,20);g.lineTo(24,20);g.lineTo(20,-2);g.lineTo(-20,-2);g.closePath();g.stroke();
     g.fillStyle='rgba(0,0,0,.6)';g.fillRect(-19,8,16,10);g.fillRect(3,8,16,10);
     g.strokeStyle='#ff7a1a';g.lineWidth=2;g.strokeRect(-19,8,16,10);g.strokeRect(3,8,16,10);
     g.fillStyle=fill;g.beginPath();g.arc(0,-10,8,0,6.283);g.fill();archHorns(g,0,-15,.85,'#8f8a95');archFace(g,0,-10,.9,'#efeae2');
     g.fillStyle='#ff7a1a';g.fillRect(-11,-16,6,8);g.fillRect(5,-16,6,8);
-    g.save();g.rotate(e.ang||0);
+    g.save();g.rotate(turretLocalAngle(e));
     g.strokeStyle='#4a4650';g.lineWidth=4;g.beginPath();g.moveTo(-6,-6);g.lineTo(-18,2);g.stroke();
     g.fillStyle='#141317';g.beginPath();g.arc(-19,3,4,0,6.283);g.fill();
     g.strokeStyle='#4a4650';g.lineWidth=7;g.beginPath();g.moveTo(0,0);g.lineTo(25,0);g.stroke();
