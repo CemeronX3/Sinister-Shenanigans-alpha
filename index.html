@@ -5773,8 +5773,9 @@ function mikeArmPose(e){
   if(e.atk){
     if(e.weapon==='flame'||e.weapon==='laser'){
       const t=e.at/MIKE_WEAPON_CYCLE;
-      const peak=(e.weapon==='flame'?-17:19)*Math.PI/180;
-      a+=mikeArmFrame(t,[[0,0],[.31,peak],[.73,peak],[.9,0]])+(e.armAim||0)*mikeArmFrame(t,[[0,0],[.31,1],[.73,1],[.9,0]]);
+      const target=e.armLock??Math.atan2(P.y-6-y,P.x-x);
+      const delta=Math.atan2(Math.sin(target-rest),Math.cos(target-rest));
+      a+=delta*mikeArmFrame(t,[[0,0],[.31,1],[.73,1],[.9,0]]);
       if(e.weapon==='laser')recoil=MIKE_ARM_SCALE*mikeArmFrame(t,[[0,0],[.35,0],[.38,-7],[.53,0]]);
     }else{
       const target=Math.atan2(P.y-y,P.x-x);
@@ -5787,12 +5788,7 @@ function mikeArmPose(e){
   return {x,y,a,recoil,mx:x+Math.cos(a)*reach,my:y+Math.sin(a)*reach};
 }
 function startArmAtk(e){
-  e.atk=e.weapon;e.at=0;e.count=0;e.emit=0;e.armAim=0;
-  if(e.weapon==='flame'||e.weapon==='laser'){
-    const pose=mikeArmPose(e),peak=(e.weapon==='flame'?-17:19)*Math.PI/180;
-    const delta=Math.atan2(P.y-6-pose.y,P.x-pose.x)-pose.a-peak;
-    e.armAim=clamp(Math.atan2(Math.sin(delta),Math.cos(delta)),-.55,.55);
-  }
+  e.atk=e.weapon;e.at=0;e.count=0;e.emit=0;e.armLock=null;
 }
 function endArmAtk(e){e.atk=null;e.at=0;e.count=0;if(e.rig)e.rig.busy=Math.max(0,e.rig.busy-1)}
 function updMikeRig(rig,dt){const arms=enemies.filter(e=>e.type==='mikeArm'&&e.rig===rig&&e.alive);
@@ -5835,6 +5831,7 @@ function updMikeArm(e,dt,dx,dy,d){const dm=run.hard?1.3:1,rig=e.rig;
     }
     if(e.at>=MIKE_WEAPON_CYCLE)endArmAtk(e)}
   else if(e.weapon==='laser'){
+    if(e.armLock==null&&e.at>=.37*MIKE_WEAPON_CYCLE)e.armLock=mikeArmPose(e).a;
     if(e.count===0){
       e.count=1;sfx('beamWarn');
       const pose=mikeArmPose(e);
