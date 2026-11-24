@@ -6456,13 +6456,54 @@ function bgArrow(r,dir,active){const g=ctx,cx=r.x+r.w/2,cy=r.y+r.h/2,h=active&&h
   if(dir<0){g.moveTo(cx+7,cy-11);g.lineTo(cx-7,cy);g.lineTo(cx+7,cy+11)}
   else{g.moveTo(cx-7,cy-11);g.lineTo(cx+7,cy);g.lineTo(cx-7,cy+11)}
   g.stroke();g.restore()}
+const BOSS_PORTRAIT_PALETTES={
+  mini:['#493d32','#172326','#c79a70'],boss:['#323c36','#111a20','#e6bf8c'],
+  mike:['#374659','#171c2b','#ec6558'],titan:['#462933','#161923','#e95e63']
+};
+function drawBossPortrait(id,r){
+  const palette=BOSS_PORTRAIT_PALETTES[id];
+  if(!palette)return false;
+  const g=ctx,x=r.x+r.w/2,y=r.y+r.h*.49;
+  const bg=g.createRadialGradient(x,y,8,x,y,r.h*.63);
+  bg.addColorStop(0,palette[0]);bg.addColorStop(1,palette[1]);
+  g.fillStyle=bg;g.fillRect(r.x,r.y,r.w,r.h);
+  g.save();g.strokeStyle=palette[2];g.lineWidth=1;g.globalAlpha=.16;
+  for(const radius of [69,87,106]){
+    g.beginPath();g.arc(x,y,radius,0,Math.PI*2);g.stroke();
+  }
+  g.beginPath();g.moveTo(x,r.y+43);g.lineTo(x,r.y+r.h-38);
+  g.moveTo(r.x+18,y);g.lineTo(r.x+r.w-18,y);g.stroke();g.restore();
+  g.save();g.translate(x,y);
+  if(id==='mini'){
+    g.scale(.66,.66);
+    drawMini({t:1,phase:1},3,-7);
+  }else if(id==='boss'){
+    drawBoss({phase:1},6,-3,1.03,1);
+  }else if(id==='mike'){
+    g.scale(.51,.51);
+    const rig={x:0,y:0};
+    for(const [weapon,ox,oy] of [['flame',-90,30],['laser',90,30],['rocket',-90,-55],['hammer',90,-55]]){
+      drawEnemy({type:'mikeArm',weapon,ox,oy,x:ox,y:oy,rig});
+    }
+    drawEnemy({type:'mikeCore',x:0,y:0,rig});
+  }else{
+    g.scale(.40,.40);g.translate(0,-TITAN_ROOF_Y+79*1.15+4);
+    const rig={x:0};
+    titanVisualArm(g,rig,'L',false);titanVisualArm(g,rig,'R',false);
+    titanVisualBody(g,rig,false);
+  }
+  g.restore();
+  return true;
+}
 function drawBossGate(){ctx.fillStyle='rgba(12,11,13,.95)';ctx.fillRect(0,0,W,H);
   label('ПОРТАЛ БОССФАЙТОВ',W/2,50,28,C.red);label('Выбери противника · от слабого к сильному',W/2,78,14,C.muted,'center',FM);
   const pageStart=ui.bgPage*BG_PAGE,pageItems=BOSS_TARGETS.slice(pageStart,pageStart+BG_PAGE),totalPages=bgTotalPages();
   pageItems.forEach((t,j)=>{const r=BG.grid(j),h=hit(r),spr=SPR[t.spr];
     ctx.save();ctx.beginPath();ctx.rect(r.x,r.y,r.w,r.h);ctx.clip();
-    if(spr&&spr.complete&&spr.naturalWidth)ctx.drawImage(spr,r.x,r.y,r.w,r.h);
-    else{ctx.fillStyle='#1b191f';ctx.fillRect(r.x,r.y,r.w,r.h)}
+    if(!drawBossPortrait(t.id,r)){
+      if(spr&&spr.complete&&spr.naturalWidth)ctx.drawImage(spr,r.x,r.y,r.w,r.h);
+      else{ctx.fillStyle='#1b191f';ctx.fillRect(r.x,r.y,r.w,r.h)}
+    }
     ctx.fillStyle=`rgba(12,11,13,${h?.15:0})`;ctx.fillRect(r.x,r.y,r.w,r.h);
     ctx.fillStyle='rgba(12,11,13,.72)';ctx.fillRect(r.x,r.y+r.h-44,r.w,44);
     ctx.restore();
