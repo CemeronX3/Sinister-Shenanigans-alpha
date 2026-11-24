@@ -5756,7 +5756,44 @@ function spawnMike(){const rig={x:W/2,y:MIDY-20,armsAlive:4,busy:0,cd:2.4,shield
     stunT:0,slowT:0,dotT:0,dotAcc:0,t:0,cd:1.3,atk:null,at:0,count:0,rig,seed:Math.random()});
   burst(rig.x,rig.y,70,['#0c0b0d','#efeae2',C.red],320,6,1.2);shake=14;
   banner('МАЙК','Уничтожь все 4 руки, чтобы снять щит с ядра');sfx('boss')}
-function startArmAtk(e){e.atk=e.weapon;e.at=0;e.count=0;e.emit=0}
+const MIKE_ARM_SCALE=.62;
+const MIKE_ARM_SOCKET=42*MIKE_ARM_SCALE;
+const MIKE_WEAPON_CYCLE=2.2;
+function mikeArmFrame(t,keys){
+  for(let i=1;i<keys.length;i++){
+    const [end,value]=keys[i],[start,previous]=keys[i-1];
+    if(t<=end)return previous+(value-previous)*clamp((t-start)/(end-start),0,1);
+  }
+  return keys[keys.length-1][1];
+}
+function mikeArmPose(e){
+  const rest={flame:2.74,laser:.40,rocket:-2.53,hammer:-.61}[e.weapon];
+  const x=e.x-Math.cos(rest)*MIKE_ARM_SOCKET,y=e.y-Math.sin(rest)*MIKE_ARM_SOCKET;
+  let a=rest,recoil=0;
+  if(e.atk){
+    if(e.weapon==='flame'||e.weapon==='laser'){
+      const t=e.at/MIKE_WEAPON_CYCLE;
+      const peak=(e.weapon==='flame'?-17:19)*Math.PI/180;
+      a+=mikeArmFrame(t,[[0,0],[.31,peak],[.73,peak],[.9,0]])+(e.armAim||0)*mikeArmFrame(t,[[0,0],[.31,1],[.73,1],[.9,0]]);
+      if(e.weapon==='laser')recoil=MIKE_ARM_SCALE*mikeArmFrame(t,[[0,0],[.35,0],[.38,-7],[.53,0]]);
+    }else{
+      const target=Math.atan2(P.y-y,P.x-x);
+      const delta=Math.atan2(Math.sin(target-rest),Math.cos(target-rest));
+      const turn=e.weapon==='hammer'?.68:clamp(delta,-.8,.8);
+      a+=turn*Math.sin(Math.PI*clamp(e.at/(e.weapon==='rocket'?.5:1),0,1));
+    }
+  }
+  const reach=MIKE_ARM_SOCKET+recoil+111*MIKE_ARM_SCALE;
+  return {x,y,a,recoil,mx:x+Math.cos(a)*reach,my:y+Math.sin(a)*reach};
+}
+function startArmAtk(e){
+  e.atk=e.weapon;e.at=0;e.count=0;e.emit=0;e.armAim=0;
+  if(e.weapon==='flame'||e.weapon==='laser'){
+    const pose=mikeArmPose(e),peak=(e.weapon==='flame'?-17:19)*Math.PI/180;
+    const delta=Math.atan2(P.y-6-pose.y,P.x-pose.x)-pose.a-peak;
+    e.armAim=clamp(Math.atan2(Math.sin(delta),Math.cos(delta)),-.55,.55);
+  }
+}
 function endArmAtk(e){e.atk=null;e.at=0;e.count=0;if(e.rig)e.rig.busy=Math.max(0,e.rig.busy-1)}
 function updMikeRig(rig,dt){const arms=enemies.filter(e=>e.type==='mikeArm'&&e.rig===rig&&e.alive);
   rig.armsAlive=arms.length;if(rig.shieldDown||!arms.length||rig.busy>0)return;
@@ -5765,16 +5802,46 @@ function updMikeRig(rig,dt){const arms=enemies.filter(e=>e.type==='mikeArm'&&e.r
   const second=pool.length?pick(pool):null;
   startArmAtk(first);rig.busy=1;if(second){startArmAtk(second);rig.busy=2}
   const dead=4-rig.armsAlive,tier=Math.min(2,dead);rig.cd=[2.4,1.7,1.15][tier]}
+function drawMikeBarrelEffect(g,e,center){
+  const t=e.at/MIKE_WEAPON_CYCLE;
+  if(e.weapon==='flame'){
+    const alpha=mikeArmFrame(t,[[0,0],[.34,0],[.37,1],[.44,.7],[.55,1],[.68,.85],[.73,0]]);
+    if(!alpha)return;
+    g.save();g.translate(center,0);g.scale(MIKE_ARM_SCALE,MIKE_ARM_SCALE);g.globalAlpha=alpha;
+    g.fillStyle='#f48b3b';
+    g.beginPath();g.moveTo(111,-4);g.quadraticCurveTo(133,-20,157,-17);
+    g.lineTo(149,-8);g.lineTo(182,-12);g.lineTo(167,1);g.lineTo(179,9);g.lineTo(148,9);
+    g.lineTo(159,17);g.quadraticCurveTo(129,19,111,4);g.closePath();g.fill();
+    g.fillStyle='#ffe197';g.beginPath();g.moveTo(111,-2);g.quadraticCurveTo(136,-8,156,0);
+    g.quadraticCurveTo(135,9,111,2);g.closePath();g.fill();g.restore();
+  }else if(e.weapon==='laser'){
+    const alpha=mikeArmFrame(t,[[0,0],[.18,0],[.25,.32],[.31,.68],[.37,1],[.41,.25],[.53,0]]);
+    if(!alpha)return;
+    g.save();g.globalAlpha=alpha;g.fillStyle='#b9ffff';
+    g.fillRect(center+104*MIKE_ARM_SCALE,-7*MIKE_ARM_SCALE,7*MIKE_ARM_SCALE,14*MIKE_ARM_SCALE);
+    g.restore();
+  }
+}
 function updMikeArm(e,dt,dx,dy,d){const dm=run.hard?1.3:1,rig=e.rig;
   e.x=rig.x+e.ox;e.y=rig.y+e.oy;
   if(d<e.r+P.r+8)hurtPlayer(10*dm);
   if(!e.atk)return;e.at+=dt;
-  if(e.weapon==='flame'){e.emit=(e.emit||0)-dt;const base=Math.atan2(P.y-6-e.y,P.x-e.x);
-    while(e.emit<=0){e.emit+=.05;const o=rand(-.35,.35);eShoot(e.x,e.y,base+o,200,10*dm,C.ember,5,.6)}
-    if(e.at>.9)endArmAtk(e)}
-  else if(e.weapon==='laser'){if(e.count===0){e.count=1;const a=Math.atan2(P.y-6-e.y,P.x-e.x);sfx('beamWarn');
-      beams.push({x:e.x,y:e.y,a,t:0,warn:.8,on:.4,dmg:18*dm,hit:false})}
-    if(e.at>1.3)endArmAtk(e)}
+  if(e.weapon==='flame'){
+    const start=.37*MIKE_WEAPON_CYCLE,end=.73*MIKE_WEAPON_CYCLE;
+    if(e.at>=start&&e.at<end){
+      const pose=mikeArmPose(e);
+      e.emit-=dt;
+      while(e.emit<=0){e.emit+=.05;eShoot(pose.mx,pose.my,pose.a+rand(-.25,.25),200,10*dm,C.ember,5,.6)}
+    }
+    if(e.at>=MIKE_WEAPON_CYCLE)endArmAtk(e)}
+  else if(e.weapon==='laser'){
+    if(e.count===0){
+      e.count=1;sfx('beamWarn');
+      const pose=mikeArmPose(e);
+      beams.push({x:pose.mx,y:pose.my,a:pose.a,t:e.at-dt,warn:.37*MIKE_WEAPON_CYCLE,on:.18*MIKE_WEAPON_CYCLE,
+        dmg:18*dm,hit:false,arm:e,col:'rgba(77,218,255,.65)',warnCol:'#99e7ed',width:14});
+    }
+    if(e.at>=MIKE_WEAPON_CYCLE)endArmAtk(e)}
   else if(e.weapon==='rocket'){if(e.count===0){e.count=1;const a=Math.atan2(P.y-e.y,P.x-e.x);
       rockets.push({x:e.x+Math.cos(a)*66,y:e.y+Math.sin(a)*66,vx:Math.cos(a)*120,vy:Math.sin(a)*120,dmg:16*dm,life:5,r:9,seed:Math.random()});sfx('ult')}
     if(e.at>.5)endArmAtk(e)}
@@ -6112,8 +6179,14 @@ function updWorld(dt){
   radCones=radCones.filter(rc=>rc.t<rc.dur+.3);
   for(const cb of cbeams)cb.t+=dt;
   cbeams=cbeams.filter(cb=>cb.t<cb.dur);
-  for(const bm of beams){bm.t+=dt;if(bm.t>bm.warn&&bm.t<bm.warn+bm.on&&!bm.hit){const px=P.x-bm.x,py=P.y-6-bm.y;const along=px*Math.cos(bm.a)+py*Math.sin(bm.a);
-      const perp=Math.abs(-px*Math.sin(bm.a)+py*Math.cos(bm.a));if(along>0&&perp<16){bm.hit=true;let da=bm.a+Math.PI-P.aim;while(da>Math.PI)da-=6.283;while(da<-Math.PI)da+=6.283;
+  for(const bm of beams){
+    if(bm.arm){
+      if(!bm.arm.alive){bm.t=bm.warn+bm.on;continue}
+      const pose=mikeArmPose(bm.arm);
+      bm.x=pose.mx;bm.y=pose.my;bm.a=pose.a;
+    }
+    bm.t+=dt;if(bm.t>bm.warn&&bm.t<bm.warn+bm.on&&!bm.hit){const px=P.x-bm.x,py=P.y-6-bm.y;const along=px*Math.cos(bm.a)+py*Math.sin(bm.a);
+      const perp=Math.abs(-px*Math.sin(bm.a)+py*Math.cos(bm.a));if(along>0&&perp<(bm.width?bm.width/2+P.r:16)){bm.hit=true;let da=bm.a+Math.PI-P.aim;while(da>Math.PI)da-=6.283;while(da<-Math.PI)da+=6.283;
       if(P.shield&&Math.abs(da)<1.15){P.shEn-=(run&&run.mods.guard?0.5:1)*(35);burst(P.x+Math.cos(P.aim)*30,P.y-16+Math.sin(P.aim)*30,16,['#fff',C.ember],220,4,.4);sfx('block');if(P.shEn<=0)shieldBreak()}else hurtPlayer(bm.dmg)}}
     if(bm.t>bm.warn&&!bm.shook){bm.shook=true;sfx('beamFire');shake=Math.max(shake,6)}}
   beams=beams.filter(b=>b.t<b.warn+b.on);
@@ -8984,9 +9057,7 @@ function drawEnemy(e){
     shadow(e.x,e.y+40,16);
     const armSpr={flame:SPR.mikeArmFlame,laser:SPR.mikeArmLaser,rocket:SPR.mikeArmRocket,hammer:SPR.mikeArmHammer}[e.weapon];
     const name={flame:'mikeFlame',laser:'mikeLaser',rocket:'mikeRocketArm',hammer:'mikeHammer'}[e.weapon];
-    const rest={flame:2.74,laser:.40,rocket:-2.53,hammer:-.61}[e.weapon];
-    const socket=42*.62;
-    const px=e.x-Math.cos(rest)*socket,py=e.y-Math.sin(rest)*socket;
+    const {x:px,y:py,a,recoil}=mikeArmPose(e);
     g.save();
     if(rig&&!rig.legacy){
       const side=Math.sign(e.ox),upper=e.oy<0;
@@ -9001,13 +9072,12 @@ function drawEnemy(e){
       }
     }
     if(SPR['archV2_'+name]?.naturalWidth){
-      const target=Math.atan2(P.y-py,P.x-px);
-      const delta=Math.atan2(Math.sin(target-rest),Math.cos(target-rest));
-      const kick=active?Math.sin(Math.PI*clamp(e.at/(e.weapon==='rocket'?.5:e.weapon==='laser'?1.3:e.weapon==='flame'?.9:1),0,1)):0;
-      const turn=e.weapon==='hammer'?.68:clamp(delta,-.8,.8);
-      g.translate(px,py);g.rotate(rest+turn*kick);
-      if(e.flash>0||active)g.filter=e.flash>0?'brightness(2.35)':'brightness(1.3)';
-      architectArt(g,name,socket,0,.62);
+      g.translate(px,py);g.rotate(a);
+      if(e.flash>0)g.filter='brightness(2.35)';
+      const center=MIKE_ARM_SOCKET+recoil;
+      architectArt(g,name,center,0,MIKE_ARM_SCALE);
+      g.filter='none';
+      if(active)drawMikeBarrelEffect(g,e,center);
     }else if(armSpr&&armSpr.complete&&armSpr.naturalWidth){
       g.translate(e.x,e.y);
       if(e.flash>0)g.filter='brightness(2.4)';else if(active)g.filter='brightness(1.35)';
@@ -9870,7 +9940,7 @@ function drawWorldInner(){
     ctx.globalAlpha=a*.4;ctx.strokeStyle=C.red;ctx.lineWidth=16;ctx.beginPath();ctx.moveTo(cb.x,cb.y);ctx.lineTo(ex,ey);ctx.stroke();ctx.globalAlpha=1}
   for(const bm of beams){const ex=bm.x+Math.cos(bm.a)*1200,ey=bm.y+Math.sin(bm.a)*1200;
     if(bm.t<bm.warn){ctx.strokeStyle=bm.warnCol||C.red;ctx.globalAlpha=.35+bm.t/bm.warn*.4;ctx.lineWidth=2;ctx.setLineDash([10,8]);ctx.beginPath();ctx.moveTo(bm.x,bm.y);ctx.lineTo(ex,ey);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1}
-    else{const w1=bm.big?40:26,w2=bm.big?14:8;ctx.strokeStyle=bm.col||'rgba(255,122,26,.55)';ctx.lineWidth=w1;ctx.beginPath();ctx.moveTo(bm.x,bm.y);ctx.lineTo(ex,ey);ctx.stroke();ctx.strokeStyle='#fff';ctx.lineWidth=w2;ctx.stroke()}}
+    else{const w1=bm.width??(bm.big?40:26),w2=bm.width?4:bm.big?14:8;ctx.strokeStyle=bm.col||'rgba(255,122,26,.55)';ctx.lineWidth=w1;ctx.beginPath();ctx.moveTo(bm.x,bm.y);ctx.lineTo(ex,ey);ctx.stroke();ctx.strokeStyle='#fff';ctx.lineWidth=w2;ctx.stroke()}}
   for(const pr of errBlades)drawErrBlade(ctx,pr);
   for(const s of spikes){if(s.erupted)continue;const k=s.t/s.dur,maxR=s.r||58,r=16+k*(maxR-16),rc=s.col==='yellow'?'244,217,62':'201,75,75';
     ctx.strokeStyle=`rgba(${rc},${(.4+Math.sin(time*10)*.15).toFixed(2)})`;ctx.lineWidth=3;ctx.setLineDash([8,6]);
