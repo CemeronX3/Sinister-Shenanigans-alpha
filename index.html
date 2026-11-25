@@ -1649,12 +1649,12 @@ function characterLevel(kind){
 function tensionKey(){
   return P.kind==='senton'&&characterLevel(P.kind)>=3?'KeyC':'Space';
 }
-const TENSION_PER_SECOND=1.5;
 const TENSION_LOSS_ON_HIT=10;
 function updateCombatTension(dt){
   if(!P||!run||P.dead||P.ult||P.tension>=100||room.endT!=null||room.officeCutscene)return;
   if(!enemies.some(e=>e.alive&&e.state!=='dormant'))return;
-  const next=P.tension+TENSION_PER_SECOND*dt*run.mods.tension;
+  const rate=characterLevel(P.kind)<3?3:2;
+  const next=P.tension+rate*dt*run.mods.tension;
   P.tension=next>=100-1e-8?100:next;
   if(P.tension===100)text(P.x,P.y-70,'НАПРЯЖЕНИЕ НА ПРЕДЕЛЕ',C.ember,16);
 }
