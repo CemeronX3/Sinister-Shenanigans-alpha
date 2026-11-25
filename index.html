@@ -6006,6 +6006,10 @@ function updPet(dt){const p=run&&run.pet;if(!p)return;
     let px=ox,py=oy;const dmg=25*run.mods.dmg*(P.ult?1.5:1);
     for(const e of hit){const ey=BIG(e)?e.y-10:e.y;bolts.push({pts:zig(px,py,e.x,ey),t:0});px=e.x;py=ey;burst(e.x,ey,6,['#cfe0ff','#fff'],140,3,.25);damageEnemy(e,dmg)}sfx('zap')}}
 function splitAttackActive(){return !!(run?.mods.splitPersonality&&!P.ult)}
+function splitShotDirections(dx,dy){
+  return [[(dx+dy)*Math.SQRT1_2,(dy-dx)*Math.SQRT1_2],
+          [(dx-dy)*Math.SQRT1_2,(dy+dx)*Math.SQRT1_2]];
+}
 function updPlayer(dt){
   const s=stats();P.maxHp=s.maxHp;
   // комнаты с камерой (сейчас только коридор-подход к офису Еррора) рисуют мир со сдвигом ctx.translate(-camX,-camY),
@@ -6067,7 +6071,7 @@ function updPlayer(dt){
   else if(P.kind==='tenn'){if(mouse.down&&!P.shield){P.thrust=.22;if(P.atkT<=0){P.atkT=.14;sfx('aoe');
       radCones.push({x:ox,y:oy,a:P.aim,spread:s.spread*(split?2:1),range:s.reach,t:0,dur:.3,dmg:rand(s.dmgMin,s.dmgMax)*s.dmgMul*.3,debuff:s.debuff,hit:new Set()})}}}
   else if(P.kind==='cain'){if(mouse.down&&!P.shield&&P.atkT<=0){P.atkT=s.atkCd;P.thrust=.3;sfx('shoot');
-      for(const [sx,sy] of split?[[0,-1],[0,1]]:[[dx,dy]]){
+      for(const [sx,sy] of split?splitShotDirections(dx,dy):[[dx,dy]]){
         waves.push({x:ox,y:oy,vx:sx*s.waveSpd,vy:sy*s.waveSpd,dmg:rand(s.dmgMin,s.dmgMax)*s.dmgMul,r:s.waveR,hit:new Set(),life:3,t:0});
       }}}
   else if(P.kind==='senton'){
@@ -6078,14 +6082,14 @@ function updPlayer(dt){
     if(P.tw===2&&s.maxTw>=2){
       if(mouse.down&&!P.shield){P.thrust=.2;P.chg=Math.min(1,(P.chg||0)+dt/1)}
       else{if(P.chg>.05){const dmg=(s.chgMin+P.chg*(s.chgMax-s.chgMin))*s.dmgMul*(big?1.6:1);
-          for(const [sx,sy] of split?[[0,-1],[0,1]]:[[dx,dy]])pbul.push({x:ox,y:oy,vx:sx*480,vy:sy*480,dmg,life:1.2,big:true,r:(7+P.chg*10)*(big?1.4:1),col:'#3fd6ff'});
+          for(const [sx,sy] of split?splitShotDirections(dx,dy):[[dx,dy]])pbul.push({x:ox,y:oy,vx:sx*480,vy:sy*480,dmg,life:1.2,big:true,r:(7+P.chg*10)*(big?1.4:1),col:'#3fd6ff'});
           shake=Math.max(shake,4+P.chg*8);burst(ox+dx*10,oy+dy*10,14+P.chg*16,['#3fd6ff','#fff'],240,5,.5);sfx('ult')}
         P.chg=0}
     }else{P.chg=0;
       if(mouse.down&&!P.shield){P.atkT-=dt;if(P.atkT<=0){P.atkT=s.atkCd;P.thrust=.2;sfx('shoot');
           if(P.tw===1&&s.maxTw>=1){for(const sprAng of split?[-.28,-.093,.093,.28]:[-.28,0,.28]){const a=P.aim+sprAng;
               pbul.push({x:ox,y:oy,vx:Math.cos(a)*560,vy:Math.sin(a)*560,dmg:rand(s.dmg3Min,s.dmg3Max)*s.dmgMul*(big?1.6:1),life:.9,r:big?6:4,col:'#3fd6ff'})}}
-          else if(split){for(const sy of [-1,1])pbul.push({x:ox,y:oy,vx:0,vy:sy*560,dmg:rand(s.dmgMin,s.dmgMax)*s.dmgMul*(big?1.6:1),life:.9,r:big?6:4,col:'#3fd6ff'})}
+          else if(split){for(const [sx,sy] of splitShotDirections(dx,dy))pbul.push({x:ox,y:oy,vx:sx*560,vy:sy*560,dmg:rand(s.dmgMin,s.dmgMax)*s.dmgMul*(big?1.6:1),life:.9,r:big?6:4,col:'#3fd6ff'})}
           else{for(const off of[-3,3]){
               pbul.push({x:ox-dy*off*.3,y:oy+dx*off*.3,vx:dx*560,vy:dy*560,dmg:rand(s.dmgMin,s.dmgMax)*s.dmgMul*(big?1.6:1),life:.9,r:big?6:4,col:'#3fd6ff'})}}}}}}
   else if(secondThrust||(mouse.down&&!P.shield&&P.atkT<=0)){
