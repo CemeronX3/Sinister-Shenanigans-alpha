@@ -6006,9 +6006,10 @@ function updPet(dt){const p=run&&run.pet;if(!p)return;
     let px=ox,py=oy;const dmg=25*run.mods.dmg*(P.ult?1.5:1);
     for(const e of hit){const ey=BIG(e)?e.y-10:e.y;bolts.push({pts:zig(px,py,e.x,ey),t:0});px=e.x;py=ey;burst(e.x,ey,6,['#cfe0ff','#fff'],140,3,.25);damageEnemy(e,dmg)}sfx('zap')}}
 function splitAttackActive(){return !!(run?.mods.splitPersonality&&!P.ult)}
+const SPLIT_SHOT_ANGLE=Math.PI/12;
 function splitShotDirections(dx,dy){
-  return [[(dx+dy)*Math.SQRT1_2,(dy-dx)*Math.SQRT1_2],
-          [(dx-dy)*Math.SQRT1_2,(dy+dx)*Math.SQRT1_2]];
+  const c=Math.cos(SPLIT_SHOT_ANGLE),s=Math.sin(SPLIT_SHOT_ANGLE);
+  return [[dx*c+dy*s,dy*c-dx*s],[dx*c-dy*s,dy*c+dx*s]];
 }
 function updPlayer(dt){
   const s=stats();P.maxHp=s.maxHp;
