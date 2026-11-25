@@ -1649,11 +1649,12 @@ function characterLevel(kind){
 function tensionKey(){
   return P.kind==='senton'&&characterLevel(P.kind)>=3?'KeyC':'Space';
 }
-const TENSION_CHARGE_SECONDS=20;
+const TENSION_PER_SECOND=1.5;
+const TENSION_LOSS_ON_HIT=10;
 function updateCombatTension(dt){
   if(!P||!run||P.dead||P.ult||P.tension>=100||room.endT!=null||room.officeCutscene)return;
   if(!enemies.some(e=>e.alive&&e.state!=='dormant'))return;
-  const next=P.tension+(100/TENSION_CHARGE_SECONDS)*dt*run.mods.tension;
+  const next=P.tension+TENSION_PER_SECOND*dt*run.mods.tension;
   P.tension=next>=100-1e-8?100:next;
   if(P.tension===100)text(P.x,P.y-70,'НАПРЯЖЕНИЕ НА ПРЕДЕЛЕ',C.ember,16);
 }
@@ -1825,7 +1826,9 @@ function drawShield(){
 function hurtPlayer(dmg){if(P.inv>0||P.dead||room.endT!=null)return;
   if(P.dashing&&(P.kind==='senton'||(run&&run.mods.dash)))return;
   if(run&&run.mods.dodge>0&&Math.random()<run.mods.dodge){P.inv=.2;P.flickerT=1.5;text(P.x,P.y-56,'УКЛОНЕНИЕ',C.acid,15);sfx('pick');return}
-  const s=stats();dmg*=1-s.def;P.hp-=dmg;P.inv=.65;shake=Math.max(shake,8);sfx('hurt');
+  const s=stats();dmg*=1-s.def;P.hp-=dmg;
+  if(dmg>0)P.tension=Math.max(0,P.tension-TENSION_LOSS_ON_HIT);
+  P.inv=.65;shake=Math.max(shake,8);sfx('hurt');
   text(P.x,P.y-56,'-'+Math.round(dmg),C.red,17);burst(P.x,P.y-14,8,[C.red,'#fff'],160,4,.4);
   if(P.hp<=0){P.hp=0;P.dead=true;musicStop();musStop(1.2);burst(P.x,P.y-14,60,['#f2efe9','#141317','#1d2668',C.lav],320,7,1.2);room.endT=1.6;room.endKind='dead';P.ult=false;sfx('boss')}}
 
