@@ -86,6 +86,7 @@ const items=[
  {perk:perks.find(perk=>perk.id==='observer'),cost:23,art:19},
  {perk:perks.find(perk=>perk.id==='devastating'),cost:18,art:20},
  {perk:perks.find(perk=>perk.id==='splitPersonality'),cost:40,art:22},
+ {perk:perks.find(perk=>perk.id==='unlimited'),cost:25,art:23},
  {perk:{id:'potion',name:'Зелье лечения',desc:'Восстанавливает 10 здоровья.'},cost:10,art:21},
 ].map(({perk,cost,art})=>({perk,cost,art,name:perk.name.toUpperCase(),detail:perk.desc}));
 const STOPWATCH=20,POTION=21,PERK_STANDS=3;
@@ -189,6 +190,14 @@ function drawArtifact(kind,x,y,scale=1){
  const label=(text,x,y,size,color)=>{g.font=`bold ${size}px monospace`;g.textAlign='center';g.fillStyle=color;g.fillText(text,x,y)};
  // The drawing space is roughly 60x64 and deliberately has no image backing.
  switch(kind){
+ case 23:
+  fill([[-13,-24],[-9,-24],[-9,-32],[9,-32],[9,-24],[13,-24],[19,-18],[19,23],[13,29],[-13,29],[-19,23],[-19,-18]],'#443247','#17131e',3);
+  fill([[-13,-17],[13,-17],[14,18],[10,23],[-10,23],[-14,18]],'#9d64d1','#17131e',2);
+  bar(-6,-29,12,5,'#e8bd83');
+  seg(-11,-13,-11,15,'#dfc0ff',2);
+  g.beginPath();g.moveTo(0,3);g.bezierCurveTo(-12,-13,-16,16,0,3);g.bezierCurveTo(12,-13,16,16,0,3);
+  g.strokeStyle='#f9e6ff';g.lineWidth=2.6;g.stroke();
+  break;
  case 0: // Faceted lilac sharpened tip, angled as in the reference.
   g.rotate(.64);
   fill([[-9,24],[-9,12],[9,12],[9,24]],'#62458b');
@@ -1000,6 +1009,7 @@ const PERKS=[
  {id:'heat',name:'Перегрев',desc:'Напряжение копится на 50% быстрее',apply:m=>m.tension*=1.5},
  {id:'leech',name:'Поглощение',desc:'Каждое убийство лечит 5 здоровья',apply:m=>m.lifesteal+=5},
  {id:'shaft',name:'Большая шишка',desc:'Увеличивает размер и ширину атак на 25%',apply:m=>m.sizeMul*=1.25},
+ {id:'unlimited',name:'Безлимит',desc:'Полученный урон не уменьшает напряжение.',apply:m=>m.keepTensionOnHit=true},
  {id:'splitPersonality',name:'Раздвоение личности',desc:'Меняет обычную атаку персонажа. В ультформе отключается.',apply:m=>m.splitPersonality=true},
  {id:'doublepay',name:'Двойная оплата',desc:'За врагов выпадает в 1,5 раза больше токенов',apply:m=>m.tokenMul*=1.5},
  {id:'greed',name:'Кто хочет стать миллионером',desc:'Монет выпадает в 1,5 раза больше',apply:m=>m.coinMul*=1.5},
@@ -1854,7 +1864,7 @@ function hurtPlayer(dmg){if(P.inv>0||P.dead||room.endT!=null)return;
   if(P.dashing&&(P.kind==='senton'||(run&&run.mods.dash)))return;
   if(run&&run.mods.dodge>0&&Math.random()<run.mods.dodge){P.inv=.2;P.flickerT=1.5;text(P.x,P.y-56,'УКЛОНЕНИЕ',C.acid,15);sfx('pick');return}
   const s=stats();dmg*=1-s.def;P.hp-=dmg;
-  if(dmg>0)P.tension=Math.max(0,P.tension-TENSION_LOSS_ON_HIT);
+  if(dmg>0&&!run?.mods.keepTensionOnHit)P.tension=Math.max(0,P.tension-TENSION_LOSS_ON_HIT);
   P.inv=.65;shake=Math.max(shake,8);sfx('hurt');
   text(P.x,P.y-56,'-'+Math.round(dmg),C.red,17);burst(P.x,P.y-14,8,[C.red,'#fff'],160,4,.4);
   if(P.hp<=0){P.hp=0;P.dead=true;musicStop();musStop(1.2);burst(P.x,P.y-14,60,['#f2efe9','#141317','#1d2668',C.lav],320,7,1.2);room.endT=1.6;room.endKind='dead';P.ult=false;sfx('boss')}}
@@ -6520,7 +6530,7 @@ function updUpgrade(dt){ui.deny=Math.max(0,(ui.deny||0)-dt);
   if(pressed.has('KeyT')&&ui.tab>=1&&ui.tab<=maxLv)setLevelDebug();
   if(mouse.clicked){for(const b of UB.tabs)if(hit(b))ui.tab=b.t;if(hit(UB.buy))tryBuy();if(hit(UB.back))state='lobby';if(ui.tab>=1&&ui.tab<=maxLv&&hit(UB.setlv))setLevelDebug()}}
 
-const BP={grid:i=>({x:24+(i%7)*134,y:100+Math.floor(i/7)*150,w:118,h:134}),go:{x:W/2-130,y:550,w:260,h:40}};
+const BP={grid:i=>({x:24+(i%8)*115,y:100+Math.floor(i/8)*150,w:108,h:134}),go:{x:W/2-130,y:550,w:260,h:40}};
 const perkLocked=p=>!!(p.need&&save.lv<p.need);
 /* ---------- портал боссфайтов: выбор цели, затем усиления ---------- */
 const BG_PAGE=3;
@@ -8394,10 +8404,18 @@ function drawTennVision(x,y,s,face,wheel,aim,zap,head){const g=ctx;g.save();g.tr
   g.strokeStyle='#0d0f1c';g.lineWidth=.35*s;for(const tx of[-3.2,-.6,2,4.6]){g.beginPath();g.moveTo(tx*s,-23*s);g.lineTo(tx*s,-16*s);g.stroke()}
   g.restore()}
 const BOSS_PERK_ART={};for(const [id,path] of [['observer','sprites/perk_observer.png'],['devastating','sprites/perk_devastating_seconds.png'],['doublepay','sprites/doublepay-original.png?v=9738e20']]){const img=new Image();img.src=path;BOSS_PERK_ART[id]=img}
-const PCOL={splitPersonality:'#ffe600',observer:'#941328',devastating:'#c0252d',tip:'#ff5a2a',plate:'#e3c9f2',cell:'#efee4f',servo:'#36d936',lunge:'#e0473a',heat:'#f0882e',leech:'#36d936',shaft:'#1d2850',greed:'#a6f062',doublepay:'#080e73',signal:'#d9d9dc',pet:'#2a64f0',core:'#0d1120',stunner:'#1c3fd4',ember:'#e8641f',confuse:'#c0203a',treasure:'#d62a8c',dash:'#3aa8d6'};
+const PCOL={unlimited:'#35214f',splitPersonality:'#ffe600',observer:'#941328',devastating:'#c0252d',tip:'#ff5a2a',plate:'#e3c9f2',cell:'#efee4f',servo:'#36d936',lunge:'#e0473a',heat:'#f0882e',leech:'#36d936',shaft:'#1d2850',greed:'#a6f062',doublepay:'#080e73',signal:'#d9d9dc',pet:'#2a64f0',core:'#0d1120',stunner:'#1c3fd4',ember:'#e8641f',confuse:'#c0203a',treasure:'#d62a8c',dash:'#3aa8d6'};
 function perkIcon(id,cx,cy){const g=ctx;g.save();g.translate(cx,cy);g.lineCap='butt';g.lineJoin='miter';
   const L=(a,b,c,d)=>{g.beginPath();g.moveTo(a,b);g.lineTo(c,d);g.stroke()};
-  if(id==='splitPersonality'){
+  if(id==='unlimited'){
+    g.fillStyle='#21162e';g.fillRect(-84,-7,168,42);
+    g.strokeStyle='#dab8f3';g.lineWidth=4;g.strokeRect(-84,-7,168,42);
+    g.fillStyle='#bb79ef';for(let i=0;i<5;i++)g.fillRect(-76+i*31,1,27,26);
+    g.fillStyle='#ffd17c';g.beginPath();g.moveTo(15,-61);g.lineTo(-18,-28);g.lineTo(5,-28);
+    g.lineTo(-6,-12);g.lineTo(37,-42);g.lineTo(14,-42);g.closePath();g.fill();
+    g.strokeStyle='#f8e9ff';g.lineWidth=5;g.beginPath();g.moveTo(0,52);
+    g.bezierCurveTo(-25,28,-32,77,0,52);g.bezierCurveTo(25,28,32,77,0,52);g.stroke();
+  }else if(id==='splitPersonality'){
     g.fillStyle='#fff8ed';g.strokeStyle='#17141e';g.lineWidth=3;
     for(const side of [-1,1]){
       g.save();g.scale(side,1);g.beginPath();g.moveTo(0,49);g.lineTo(42,-22);
