@@ -1020,7 +1020,7 @@ const PERKS=[
  {id:'heat',name:'Перегрев',desc:'Напряжение копится на 50% быстрее',apply:m=>m.tension*=1.5},
  {id:'leech',name:'Поглощение',desc:'Каждое убийство лечит 5 здоровья',apply:m=>m.lifesteal+=5},
  {id:'shaft',name:'Большая шишка',desc:'Увеличивает размер и ширину атак на 25%',apply:m=>m.sizeMul*=1.25},
- {id:'parry',name:'Паррирователь',desc:'[R] Даёт неуязвимость на 1 секунду. Перезарядка: 12 секунд.',apply:m=>m.parry=true},
+ {id:'parry',name:'Паррирователь',desc:'[R] Неуязвимость на 1 секунду. 3 заряда на локацию или отдельный бой с боссом.',apply:m=>m.parry=true},
  {id:'bob',name:'Глазастый Боб',desc:'Куб следует за тобой и стреляет во врагов тремя красными снарядами.',apply:m=>m.bob=true},
  {id:'unlimited',name:'Безлимит',desc:'Полученный урон не уменьшает напряжение.',apply:m=>m.keepTensionOnHit=true},
  {id:'splitPersonality',name:'Раздвоение личности',desc:'Меняет обычную атаку персонажа. В ультформе отключается.',apply:m=>m.splitPersonality=true},
@@ -1615,6 +1615,7 @@ function enterRoom(){const keepT=P.tension;clearArrays();const boss=run.level===
   else if(run.zone===4&&run.level===2&&run.roomIdx===2){room.wavesLeft=0;room.rocks=[];room.props=room.props.filter(q=>Math.hypot(q.x-(W/2+120),q.y-MIDY)>190);
     room.floor=makeFloor(room);room.creatorIntro=1.2;banner('ЛОЖНЫЙ СОЗДАТЕЛЬ','Отладка · уровень 2 · комната 3');sfx('boss');musStart('creatorman')}
   else{room.wavesLeft=run.level>=4?2:1;spawnWave();musStart(run.zone===1?'wasteland':run.zone===3?'depths':run.zone===4?'debug':'architects')}
+  room.parryBoss=room.miniIntro!=null||room.mikeIntro!=null||room.krakenIntro!=null||room.creatorIntro!=null;
   for(const m of room.mimicSpots)spawnEnemy(run.zone===2?'archMimic':run.zone===3?'scallop':run.zone===4?'dbgmimic':'mimic',m.x,m.y,true)}
 function pickType(){const l=run.level;
   if(run.zone===4){const pool=[['eyeglitch',3],['c1a8',3],['credmini',3],['archFused',2]];
@@ -6057,14 +6058,18 @@ function splitShotDirections(dx,dy){
   const c=Math.cos(SPLIT_SHOT_ANGLE),s=Math.sin(SPLIT_SHOT_ANGLE);
   return [[dx*c+dy*s,dy*c-dx*s],[dx*c-dy*s,dy*c+dx*s]];
 }
-const PARRY_COOLDOWN=12;
+const PARRY_CHARGES=3;
+function parryPool(){
+  return !run.bossStart&&(room.kind==='boss'||room.parryBoss)?room:run;
+}
 function updateParry(dt){
   if(!run?.mods.parry)return;
   P.parryT=Math.max(0,(P.parryT||0)-dt);
-  P.parryCd=Math.max(0,(P.parryCd||0)-dt);
-  if(!pressed.has('KeyR')||P.dead||P.parryCd>0||room.kind==='shop'||room.endT!=null)return;
+  const pool=parryPool();
+  if(!pressed.has('KeyR')||P.dead||(pool.parryCharges??PARRY_CHARGES)<=0||room.kind==='shop'||room.kind==='officeApproach'||room.endT!=null)return;
   if(room.kind==='training'&&(keys.has('ShiftLeft')||keys.has('ShiftRight')))return;
-  P.parryT=1;P.parryCd=PARRY_COOLDOWN;
+  pool.parryCharges=(pool.parryCharges??PARRY_CHARGES)-1;
+  P.parryT=1;
   burst(P.x,P.y-16,12,['#eaffff','#62d8e2'],130,3,.35);sfx('block');
 }
 function updPlayer(dt){
@@ -10449,8 +10454,15 @@ function drawHUD(){ctx.fillStyle='#141316';ctx.fillRect(0,0,W,room.cam?50:A.y-24
   if(!run)return;
   const full=P.tension>=100&&!P.ult,low=P.hp/P.maxHp<.3;
   if(run.mods.parry){
-    const status=P.parryT>0?'АКТИВНО':P.parryCd>0?P.parryCd.toFixed(1)+' с':'ГОТОВО';
-    label('[R] ПАРИРОВАНИЕ · '+status,24,87,11,'#a4e7ee','left',FM);
+    const x=W-258,y=26,n=parryPool().parryCharges??PARRY_CHARGES;
+    ctx.fillStyle='#0c0b0d';ctx.fillRect(x,y,40,40);
+    ctx.fillStyle=P.parryT>0?'#e1ffff':n?'#a0d9de':'#4b525d';ctx.fillRect(x+3,y+3,34,34);
+    ctx.fillStyle='#263645';ctx.beginPath();ctx.moveTo(x+20,y+7);ctx.lineTo(x+30,y+12);
+    ctx.lineTo(x+28,y+22);ctx.lineTo(x+20,y+28);ctx.lineTo(x+12,y+22);ctx.lineTo(x+10,y+12);ctx.closePath();ctx.fill();
+    for(let i=0;i<PARRY_CHARGES;i++){
+      ctx.fillStyle=i<n?'#f0ffff':'#364655';ctx.fillRect(x+8+i*9,y+31,6,3);
+    }
+    label('R',x-7,y+26,13,C.muted,'right',FM);
   }
   const action=characterLevel(P.kind)<3?'НАВЫК':'УЛЬТФОРМА';
   const key=tensionKey()==='KeyC'?'C':'ПРОБЕЛ';
