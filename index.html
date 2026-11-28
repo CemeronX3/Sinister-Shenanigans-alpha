@@ -17,7 +17,7 @@ async function start(){
   const files=['00','01','02','03'];
   let completed=0;
   const chunks=await Promise.all(files.map(async part=>{
-    const response=await fetch('./builds/beta06-warden-scale/part-'+part+'.bin');
+    const response=await fetch('./builds/beta06-hd/part-'+part+'.bin');
     if(!response.ok)throw new Error('HTTP '+response.status);
     const chunk=await response.blob();
     statusLabel.textContent='Загрузка Beta 0.6… '+(++completed)+' / '+files.length;
